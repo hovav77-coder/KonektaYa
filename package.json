@@ -1,0 +1,9 @@
+{
+  "name": "konektaya",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KonektaYa — marketplace de matching de inmuebles y vehiculos en Panama. Fase 1: sitio estatico. Fase 2: backend + Supabase.",
+  "scripts": {
+    "dev": "node .claude/serve.js"
+  }
+}

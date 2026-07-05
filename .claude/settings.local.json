@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3005 -State Listen -ErrorAction SilentlyContinue)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3005 -State Listen -ErrorAction SilentlyContinue | Select-Object LocalAddress, LocalPort, OwningProcess; \\(Invoke-WebRequest -Uri \"http://localhost:3005\" -UseBasicParsing -TimeoutSec 10\\).StatusCode)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git -c user.email=\"hovav.saida@imrsa.com\" -c user.name=\"Hovav Saida\" commit -q -m \"KonektaYa - lanzamiento fase 1 \\(sitio estatico\\)\")",
+      "Bash(git branch *)"
+    ]
+  }
+}
