@@ -12202,7 +12202,8 @@
           propertyName: match.property.name,
           searchName: match.search.name,
           recordTitle: propertyHeader(match.property),
-          contactName: fullName(match.search)
+          contactName: fullName(match.search),
+          unlockedBy: currentUserEmail
         };
         save();
         render();
@@ -12230,7 +12231,8 @@
           vehicleName: vehicleOfferTitle(match.offer),
           searchName: vehicleSearchTitle(match.search),
           recordTitle: vehicleOfferTitle(match.offer),
-          contactName: fullName(match.search)
+          contactName: fullName(match.search),
+          unlockedBy: currentUserEmail
         };
         save();
         render();
@@ -12311,7 +12313,9 @@
       function renderHistory() {
         const target = document.getElementById("unlockHistory");
         if (!target) return;
-        const items = Object.values(machUnlocks);
+        const items = Object.values(machUnlocks).filter(
+          (it) => currentUserEmail && normalize(it.unlockedBy || "") === normalize(currentUserEmail)
+        );
         if (!items.length) {
           target.innerHTML =
             '<article class="card empty"><h3>Sin historial</h3><p>Aún no hay Contactos desbloqueados.</p></article>';
@@ -12326,7 +12330,7 @@
             const dt = String(item.displayType || publicMachLabel(item.machType) || "Contacto desbloqueado");
             const rank = dt.includes(" · ") ? dt.split(" · ")[0] : "";
             const tierName = dt.includes(" · ") ? dt.split(" · ").slice(1).join(" · ") : dt;
-            const record = item.recordTitle || item.vehicleName || item.propertyName || "Registro";
+            const record = item.recordTitle || item.vehicleName || "Contacto desbloqueado";
             const contact = item.contactName || item.searchName || "Interesado";
             const desc = record && contact && record !== contact ? `${record} · Contacto: ${contact}` : contact || record;
             const estado = item.followStatus
