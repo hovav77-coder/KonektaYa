@@ -705,6 +705,102 @@
         color: #ffffff;
       }
 
+      .home-benefit-card .benefit-icon {
+        display: inline-flex;
+        margin-bottom: 8px;
+      }
+      .home-benefit-card .benefit-icon svg {
+        display: block;
+        height: 24px;
+        width: 24px;
+      }
+      .home-flow-steps {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 18px;
+      }
+      .home-flow-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.06em;
+        margin-right: 4px;
+        text-transform: uppercase;
+      }
+      .home-flow-step {
+        background: #ffffff;
+        border: 1px solid #dce5ef;
+        border-radius: 999px;
+        color: var(--navy);
+        font-size: 13px;
+        font-weight: 800;
+        padding: 6px 14px;
+      }
+      .home-flow-steps .flow-arrow {
+        color: #b6c4d4;
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .history-summary {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 12px;
+      }
+      .history-summary strong {
+        color: var(--ink);
+      }
+      .history-list-rows {
+        display: grid;
+        gap: 10px;
+      }
+      .history-row {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #eef2f7;
+        border-radius: 12px;
+        display: flex;
+        gap: 14px;
+        padding: 12px 14px;
+      }
+      .history-rank {
+        align-items: center;
+        border-radius: 10px;
+        color: #ffffff;
+        display: inline-flex;
+        flex-shrink: 0;
+        font-size: 14px;
+        font-weight: 950;
+        height: 44px;
+        justify-content: center;
+        width: 44px;
+      }
+      .history-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .history-title {
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 800;
+        margin: 0;
+      }
+      .history-sub {
+        color: var(--muted);
+        font-size: 12.5px;
+        font-weight: 700;
+        margin: 2px 0 0;
+      }
+      .history-cost {
+        color: var(--ink);
+        flex-shrink: 0;
+        font-size: 16px;
+        font-weight: 950;
+      }
+
       .field.full {
         grid-column: 1 / -1;
       }
@@ -2145,25 +2241,44 @@
         border-radius: 0 14px 14px 0;
       }
 
-      .interest-chip-row {
+      .interest-banner {
         align-items: center;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .interest-chip {
         background: var(--orange-soft);
-        border-radius: 999px;
-        color: #712b13;
-        font-size: 12px;
-        font-weight: 800;
-        padding: 3px 12px;
+        border: 1px solid var(--orange-2);
+        border-radius: 12px;
+        display: flex;
+        gap: 12px;
+        padding: 10px 14px;
       }
 
-      .interest-last {
-        color: var(--muted);
-        font-size: 12px;
+      .interest-banner-icon {
+        align-items: center;
+        background: var(--orange);
+        border-radius: 999px;
+        color: #ffffff;
+        display: inline-flex;
+        flex-shrink: 0;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+
+      .interest-banner-icon svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .interest-banner-text strong {
+        color: #712b13;
+        display: block;
+        font-size: 14px;
+        font-weight: 900;
+        line-height: 1.3;
+      }
+
+      .interest-banner-text span {
+        color: #993c1d;
+        font-size: 12.5px;
         font-weight: 700;
       }
 
@@ -5192,29 +5307,37 @@
           <h2>Menos fricción, mejores contactos.</h2>
           <div class="home-benefit-grid">
             <article class="home-benefit-card">
+              <span class="benefit-icon" style="color:#e05b2a;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg></span>
               <h3>Registro rápido</h3>
               <p>Publica o registra una búsqueda sin procesos largos.</p>
             </article>
             <article class="home-benefit-card">
+              <span class="benefit-icon" style="color:#0f5e91;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2.5"></circle><path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path></svg></span>
               <h3>IA de compatibilidad</h3>
               <p>Cruza ubicación, PH, precio, metraje y necesidad.</p>
             </article>
             <article class="home-benefit-card">
+              <span class="benefit-icon" style="color:#12a150;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg></span>
               <h3>Contacto protegido</h3>
               <p>Los datos sensibles permanecen ocultos hasta desbloquear.</p>
             </article>
             <article class="home-benefit-card">
+              <span class="benefit-icon" style="color:#0f5e91;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v10M15 9.5c-.8-.8-2.6-1.2-3.8-.5-1 .6-.9 2 .3 2.5l1.4.6c1.5.6 1.8 2.1.7 2.9-1.2.9-3.3.4-4.1-.5"></path></svg></span>
               <h3>Sin comisión</h3>
               <p>KonektaYa no cobra comisión por cierre.</p>
             </article>
           </div>
-          <div class="home-flow-strip">
-            <strong>Flujo:</strong>
-            <span>1. Registra</span>
-            <span>2. La IA analiza</span>
-            <span>3. Recibes resultados</span>
-            <span>4. Decides si desbloqueas</span>
-            <span>5. Contactas directamente</span>
+          <div class="home-flow-steps">
+            <span class="home-flow-label">Cómo funciona</span>
+            <span class="home-flow-step">1 · Registra</span>
+            <span class="flow-arrow">›</span>
+            <span class="home-flow-step">2 · La IA analiza</span>
+            <span class="flow-arrow">›</span>
+            <span class="home-flow-step">3 · Recibes resultados</span>
+            <span class="flow-arrow">›</span>
+            <span class="home-flow-step">4 · Desbloqueas</span>
+            <span class="flow-arrow">›</span>
+            <span class="home-flow-step">5 · Contactas</span>
           </div>
         </section>
       </section>
@@ -7330,9 +7453,12 @@
             : ""
         ].filter(Boolean).join("");
         const interestBanner = requested
-          ? `<div class="interest-chip-row">
-              <span class="interest-chip">Pidió que lo contacten${reminderCount ? ` · ${reminderCount} recordatorio${reminderCount === 1 ? "" : "s"}` : ""}</span>
-              <span class="interest-last">Último: ${formatDate(requestInfo.lastReminderAt || requestInfo.requestedAt)}</span>
+          ? `<div class="interest-banner">
+              <span class="interest-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg></span>
+              <div class="interest-banner-text">
+                <strong>Este cliente pidió que lo contacten</strong>
+                <span>Interés activo · último ${formatDate(requestInfo.lastReminderAt || requestInfo.requestedAt)}${reminderCount ? ` · ${reminderCount} recordatorio${reminderCount === 1 ? "" : "s"}` : ""}</span>
+              </div>
             </div>`
           : "";
         const unlockButton = canUnlockHere
@@ -11026,9 +11152,12 @@
           extrasOk ? factorChip("ok", "Extras") : factorChip("warn", "Extras distintos")
         ].join("");
         const interestBanner = requested
-          ? `<div class="interest-chip-row">
-              <span class="interest-chip">Pidió que lo contacten${reminderCount ? ` · ${reminderCount} recordatorio${reminderCount === 1 ? "" : "s"}` : ""}</span>
-              <span class="interest-last">Último: ${formatDate(requestInfo.lastReminderAt || requestInfo.requestedAt)}</span>
+          ? `<div class="interest-banner">
+              <span class="interest-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.7 21a2 2 0 0 1-3.4 0"></path></svg></span>
+              <div class="interest-banner-text">
+                <strong>Este cliente pidió que lo contacten</strong>
+                <span>Interés activo · último ${formatDate(requestInfo.lastReminderAt || requestInfo.requestedAt)}${reminderCount ? ` · ${reminderCount} recordatorio${reminderCount === 1 ? "" : "s"}` : ""}</span>
+              </div>
             </div>`
           : "";
         return `
@@ -11929,7 +12058,9 @@
           machType: match.mach.label,
           displayType: match.mach.displayLabel || publicMachLabel(match.mach.label),
           propertyName: match.property.name,
-          searchName: match.search.name
+          searchName: match.search.name,
+          recordTitle: propertyHeader(match.property),
+          contactName: fullName(match.search)
         };
         save();
         render();
@@ -11955,7 +12086,9 @@
           machType: match.mach.label,
           displayType: match.mach.displayLabel,
           vehicleName: vehicleOfferTitle(match.offer),
-          searchName: vehicleSearchTitle(match.search)
+          searchName: vehicleSearchTitle(match.search),
+          recordTitle: vehicleOfferTitle(match.offer),
+          contactName: fullName(match.search)
         };
         save();
         render();
@@ -12042,19 +12175,37 @@
             '<article class="card empty"><h3>Sin historial</h3><p>Aún no hay Contactos desbloqueados.</p></article>';
           return;
         }
-        target.innerHTML = items
-          .map(
-            (item) => `
-              <article class="history-item">
-                <strong>${item.displayType || publicMachLabel(item.machType) || "Contacto desbloqueado"} · ${money.format(item.price || 0)}</strong>
-                <div>${item.propertyName || item.vehicleName || "Registro"} · ${item.searchName || "Interesado"}</div>
-                <div>${formatDate(item.unlockedAt)}</div>
-                ${item.followStatus ? `<div>Estado: ${item.followStatus === "cerrado" ? "Cerrado" : item.followStatus === "contactado" ? "Contactado" : "Desbloqueado"}</div>` : ""}
-                ${item.followNote ? `<div>Nota: ${escapeHtml(item.followNote)}</div>` : ""}
-              </article>
-            `
-          )
+        const total = items.reduce((sum, it) => sum + Number(it.price || 0), 0);
+        const rankColors = { AAA: "#0a2f55", AA: "#0f5e91", A: "#2e78ad", BBB: "#5f7186", BB: "#5f7186", B: "#8a97a8" };
+        const rows = items
+          .slice()
+          .sort((a, b) => new Date(b.unlockedAt || 0) - new Date(a.unlockedAt || 0))
+          .map((item) => {
+            const dt = String(item.displayType || publicMachLabel(item.machType) || "Contacto desbloqueado");
+            const rank = dt.includes(" · ") ? dt.split(" · ")[0] : "";
+            const tierName = dt.includes(" · ") ? dt.split(" · ").slice(1).join(" · ") : dt;
+            const record = item.recordTitle || item.vehicleName || item.propertyName || "Registro";
+            const contact = item.contactName || item.searchName || "Interesado";
+            const desc = record && contact && record !== contact ? `${record} · Contacto: ${contact}` : contact || record;
+            const estado = item.followStatus
+              ? ` · ${item.followStatus === "cerrado" ? "Cerrado" : item.followStatus === "contactado" ? "Contactado" : "Desbloqueado"}`
+              : "";
+            return `
+              <div class="history-row">
+                <span class="history-rank" style="background:${rankColors[rank] || "#5f7186"};">${rank || "—"}</span>
+                <div class="history-main">
+                  <p class="history-title">${desc}</p>
+                  <p class="history-sub">${tierName} · ${formatDate(item.unlockedAt)}${estado}</p>
+                </div>
+                <div class="history-cost">${money.format(item.price || 0)}</div>
+              </div>
+            `;
+          })
           .join("");
+        target.innerHTML = `
+          <div class="history-summary">${items.length} contacto${items.length === 1 ? "" : "s"} · Total gastado <strong>${money.format(total)}</strong></div>
+          <div class="history-list-rows">${rows}</div>
+        `;
       }
 
       setupUserDashboardVerticalFilter();
