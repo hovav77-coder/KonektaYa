@@ -3,7 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>KonektaYa | Prototipo Visual</title>
+    <title>KonektaYa — Publica o busca propiedades y vehículos en Panamá</title>
+    <meta name="description" content="KonektaYa conecta tu oferta o necesidad de propiedades y vehículos con personas realmente interesadas en Panamá. Publicar y buscar es gratis, sin comisión por cierre." />
+    <link rel="canonical" href="https://konektaya.com/" />
+    <meta name="theme-color" content="#0a2f55" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="KonektaYa" />
+    <meta property="og:title" content="KonektaYa — Propiedades y vehículos en Panamá" />
+    <meta property="og:description" content="Conecta tu oferta o necesidad con personas realmente interesadas. Publicar y buscar es gratis." />
+    <meta property="og:url" content="https://konektaya.com/" />
+    <meta property="og:locale" content="es_PA" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="KonektaYa — Propiedades y vehículos en Panamá" />
+    <meta name="twitter:description" content="Conecta tu oferta o necesidad con personas realmente interesadas. Publicar y buscar es gratis." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Crect%20width='32'%20height='32'%20rx='7'%20fill='%230a2f55'/%3E%3Ctext%20x='16'%20y='23'%20font-family='Arial,sans-serif'%20font-size='19'%20font-weight='bold'%20fill='%23ffffff'%20text-anchor='middle'%3EK%3C/text%3E%3Ccircle%20cx='24'%20cy='9'%20r='3'%20fill='%23e05b2a'/%3E%3C/svg%3E" />
     <style>
       :root {
         --bg: #f6f8fb;
@@ -9635,10 +9648,9 @@
         setupDashboardViews();
         setupUserDashboardTabs();
         setupAdminPanelTabs();
-        render();
         showTab(location.hash.replace("#", "") || "inicio");
       } catch (error) {
-        console.warn("Render inicial reemplazado por modelo de créditos.", error);
+        console.warn("Init parcial; el render definitivo lo hace el modelo de créditos.", error);
       }
     </script>
     <script>
@@ -12265,5 +12277,6 @@
         activatePropertyYaTab((location.hash || "#inicio").replace("#", ""));
       })();
     </script>
+    <script defer src="/_vercel/insights/script.js"></script>
   </body>
 </html>
