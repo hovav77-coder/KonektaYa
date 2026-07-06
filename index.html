@@ -592,6 +592,106 @@
         display: none;
       }
 
+      .results-filter-card,
+      .results-scale,
+      .results-example-action strong {
+        display: none !important;
+      }
+
+      .pay-amounts {
+        display: flex;
+        gap: 8px;
+      }
+      .pay-amount {
+        flex: 1;
+        border: 1px solid #dce5ef;
+        border-radius: 10px;
+        background: #ffffff;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+        padding: 9px 0;
+        cursor: pointer;
+      }
+      .pay-amount.active {
+        border: 2px solid var(--orange);
+        color: var(--ink);
+      }
+      .pay-tabs {
+        display: flex;
+        gap: 6px;
+        background: #f6f8fb;
+        border-radius: 10px;
+        padding: 4px;
+      }
+      .pay-tab {
+        flex: 1;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        font-size: 13.5px;
+        font-weight: 800;
+        padding: 9px 0;
+        cursor: pointer;
+      }
+      .pay-tab.active {
+        background: var(--navy);
+        color: #ffffff;
+      }
+      .pay-pane {
+        display: grid;
+        gap: 10px;
+      }
+      .pay-input {
+        height: 42px;
+        border: 1px solid #dce5ef;
+        border-radius: 10px;
+        padding: 0 12px;
+        font-size: 14px;
+        color: var(--ink);
+        width: 100%;
+      }
+      .pay-note {
+        color: var(--muted);
+        font-size: 11.5px;
+        font-weight: 700;
+        margin: 0;
+        text-align: center;
+      }
+      .pay-yappy {
+        background: #f6f8fb;
+        border-radius: 12px;
+        padding: 14px 16px;
+        text-align: center;
+      }
+      .pay-yappy-title {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--muted);
+      }
+      .pay-yappy-num {
+        margin: 4px 0;
+        font-size: 26px;
+        font-weight: 900;
+        color: var(--navy);
+      }
+
+      .wa-btn {
+        align-items: center;
+        background: #25d366;
+        border: none;
+        color: #ffffff;
+        display: inline-flex;
+        margin: 6px 0 2px;
+        text-decoration: none;
+      }
+      .wa-btn:hover {
+        background: #1eb85a;
+        color: #ffffff;
+      }
+
       .field.full {
         grid-column: 1 / -1;
       }
@@ -5031,9 +5131,9 @@
       <section class="hero tab-panel active" id="inicio">
         <div class="hero-copy">
           <span class="eyebrow">KonektaYa · Panamá</span>
-          <h1>Propiedades y vehículos, con contactos que <span class="hero-accent">sí califican.</span></h1>
+          <h1>Publica o busca <span class="hero-accent">propiedades y vehículos.</span></h1>
           <p>
-            La IA de KonektaYa cruza ubicación, precio y urgencia para conectarte solo con interesados reales. Publicar y buscar es gratis.
+            KonektaYa conecta tu oferta o necesidad con personas realmente interesadas. Publicar y buscar es gratis.
           </p>
           <div class="home-proof-pills" aria-label="Beneficios principales">
             <span>✓ Registro rápido</span>
@@ -5742,8 +5842,9 @@
               <span class="eyebrow">Resultados inteligentes</span>
               <h2>Resultados calificados</h2>
               <p class="intro">
-                KonektaYa no cobra comisión por cierre. Publicar y buscar es gratis. Solo paga
-                quien publicó el registro cuando decide desbloquear un contacto calificado.
+                Nuestra IA cruza ubicación, precio, urgencia y características para conectarte solo con
+                personas realmente interesadas. Tu contacto permanece protegido hasta que decides conectar.
+                Publicar y buscar es gratis, sin comisión por cierre.
               </p>
             </div>
             <aside class="results-filter-card" aria-label="Filtro de resultados por categoría">
@@ -5769,6 +5870,33 @@
                 <div class="results-stat"><span>Mínimo</span><strong>70%</strong></div>
               </div>
             </aside>
+          </div>
+
+          <div class="results-concept" style="display:grid;gap:18px;margin:4px 0 8px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;">
+              <div style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:16px 18px;">
+                <strong style="display:block;color:var(--navy);font-size:16px;font-weight:900;">1. Publica o busca</strong>
+                <span style="color:var(--muted);font-size:13.5px;">Gratis, en minutos.</span>
+              </div>
+              <div style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:16px 18px;">
+                <strong style="display:block;color:var(--navy);font-size:16px;font-weight:900;">2. La IA conecta</strong>
+                <span style="color:var(--muted);font-size:13.5px;">Encuentra coincidencias reales.</span>
+              </div>
+              <div style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:16px 18px;">
+                <strong style="display:block;color:var(--navy);font-size:16px;font-weight:900;">3. Contacto protegido</strong>
+                <span style="color:var(--muted);font-size:13.5px;">Se libera cuando tú decides.</span>
+              </div>
+            </div>
+            <div>
+              <span class="eyebrow">Niveles de resultado según compatibilidad</span>
+              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+                <span class="pill mach-standard">Básico · 70%+</span>
+                <span class="pill mach-qualified">Calificado · 80%+</span>
+                <span class="pill mach-premium">Premium · 90%+</span>
+                <span class="pill mach-hot">Prioritaria · 95%+</span>
+                <span class="pill mach-exclusive">Exclusiva · 100%</span>
+              </div>
+            </div>
           </div>
 
           <div class="opportunity-table results-scale" aria-label="Niveles de resultados">
@@ -6014,7 +6142,7 @@
                   <span>Saldo para probar desbloqueos</span>
                 </div>
                 <div class="wallet-actions">
-                  <button class="button primary" type="button" onclick="addDemoBalance(50)">+ Agregar USD 50</button>
+                  <button class="button primary" type="button" onclick="openPayModal(50)">+ Agregar crédito</button>
                   <button class="button wallet-ghost" type="button" onclick="logoutUser()">Cerrar sesión</button>
                 </div>
                 <div class="wallet-session">
@@ -6186,6 +6314,49 @@
             <button class="results-modal-close" type="button" aria-label="Cerrar resultados" onclick="closeResultsModal()">✕</button>
           </div>
           <div class="results-modal-body" id="resultsModalBody"></div>
+        </div>
+      </div>
+      <div class="results-modal-overlay hidden" id="payModal" role="dialog" aria-modal="true" aria-label="Comprar crédito">
+        <div class="results-modal" style="max-width:460px;">
+          <div class="results-modal-head">
+            <div class="results-modal-head-main">
+              <p class="results-modal-title">Comprar crédito</p>
+              <p class="results-modal-subtitle">El crédito se usa para desbloquear contactos calificados.</p>
+            </div>
+            <button class="results-modal-close" type="button" aria-label="Cerrar" onclick="closePayModal()">✕</button>
+          </div>
+          <div class="results-modal-body" style="background:#ffffff;">
+            <div class="pay-amounts" id="payAmounts">
+              <button type="button" class="pay-amount" data-pay-amount="10">$10</button>
+              <button type="button" class="pay-amount active" data-pay-amount="25">$25</button>
+              <button type="button" class="pay-amount" data-pay-amount="50">$50</button>
+              <button type="button" class="pay-amount" data-pay-amount="100">$100</button>
+              <button type="button" class="pay-amount" data-pay-amount="otro">Otro</button>
+            </div>
+            <input class="pay-input hidden" id="payAmountOther" type="text" inputmode="numeric" placeholder="Escribe el monto en USD" />
+            <div class="pay-tabs">
+              <button type="button" class="pay-tab active" data-pay-method="card">Tarjeta</button>
+              <button type="button" class="pay-tab" data-pay-method="yappy">Yappy</button>
+            </div>
+            <div class="pay-pane" data-pay-pane="card">
+              <input class="pay-input" id="payCardNumber" inputmode="numeric" placeholder="Número de tarjeta" />
+              <div style="display:flex;gap:10px;">
+                <input class="pay-input" id="payCardExp" placeholder="MM/AA" />
+                <input class="pay-input" id="payCardCvv" inputmode="numeric" placeholder="CVV" />
+              </div>
+              <input class="pay-input" id="payCardName" placeholder="Nombre en la tarjeta" />
+              <button class="button primary" type="button" id="payCardBtn" onclick="submitCardPayment()">Pagar $25</button>
+              <p class="pay-note">Pago seguro procesado por la pasarela. No guardamos tu tarjeta. (Demo: acredita saldo simulado hasta conectar la pasarela real.)</p>
+            </div>
+            <div class="pay-pane hidden" data-pay-pane="yappy">
+              <div class="pay-yappy">
+                <p class="pay-yappy-title">Paga con Yappy al número de KonektaYa</p>
+                <p class="pay-yappy-num">6123-4567</p>
+              </div>
+              <p class="pay-note">Abre tu app Yappy, envía el monto seleccionado a ese número y toca "Ya pagué". Un administrador confirma el pago y acredita tu crédito.</p>
+              <button class="button primary" type="button" id="payYappyBtn" onclick="submitYappyPayment()">Ya pagué $25</button>
+            </div>
+          </div>
         </div>
       </div>
     </main>
@@ -6749,6 +6920,22 @@
         render();
       }
 
+      function normalizePhoneForWa(phone) {
+        let digits = String(phone || "").replace(/\D/g, "");
+        if (!digits) return "";
+        if (digits.length === 8) digits = "507" + digits;
+        return digits;
+      }
+
+      function whatsappButton(phone, name) {
+        const num = normalizePhoneForWa(phone);
+        if (!num) return "";
+        const firstName = String(name || "").trim().split(/\s+/)[0] || "";
+        const message = `Hola ${firstName}, te contacto desde KonektaYa. Coincidimos en un resultado y me gustaría conversar contigo.`;
+        const url = `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
+        return `<a class="button small wa-btn" href="${url}" target="_blank" rel="noopener">Escribir por WhatsApp</a>`;
+      }
+
       function unlockedContactCard(match, source) {
         const displayLabel = match.mach.displayLabel || publicMachLabel(match.mach.label);
         const unlockInfo = getMatchUnlockInfo(match, source);
@@ -6776,6 +6963,7 @@
                   <span class="unlock-pill">${statusText}</span>
                 </div>
                 <p class="contact-line">Tel: ${match.search.phone} · Email: ${match.search.email}${finalClientLine(match.search) ? ` · Cliente final: ${finalClientName(match.search)}` : ""}</p>
+                ${whatsappButton(match.search.phone, fullName(match.search))}
                 <p class="result-meta">${match.mach.ranking || ""} · ${match.score}% · ${matchOriginLabel(match, source)} · Desbloqueado: ${formatDate(unlockInfo.unlockedAt)} · ${money.format(unlockInfo.price || match.mach.price)}</p>
               </div>
               <div class="result-side">
@@ -10640,7 +10828,7 @@
                 <span class="pill">Saldo demo</span>
                 <strong>${money.format(amount)}</strong>
                 <p>Agrega saldo simulado para desbloquear contactos de resultados recibidos por tus propiedades.</p>
-                <button class="button primary" type="button" onclick="addDemoBalance(${amount})">Agregar saldo demo</button>
+                <button class="button primary" type="button" onclick="openPayModal(${amount})">Comprar crédito</button>
               </article>
             `
           )
@@ -10891,6 +11079,7 @@
                   <span class="unlock-pill">Contacto desbloqueado</span>
                 </div>
                 <p class="contact-line">Tel: ${contact.phone} · Email: ${contact.email}</p>
+                ${whatsappButton(contact.phone, fullName(contact))}
                 <p class="result-meta">${match.mach.ranking || ""} · ${match.score}% · ${source === "vehicleOffer" ? vehicleApplicantLabel(match.search) : vehicleSourceLabel(match.offer)} · Desbloqueado: ${formatDate(unlockInfo.unlockedAt)} · ${money.format(unlockInfo.price || match.mach.price)}</p>
               </div>
             </div>
@@ -11550,8 +11739,98 @@
       });
 
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") closeResultsModal();
+        if (event.key === "Escape") { closeResultsModal(); closePayModal(); }
       });
+
+      let payAmount = 25;
+      let payMethod = "card";
+
+      function updatePayButtons() {
+        const cardBtn = document.getElementById("payCardBtn");
+        const yappyBtn = document.getElementById("payYappyBtn");
+        const label = payAmount > 0 ? `$${payAmount.toLocaleString("en-US")}` : "";
+        if (cardBtn) cardBtn.textContent = `Pagar ${label}`.trim();
+        if (yappyBtn) yappyBtn.textContent = `Ya pagué ${label}`.trim();
+      }
+
+      function setupPayModal() {
+        const overlay = document.getElementById("payModal");
+        if (!overlay || overlay.dataset.payReady) return;
+        const otherInput = overlay.querySelector("#payAmountOther");
+        overlay.querySelectorAll("#payAmounts .pay-amount").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            overlay.querySelectorAll("#payAmounts .pay-amount").forEach((b) => b.classList.toggle("active", b === btn));
+            if (btn.dataset.payAmount === "otro") {
+              if (otherInput) {
+                otherInput.classList.remove("hidden");
+                payAmount = parseThousands(otherInput.value);
+                otherInput.focus();
+              }
+            } else {
+              if (otherInput) {
+                otherInput.classList.add("hidden");
+                otherInput.value = "";
+              }
+              payAmount = Number(btn.dataset.payAmount || 25);
+            }
+            updatePayButtons();
+          });
+        });
+        if (otherInput) {
+          otherInput.addEventListener("input", () => {
+            otherInput.value = formatThousandsValue(otherInput.value);
+            payAmount = parseThousands(otherInput.value);
+            updatePayButtons();
+          });
+        }
+        overlay.querySelectorAll(".pay-tab").forEach((tab) => {
+          tab.addEventListener("click", () => {
+            payMethod = tab.dataset.payMethod || "card";
+            overlay.querySelectorAll(".pay-tab").forEach((t) => t.classList.toggle("active", t === tab));
+            overlay.querySelectorAll(".pay-pane").forEach((p) => p.classList.toggle("hidden", p.dataset.payPane !== payMethod));
+          });
+        });
+        overlay.addEventListener("click", (event) => {
+          if (event.target === overlay) closePayModal();
+        });
+        overlay.dataset.payReady = "true";
+      }
+
+      function openPayModal(amount) {
+        setupPayModal();
+        payAmount = Number(amount) || 25;
+        payMethod = "card";
+        const overlay = document.getElementById("payModal");
+        if (!overlay) return;
+        const otherInput = overlay.querySelector("#payAmountOther");
+        if (otherInput) {
+          otherInput.classList.add("hidden");
+          otherInput.value = "";
+        }
+        overlay.querySelectorAll("#payAmounts .pay-amount").forEach((b) => b.classList.toggle("active", Number(b.dataset.payAmount) === payAmount));
+        overlay.querySelectorAll(".pay-tab").forEach((t) => t.classList.toggle("active", t.dataset.payMethod === "card"));
+        overlay.querySelectorAll(".pay-pane").forEach((p) => p.classList.toggle("hidden", p.dataset.payPane !== "card"));
+        updatePayButtons();
+        overlay.classList.remove("hidden");
+      }
+
+      function closePayModal() {
+        document.getElementById("payModal")?.classList.add("hidden");
+      }
+
+      function submitCardPayment() {
+        // Demo: acredita saldo simulado. Aquí se conectará la pasarela de tarjeta real más adelante.
+        if (!payAmount || payAmount < 1) return;
+        addDemoBalance(payAmount);
+        closePayModal();
+      }
+
+      function submitYappyPayment() {
+        // Demo: acredita saldo simulado. En producción, el admin confirma el pago Yappy antes de acreditar.
+        if (!payAmount || payAmount < 1) return;
+        addDemoBalance(payAmount);
+        closePayModal();
+      }
 
       function goToActiveInterest() {
         const offersTab = document.querySelector('[data-user-dashboard-button="properties"]');
