@@ -2282,6 +2282,115 @@
         font-weight: 700;
       }
 
+      .status-banner {
+        align-items: center;
+        border-radius: 12px;
+        display: flex;
+        gap: 12px;
+        padding: 10px 14px;
+      }
+      .status-banner.closed {
+        background: #f1f3f6;
+        border: 1px solid #dce1e8;
+      }
+      .status-banner.contacted {
+        background: var(--green-soft);
+        border: 1px solid #bde8c5;
+      }
+      .status-banner-icon {
+        align-items: center;
+        border-radius: 999px;
+        color: #ffffff;
+        display: inline-flex;
+        flex-shrink: 0;
+        height: 34px;
+        justify-content: center;
+        width: 34px;
+      }
+      .status-banner.closed .status-banner-icon {
+        background: #8a97a8;
+      }
+      .status-banner.contacted .status-banner-icon {
+        background: var(--green);
+      }
+      .status-banner-icon svg {
+        height: 18px;
+        width: 18px;
+      }
+      .status-banner-text strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 900;
+        line-height: 1.3;
+      }
+      .status-banner.closed .status-banner-text strong {
+        color: #444a52;
+      }
+      .status-banner.contacted .status-banner-text strong {
+        color: #085041;
+      }
+      .status-banner-text span {
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+      .status-banner.closed .status-banner-text span {
+        color: #5f6b7a;
+      }
+      .status-banner.contacted .status-banner-text span {
+        color: #14663f;
+      }
+      .result-row.row-closed {
+        opacity: 0.72;
+      }
+
+      .result-wrap {
+        display: grid;
+        gap: 6px;
+      }
+      .result-archive-row {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .archive-btn {
+        background: transparent;
+        border: 1px solid #dce5ef;
+        border-radius: 999px;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 800;
+        padding: 4px 12px;
+      }
+      .archive-btn:hover {
+        background: #f6f8fb;
+        color: var(--ink);
+      }
+      .archive-btn.restore {
+        border-color: var(--blue);
+        color: var(--blue);
+      }
+      .archived-section {
+        border-top: 1px solid #eef2f7;
+        margin-top: 4px;
+      }
+      .archived-section summary {
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 800;
+        list-style: none;
+        padding: 10px 0 4px;
+      }
+      .archived-section summary::-webkit-details-marker {
+        display: none;
+      }
+      .archived-list {
+        display: grid;
+        gap: 10px;
+        opacity: 0.85;
+        padding-top: 6px;
+      }
+
       .result-price-big {
         color: var(--ink);
         font-size: 20px;
@@ -7367,9 +7476,12 @@
           : `<button class="button ${ownerHasContact || requested ? "dark" : "primary"}" type="button" onclick="requestOwnerContact('${match.id}')">${
               ownerHasContact || requested ? "Enviar recordatorio" : "Quiero que me contacten"
             }</button>`;
+        const statusBanner = ownerClosed
+          ? `<div class="status-banner closed"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8"></path></svg></span><div class="status-banner-text"><strong>Proceso cerrado</strong><span>${propertyContactActionLabel(match)} marcó este resultado como cerrado.</span></div></div>`
+          : ownerContacted
+            ? `<div class="status-banner contacted"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><div class="status-banner-text"><strong>Contacto iniciado</strong><span>${propertyContactActionLabel(match)} ya está en contacto contigo.</span></div></div>`
+            : "";
         const sideNotes = [
-          ownerClosed ? `<p class="result-note">${propertyContactActionLabel(match)} marcó este resultado como cerrado.</p>` : "",
-          ownerContacted ? `<p class="result-note ok">Contacto iniciado: ya te están contactando.</p>` : "",
           ownerHasContact && !ownerClosed && !ownerContacted
             ? `<p class="result-note ok">Tus datos ya fueron compartidos.</p>`
             : "",
@@ -7381,7 +7493,8 @@
             : ""
         ].join("");
         return `
-          <div class="result-row">
+          <div class="result-row ${ownerClosed ? "row-closed" : ""}">
+            ${statusBanner}
             <div class="result-row-top">
               <div class="result-rank">
                 <span class="result-rank-badge ${rankBadgeClass(match.mach.ranking)}">${match.mach.ranking || ""}</span>
@@ -10038,6 +10151,7 @@
       let ownerBalance = load("propertyYaOwnerBalance", Number(ownerCredits || 0) * 10);
       let machUnlocks = load("propertyYaMachUnlocks", unlockedContacts || {});
       let contactRequests = load("propertyYaContactRequests", {});
+      let archivedItems = load("propertyYaArchivedItems", {});
       let validationReports = load("propertyYaValidationReports", []);
       let blockedUsers = load("propertyYaBlockedUsers", {});
       let balanceAdds = load("propertyYaBalanceAdds", []);
@@ -10144,6 +10258,7 @@
         localStorage.setItem("propertyYaOwnerBalance", JSON.stringify(ownerBalance));
         localStorage.setItem("propertyYaMachUnlocks", JSON.stringify(machUnlocks));
         localStorage.setItem("propertyYaContactRequests", JSON.stringify(contactRequests));
+        localStorage.setItem("propertyYaArchivedItems", JSON.stringify(archivedItems));
         localStorage.setItem("propertyYaValidationReports", JSON.stringify(validationReports));
         localStorage.setItem("propertyYaBlockedUsers", JSON.stringify(blockedUsers));
         localStorage.setItem("propertyYaBalanceAdds", JSON.stringify(balanceAdds));
@@ -11764,85 +11879,112 @@
 
       let activeResultsModal = null;
 
+      function archiveKey(matchId) {
+        return `${normalize(currentUserEmail)}::${matchId}`;
+      }
+
+      function isArchived(matchId) {
+        return Boolean(archivedItems[archiveKey(matchId)]);
+      }
+
+      function archiveMatch(matchId) {
+        archivedItems[archiveKey(matchId)] = { at: new Date().toISOString() };
+        save();
+        render();
+      }
+
+      function unarchiveMatch(matchId) {
+        delete archivedItems[archiveKey(matchId)];
+        save();
+        render();
+      }
+
+      function buildArchivableBody(list, sortFn, renderCard, attrsFn) {
+        const sorted = [...list].sort(sortFn);
+        const active = sorted.filter((m) => !isArchived(m.id));
+        const archived = sorted.filter((m) => isArchived(m.id));
+        const wrap = (m, arch) => {
+          const attrs = !arch && attrsFn ? attrsFn(m) : "";
+          const btn = arch
+            ? `<button class="archive-btn restore" type="button" onclick="unarchiveMatch('${m.id}')">Restaurar a la lista</button>`
+            : `<button class="archive-btn" type="button" onclick="archiveMatch('${m.id}')">Archivar</button>`;
+          return `<div class="result-wrap" ${attrs}>${renderCard(m)}<div class="result-archive-row">${btn}</div></div>`;
+        };
+        let html = active.map((m) => wrap(m, false)).join("");
+        if (!active.length) {
+          html += `<article class="card empty"><h3>Sin resultados activos</h3><p>${
+            archived.length ? "Todos están archivados. Puedes restaurarlos abajo." : "Aún no hay resultados."
+          }</p></article>`;
+        }
+        if (archived.length) {
+          html += `<details class="archived-section"><summary>Archivados (${archived.length})</summary><div class="archived-list">${archived
+            .map((m) => wrap(m, true))
+            .join("")}</div></details>`;
+        }
+        return html;
+      }
+
       function resultsModalData(kind, id) {
+        const ownerSort = (unlockedFn) => (a, b) => {
+          const rank = (m) => (unlockedFn(m) ? 2 : isContactRequested(m) ? 0 : 1);
+          return rank(a) - rank(b) || b.score - a.score;
+        };
+        const byScore = (a, b) => b.score - a.score;
         if (kind === "propertyOffer") {
           const property = properties.find((item) => item.id === id);
           if (!property) return null;
           const list = matches.filter((match) => match.property.id === id);
-          const body = [...list]
-            .sort((a, b) => {
-              const rank = (m) => (isMatchUnlocked(m, "property") ? 2 : isContactRequested(m) ? 0 : 1);
-              return rank(a) - rank(b) || b.score - a.score;
-            })
-            .map((match) => {
-              const filterAttrs = `data-property-result="${id}" data-active="${isContactRequested(match)}" data-premium="${match.score >= 90}" data-client="${["cliente_final_verificado", "empresa_final_verificada"].includes(classifyInterested(match.search))}" data-broker="${classifyInterested(match.search) === "broker_declarado"}"`;
-              const card = isMatchUnlocked(match, "property")
-                ? unlockedContactCard(match, "property")
-                : lockedResultCard(match, "property");
-              return `<div ${filterAttrs}>${card}</div>`;
-            })
-            .join("");
+          const activeList = list.filter((m) => !isArchived(m.id));
+          const attrsFn = (match) =>
+            `data-property-result="${id}" data-active="${isContactRequested(match)}" data-premium="${match.score >= 90}" data-client="${["cliente_final_verificado", "empresa_final_verificada"].includes(classifyInterested(match.search))}" data-broker="${classifyInterested(match.search) === "broker_declarado"}"`;
+          const renderCard = (match) =>
+            isMatchUnlocked(match, "property") ? unlockedContactCard(match, "property") : lockedResultCard(match, "property");
           return {
             title: `Resultados: ${propertyHeader(property)}`,
             subtitle: `${propertyPriceSummary(property)} · Los calientes primero`,
             count: list.length,
-            body: `${list.length ? propertyResultFilters(id, list) : ""}${body}`
+            body: `${activeList.length ? propertyResultFilters(id, activeList) : ""}${buildArchivableBody(list, ownerSort((m) => isMatchUnlocked(m, "property")), renderCard, attrsFn)}`
           };
         }
         if (kind === "vehicleOffer") {
           const offer = vehicleOffers.find((item) => item.id === id);
           if (!offer) return null;
           const list = vehicleMatches.filter((match) => match.offer.id === id);
-          const body = [...list]
-            .sort((a, b) => {
-              const rank = (m) => (isVehicleMatchUnlocked(m, "vehicleOffer") ? 2 : isContactRequested(m) ? 0 : 1);
-              return rank(a) - rank(b) || b.score - a.score;
-            })
-            .map((match) =>
-              isVehicleMatchUnlocked(match, "vehicleOffer")
-                ? unlockedVehicleContactCard(match, "vehicleOffer")
-                : lockedVehicleResultCard(match, "vehicleOffer")
-            )
-            .join("");
+          const renderCard = (match) =>
+            isVehicleMatchUnlocked(match, "vehicleOffer")
+              ? unlockedVehicleContactCard(match, "vehicleOffer")
+              : lockedVehicleResultCard(match, "vehicleOffer");
           return {
             title: `Resultados: ${vehicleOfferTitle(offer)} ${offer.year}`,
             subtitle: `${vehiclePriceSummary(offer)} · Los calientes primero`,
             count: list.length,
-            body
+            body: buildArchivableBody(list, ownerSort((m) => isVehicleMatchUnlocked(m, "vehicleOffer")), renderCard, null)
           };
         }
         if (kind === "propertySearch") {
           const search = searches.find((item) => item.id === id);
           if (!search) return null;
           const list = matches.filter((match) => match.search.id === id);
-          const body = [...list]
-            .sort((a, b) => b.score - a.score)
-            .map((match) => clientRequestCard(match))
-            .join("");
           return {
             title: `Resultados: ${label(search.propertyType)} en ${search.desiredZone}`,
             subtitle: `${label(search.desiredOperation)} · ≤ ${money.format(search.maxBudget)} · Los más compatibles primero`,
             count: list.length,
-            body
+            body: buildArchivableBody(list, byScore, (m) => clientRequestCard(m), null)
           };
         }
         if (kind === "vehicleSearch") {
           const search = vehicleSearches.find((item) => item.id === id);
           if (!search) return null;
           const list = vehicleMatches.filter((match) => match.search.id === id);
-          const body = [...list]
-            .sort((a, b) => b.score - a.score)
-            .map((match) =>
-              isVehicleMatchUnlocked(match, "vehicleSearch")
-                ? unlockedVehicleContactCard(match, "vehicleSearch")
-                : lockedVehicleResultCard(match, "vehicleSearch")
-            )
-            .join("");
+          const renderCard = (match) =>
+            isVehicleMatchUnlocked(match, "vehicleSearch")
+              ? unlockedVehicleContactCard(match, "vehicleSearch")
+              : lockedVehicleResultCard(match, "vehicleSearch");
           return {
             title: `Resultados: ${vehicleSearchTitle(search)}`,
             subtitle: `≤ ${money.format(search.maxBudget)} · Los más compatibles primero`,
             count: list.length,
-            body
+            body: buildArchivableBody(list, byScore, renderCard, null)
           };
         }
         return null;
