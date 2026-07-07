@@ -2339,6 +2339,47 @@
       .status-banner.contacted .status-banner-text span {
         color: #14663f;
       }
+      .status-banner.unavailable {
+        background: #fdecec;
+        border: 1px solid #f3b4b4;
+      }
+      .status-banner.unavailable .status-banner-icon {
+        background: var(--red);
+      }
+      .status-banner.unavailable .status-banner-text strong {
+        color: #991b1b;
+      }
+      .status-banner.unavailable .status-banner-text span {
+        color: #b23434;
+      }
+
+      .avail-switch {
+        background: #f1f3f6;
+        border: 1px solid #dce1e8;
+        border-radius: 999px;
+        display: inline-flex;
+        gap: 2px;
+        padding: 3px;
+      }
+      .avail-seg {
+        background: transparent;
+        border: 0;
+        border-radius: 999px;
+        color: var(--muted);
+        cursor: pointer;
+        font-size: 12.5px;
+        font-weight: 800;
+        padding: 6px 13px;
+      }
+      .avail-seg.on-active {
+        background: var(--green);
+        color: #ffffff;
+      }
+      .avail-seg.off-active {
+        background: var(--red);
+        color: #ffffff;
+      }
+
       .result-row.row-closed {
         opacity: 0.72;
       }
@@ -2389,6 +2430,25 @@
         gap: 10px;
         opacity: 0.85;
         padding-top: 6px;
+      }
+
+      .button.avail-toggle.on {
+        background: var(--green-soft);
+        border: 1px solid #bde8c5;
+        color: #085041;
+      }
+      .button.avail-toggle.off {
+        background: #f1f3f6;
+        border: 1px solid #dce1e8;
+        color: #5f6b7a;
+      }
+      .offer-unavailable-pill {
+        background: #f1f3f6;
+        border-radius: 999px;
+        color: #5f6b7a;
+        font-size: 11.5px;
+        font-weight: 800;
+        padding: 2px 10px;
       }
 
       .result-price-big {
@@ -5368,7 +5428,7 @@
       <section class="hero tab-panel active" id="inicio">
         <div class="hero-copy">
           <span class="eyebrow">KonektaYa · Panamá</span>
-          <h1>Publica o busca <span class="hero-accent">propiedades y vehículos.</span></h1>
+          <h1>Vende, compra o alquila <span class="hero-accent">propiedades y vehículos.</span></h1>
           <p>
             KonektaYa conecta tu oferta o necesidad con personas realmente interesadas. Publicar y buscar es gratis.
           </p>
@@ -7471,12 +7531,15 @@
               : factorChip("warn", "Sin depósito")
             : ""
         ].filter(Boolean).join("");
-        const sideAction = ownerClosed || ownerContacted
+        const offerAvailable = isOfferAvailable(property);
+        const sideAction = !offerAvailable || ownerClosed || ownerContacted
           ? ""
           : `<button class="button ${ownerHasContact || requested ? "dark" : "primary"}" type="button" onclick="requestOwnerContact('${match.id}')">${
               ownerHasContact || requested ? "Enviar recordatorio" : "Quiero que me contacten"
             }</button>`;
-        const statusBanner = ownerClosed
+        const statusBanner = !offerAvailable
+          ? `<div class="status-banner unavailable"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg></span><div class="status-banner-text"><strong>Ya no disponible</strong><span>El propietario marcó esta propiedad como no disponible.</span></div></div>`
+          : ownerClosed
           ? `<div class="status-banner closed"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12h8"></path></svg></span><div class="status-banner-text"><strong>Proceso cerrado</strong><span>${propertyContactActionLabel(match)} marcó este resultado como cerrado.</span></div></div>`
           : ownerContacted
             ? `<div class="status-banner contacted"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><div class="status-banner-text"><strong>Contacto iniciado</strong><span>${propertyContactActionLabel(match)} ya está en contacto contigo.</span></div></div>`
@@ -7493,7 +7556,7 @@
             : ""
         ].join("");
         return `
-          <div class="result-row ${ownerClosed ? "row-closed" : ""}">
+          <div class="result-row ${!offerAvailable || ownerClosed ? "row-closed" : ""}">
             ${statusBanner}
             <div class="result-row-top">
               <div class="result-rank">
@@ -11222,8 +11285,14 @@
               ? factorChip("ok", "Extras")
               : factorChip("warn", !f.transmission && !f.fuel ? "Transmisión y combustible distintos" : !f.transmission ? "Transmisión distinta" : "Combustible distinto")
           ].join("");
+          const offerAvailable = isOfferAvailable(offer);
           return `
-            <div class="result-row">
+            <div class="result-row ${offerAvailable ? "" : "row-closed"}">
+              ${
+                offerAvailable
+                  ? ""
+                  : `<div class="status-banner unavailable"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg></span><div class="status-banner-text"><strong>Ya no disponible</strong><span>El ofertante marcó este vehículo como no disponible.</span></div></div>`
+              }
               <div class="result-row-top">
                 <div class="result-rank">
                   <span class="result-rank-badge ${rankBadgeClass(match.mach.ranking)}">${match.mach.ranking || ""}</span>
@@ -11238,13 +11307,17 @@
                   <div class="factor-chips">${chips}</div>
                 </div>
                 <div class="result-side">
-                  <button class="button ${requested ? "dark" : "primary"}" type="button" onclick="requestVehicleOwnerContact('${match.id}')">${
-                    requested ? "Enviar recordatorio" : "Quiero que me contacten"
-                  }</button>
+                  ${
+                    offerAvailable
+                      ? `<button class="button ${requested ? "dark" : "primary"}" type="button" onclick="requestVehicleOwnerContact('${match.id}')">${
+                          requested ? "Enviar recordatorio" : "Quiero que me contacten"
+                        }</button>
                   ${
                     requested
                       ? `<p class="result-note ok">Solicitud enviada${reminderCount ? ` · ${reminderCount} recordatorio${reminderCount === 1 ? "" : "s"}` : ""}</p>`
                       : `<p class="result-note">Gratis · contacto protegido</p>`
+                  }`
+                      : ""
                   }
                 </div>
               </div>
@@ -11459,7 +11532,7 @@
                         <div class="offer-card-row">
                           <span class="offer-row-number">${index + 1}</span>
                           <div class="offer-card-main">
-                            <p class="offer-card-title">${label(property.propertyType)} en ${property.zone} · ${property.phName ? phDisplayName(property.phName) : "PH no registrado"} <span class="offer-type-pill">${label(property.propertyType)}</span></p>
+                            <p class="offer-card-title">${label(property.propertyType)} en ${property.zone} · ${property.phName ? phDisplayName(property.phName) : "PH no registrado"} <span class="offer-type-pill">${label(property.propertyType)}</span>${isOfferAvailable(property) ? "" : ` <span class="offer-unavailable-pill">No disponible</span>`}</p>
                             <div class="criteria-chips">
                               <span class="criteria-chip">${priceLine}</span>
                               <span class="criteria-chip">${property.streetOrNeighborhood || "Calle no especificada"}</span>
@@ -11483,6 +11556,7 @@
                             </div>
                           </div>
                           <div class="offer-card-actions">
+                            ${availabilitySwitch(property.id, isOfferAvailable(property), "setPropertyAvailable")}
                             <button class="button small ghost" type="button" onclick="editProperty(${property.id})">Modificar</button>
                             ${
                               propertyMatches.length
@@ -11536,7 +11610,7 @@
                       <div class="offer-card-row">
                         <span class="offer-row-number">${index + 1}</span>
                         <div class="offer-card-main">
-                          <p class="offer-card-title">${vehicleOfferTitle(offer)} ${offer.year} <span class="offer-type-pill">Vehículo</span></p>
+                          <p class="offer-card-title">${vehicleOfferTitle(offer)} ${offer.year} <span class="offer-type-pill">Vehículo</span>${isOfferAvailable(offer) ? "" : ` <span class="offer-unavailable-pill">No disponible</span>`}</p>
                           <div class="criteria-chips">
                             <span class="criteria-chip">${vehiclePriceSummary(offer)}</span>
                             <span class="criteria-chip">${Number(offer.mileage || 0).toLocaleString("es-PA")} km</span>
@@ -11546,6 +11620,7 @@
                           </div>
                         </div>
                         <div class="offer-card-actions">
+                          ${availabilitySwitch(offer.id, isOfferAvailable(offer), "setVehicleAvailable")}
                           <button class="button small ghost" type="button" onclick="editVehicleOffer(${offer.id})">Modificar</button>
                           ${
                             offerMatches.length
@@ -11897,6 +11972,41 @@
         delete archivedItems[archiveKey(matchId)];
         save();
         render();
+      }
+
+      function isOfferAvailable(offer) {
+        return Boolean(offer) && offer.available !== false;
+      }
+
+      function togglePropertyAvailable(id) {
+        properties = properties.map((p) => (p.id === id ? { ...p, available: p.available === false } : p));
+        save();
+        render();
+      }
+
+      function toggleVehicleAvailable(id) {
+        vehicleOffers = vehicleOffers.map((o) => (o.id === id ? { ...o, available: o.available === false } : o));
+        save();
+        render();
+      }
+
+      function setPropertyAvailable(id, value) {
+        properties = properties.map((p) => (p.id === id ? { ...p, available: value } : p));
+        save();
+        render();
+      }
+
+      function setVehicleAvailable(id, value) {
+        vehicleOffers = vehicleOffers.map((o) => (o.id === id ? { ...o, available: value } : o));
+        save();
+        render();
+      }
+
+      function availabilitySwitch(id, available, fn) {
+        return `<div class="avail-switch" role="group" aria-label="Disponibilidad">
+          <button type="button" class="avail-seg ${available ? "on-active" : ""}" onclick="${fn}(${id}, true)">Disponible</button>
+          <button type="button" class="avail-seg ${available ? "" : "off-active"}" onclick="${fn}(${id}, false)">No disponible</button>
+        </div>`;
       }
 
       function buildArchivableBody(list, sortFn, renderCard, attrsFn) {
