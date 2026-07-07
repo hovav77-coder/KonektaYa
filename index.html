@@ -287,71 +287,124 @@
         margin: 6px 0 26px;
       }
 
+      .home-choice-groups {
+        display: grid;
+        gap: 20px;
+      }
+
+      .hero .home-choice-label,
+      .home-choice-label {
+        align-items: center;
+        color: var(--navy);
+        display: flex;
+        font-size: 13px;
+        font-weight: 950;
+        gap: 12px;
+        letter-spacing: 0.08em;
+        margin: 0 0 12px;
+        text-transform: uppercase;
+      }
+
+      .home-choice-label::after {
+        background: #dce5ef;
+        content: "";
+        flex: 1;
+        height: 1px;
+      }
+
       .home-choice-grid {
         display: grid;
-        gap: 16px;
+        gap: 12px;
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       .home-choice-card {
-        align-items: flex-start;
+        align-items: center;
         background: #ffffff;
         border: 1px solid #dfe8f3;
-        border-radius: 18px;
+        border-radius: 16px;
         color: var(--ink);
         cursor: pointer;
-        display: grid;
-        gap: 18px;
-        min-height: 154px;
-        padding: 22px;
+        display: flex;
+        gap: 11px;
+        padding: 14px;
         text-align: left;
         transition:
           border-color 160ms ease,
           box-shadow 160ms ease,
           transform 160ms ease;
+        width: 100%;
       }
 
       .home-choice-card:hover {
         border-color: #f2bd9d;
-        box-shadow: 0 18px 34px rgba(16, 32, 51, 0.12);
+        box-shadow: 0 14px 28px rgba(16, 32, 51, 0.1);
         transform: translateY(-2px);
       }
 
       .home-choice-icon {
         align-items: center;
-        background: #eef4fb;
-        border-radius: 14px;
-        color: var(--navy);
+        border-radius: 13px;
         display: inline-flex;
-        height: 48px;
+        flex-shrink: 0;
+        height: 44px;
         justify-content: center;
-        width: 48px;
+        width: 44px;
       }
 
       .home-choice-icon svg {
         display: block;
-        height: 23px;
-        width: 23px;
+        height: 21px;
+        width: 21px;
       }
 
-      .home-choice-card strong {
+      .home-choice-text {
+        min-width: 0;
+      }
+
+      .home-choice-text strong {
         color: var(--navy);
         display: block;
-        font-size: clamp(20px, 1.4vw, 25px);
-        line-height: 1.12;
-        margin: 0 0 6px;
+        font-size: 16px;
+        line-height: 1.15;
+        margin: 0 0 2px;
+        white-space: nowrap;
       }
 
-      .home-choice-card span:last-child {
+      .home-choice-text > span {
         color: var(--muted);
         display: block;
-        font-size: 16px;
+        font-size: 12.5px;
         line-height: 1.25;
       }
 
-      .home-choice-card[data-tab-button="vehiculoOferta"] .home-choice-icon,
+      .home-choice-chev {
+        color: #b6c4d4;
+        display: none;
+        font-size: 22px;
+        font-weight: 900;
+        margin-left: auto;
+        padding-left: 8px;
+      }
+
+      .home-choice-card[data-tab-button="propietario"] .home-choice-icon {
+        background: var(--navy);
+        color: #ffffff;
+      }
+
+      .home-choice-card[data-tab-button="busqueda"] .home-choice-icon {
+        background: #eef4fb;
+        color: var(--navy);
+      }
+
+      .home-choice-card[data-tab-button="vehiculoOferta"] .home-choice-icon {
+        background: var(--orange);
+        color: #ffffff;
+      }
+
       .home-choice-card[data-tab-button="vehiculoBusqueda"] .home-choice-icon {
-        background: #fff4eb;
+        background: #fff0e8;
+        color: var(--orange);
       }
 
       .home-benefit-grid {
@@ -715,33 +768,62 @@
         width: 24px;
       }
       .home-flow-steps {
-        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e4ebf3;
+        border-radius: 20px;
+        box-shadow: 0 14px 30px rgba(16, 32, 51, 0.05);
         display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
+        flex-direction: column;
+        gap: 18px;
         margin-top: 18px;
+        padding: 26px 30px;
       }
       .home-flow-label {
         color: var(--muted);
         font-size: 12px;
         font-weight: 950;
-        letter-spacing: 0.06em;
-        margin-right: 4px;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
       }
-      .home-flow-step {
-        background: #ffffff;
-        border: 1px solid #dce5ef;
-        border-radius: 999px;
-        color: var(--navy);
-        font-size: 13px;
-        font-weight: 800;
-        padding: 6px 14px;
+      .home-flow-track {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
       }
-      .home-flow-steps .flow-arrow {
-        color: #b6c4d4;
+      .home-flow-step {
+        align-items: center;
+        display: flex;
+        flex-shrink: 0;
+        gap: 12px;
+      }
+      .home-flow-num {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 999px;
+        color: #ffffff;
+        display: inline-flex;
+        flex-shrink: 0;
         font-size: 16px;
-        font-weight: 900;
+        font-weight: 800;
+        height: 40px;
+        justify-content: center;
+        width: 40px;
+      }
+      .home-flow-step:first-child .home-flow-num {
+        background: var(--orange);
+      }
+      .home-flow-text {
+        color: var(--navy);
+        font-size: 17px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .home-flow-connector {
+        border-top: 2px dashed #c9d6e4;
+        flex: 1;
+        margin: 0 10px;
+        min-width: 24px;
       }
 
       .history-summary {
@@ -3139,120 +3221,305 @@
       }
 
       .admin-console {
-        background: linear-gradient(135deg, #ffffff, #f8fbff);
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        box-shadow: var(--soft-shadow);
         display: grid;
-        gap: 20px;
-        padding: clamp(18px, 2.2vw, 26px);
+        gap: 28px;
       }
 
       .admin-console-head {
-        align-items: center;
-        background: #f8fbff;
-        border: 1px solid #dce7f4;
-        border-radius: 16px;
-        display: grid;
+        align-items: flex-end;
+        display: flex;
+        flex-wrap: wrap;
         gap: 20px;
-        grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
-        padding: 20px;
+        justify-content: space-between;
+      }
+
+      .admin-head-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        min-width: 250px;
+      }
+
+      .admin-head-copy .admin-eyebrow {
+        color: #c6431b;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
       }
 
       .admin-console-head h2 {
-        font-size: clamp(36px, 4.2vw, 58px);
-        margin-bottom: 8px;
-      }
-
-      .admin-danger-zone {
-        align-self: stretch;
-        background: #fffaf7;
-        border: 1px solid #ffd8c4;
-        border-radius: 16px;
-        display: grid;
-        gap: 10px;
-        place-content: center;
-        padding: 16px;
-      }
-
-      .admin-danger-zone .button {
-        min-height: 48px;
-        width: 100%;
-      }
-
-      .admin-danger-zone span {
-        color: var(--muted);
-        font-size: 12px;
+        color: #16294a;
+        font-size: clamp(30px, 4vw, 42px);
         font-weight: 800;
-        line-height: 1.35;
-        text-align: center;
+        letter-spacing: -0.01em;
+        line-height: 1.02;
+        margin: 0;
+      }
+
+      .admin-console-head .intro {
+        color: #5b6b84;
+        font-size: 15px;
+        font-weight: 600;
+        margin: 0;
+      }
+
+      .admin-maintenance {
+        background: #ffffff;
+        border: 1px solid #e4e9f2;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 340px;
+        padding: 14px 16px;
+      }
+
+      .admin-maintenance-title {
+        color: #16294a;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .admin-maintenance-desc {
+        color: #5b6b84;
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.45;
+      }
+
+      .admin-clean-btn {
+        align-self: flex-start;
+        background: #ffffff;
+        border: 1.5px solid #c6431b;
+        border-radius: 10px;
+        color: #c6431b;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13.5px;
+        font-weight: 700;
+        padding: 9px 16px;
+      }
+
+      .admin-clean-row {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+      }
+
+      .admin-clean-confirm {
+        background: #c6431b;
+        border: none;
+        border-radius: 10px;
+        color: #ffffff;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13.5px;
+        font-weight: 700;
+        padding: 10px 16px;
+      }
+
+      .admin-clean-cancel {
+        background: transparent;
+        border: none;
+        color: #5b6b84;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 6px 4px;
+      }
+
+      .admin-clean-done {
+        color: #1f7a4d;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .admin-clean-restore {
+        background: transparent;
+        border: none;
+        color: #c6431b;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        padding: 4px 2px;
+        text-decoration: underline;
+      }
+
+      .admin-metrics {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .admin-metrics-head {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: space-between;
+      }
+
+      .admin-metrics-head h3 {
+        color: #5b6b84;
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        margin: 0;
+        text-transform: uppercase;
+      }
+
+      .admin-seg {
+        background: #e7ebf4;
+        border-radius: 999px;
+        display: flex;
+        gap: 2px;
+        padding: 4px;
+      }
+
+      .admin-seg button {
+        background: transparent;
+        border: none;
+        border-radius: 999px;
+        color: #5b6b84;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+        padding: 8px 18px;
+      }
+
+      .admin-seg button.active {
+        background: #ffffff;
+        box-shadow: 0 1px 4px rgba(22, 41, 74, 0.16);
+        color: #16294a;
+      }
+
+      .admin-seg.compact button {
+        font-size: 13px;
+        padding: 7px 15px;
       }
 
       .admin-kpi-grid {
         display: grid;
-        gap: 14px;
-        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       }
 
-      .admin-kpi-grid .stat {
-        align-content: space-between;
-        border-radius: 12px;
-        min-height: 112px;
-        padding: 18px;
+      .admin-kpi {
+        background: #ffffff;
+        border: 1px solid #e4e9f2;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        padding: 16px 18px;
       }
 
-      .admin-kpi-grid .stat span {
-        font-size: 13px;
-        line-height: 1.25;
+      .admin-kpi span {
+        color: #5b6b84;
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.3;
       }
 
-      .admin-kpi-grid .stat strong {
-        font-size: clamp(24px, 2.4vw, 36px);
+      .admin-kpi strong {
+        color: #16294a;
+        font-size: 30px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
         line-height: 1;
-        overflow-wrap: anywhere;
       }
 
-      .admin-kpi-grid .stat:nth-last-child(-n + 2) strong {
-        font-size: clamp(22px, 2vw, 30px);
+      .admin-money-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+
+      .admin-money {
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        padding: 18px 20px;
+      }
+
+      .admin-money span {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .admin-money strong {
+        font-size: 30px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .admin-money.navy {
+        background: #1b3560;
+      }
+
+      .admin-money.navy span {
+        color: #a9bcd9;
+      }
+
+      .admin-money.navy strong {
+        color: #ffffff;
+      }
+
+      .admin-money.orange {
+        background: #fdf0e7;
+        border: 1px solid #f3d8c2;
+      }
+
+      .admin-money.orange span {
+        color: #b04a12;
+      }
+
+      .admin-money.orange strong {
+        color: #7a3208;
       }
 
       .admin-workspace {
         background: #ffffff;
-        border: 1px solid #dce7f4;
+        border: 1px solid #e4e9f2;
         border-radius: 18px;
-        display: grid;
-        gap: 18px;
-        padding: 16px;
+        overflow: hidden;
       }
 
       .admin-panel-tabs {
-        align-items: center;
-        background: #f4f8fd;
-        border: 1px solid #dce7f4;
-        border-radius: 14px;
-        display: grid;
-        gap: 6px;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        padding: 6px;
+        border-bottom: 1px solid #e9edf4;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2px;
+        padding: 6px 14px 0;
       }
 
       .admin-panel-tabs button {
         background: transparent;
-        border: 0;
-        border-radius: 10px;
-        color: var(--muted);
+        border: none;
+        border-bottom: 2.5px solid transparent;
+        color: #5b6b84;
         cursor: pointer;
         font: inherit;
         font-size: 14px;
-        font-weight: 950;
-        min-height: 42px;
-        padding: 10px 12px;
+        font-weight: 600;
+        margin-bottom: -1px;
+        padding: 13px 15px;
       }
 
       .admin-panel-tabs button.active {
-        background: #ffffff;
-        box-shadow: 0 12px 24px rgba(10, 47, 85, 0.08);
-        color: var(--navy);
+        border-bottom-color: #c6431b;
+        color: #16294a;
+        font-weight: 700;
       }
 
       .admin-panel-pane {
@@ -3261,34 +3528,317 @@
 
       .admin-panel-pane.active {
         display: grid;
-        gap: 16px;
+        gap: 20px;
+        padding: clamp(16px, 3vw, 26px);
       }
 
       .admin-section-title {
-        align-items: end;
+        align-items: flex-end;
         display: flex;
-        gap: 12px;
+        flex-wrap: wrap;
+        gap: 14px;
         justify-content: space-between;
       }
 
       .admin-section-title h3 {
-        color: var(--navy);
-        font-size: clamp(22px, 2.5vw, 34px);
-        line-height: 1;
+        color: #16294a;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.2;
         margin: 0;
       }
 
       .admin-section-title p {
-        color: var(--muted);
-        font-weight: 750;
-        margin: 8px 0 0;
+        color: #5b6b84;
+        font-size: 13.5px;
+        font-weight: 600;
+        margin: 4px 0 0;
       }
 
-      .admin-record-grid {
-        align-items: start;
+      .admin-records-toolbar {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: space-between;
+      }
+
+      .admin-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .admin-chip {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #dce3ee;
+        border-radius: 999px;
+        color: #3a4a66;
+        cursor: pointer;
+        display: flex;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        gap: 8px;
+        padding: 7px 8px 7px 14px;
+      }
+
+      .admin-chip .chip-count {
+        background: #eef2f8;
+        border-radius: 999px;
+        color: #5b6b84;
+        font-size: 11.5px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        padding: 2px 8px;
+      }
+
+      .admin-chip.active {
+        background: #1b3560;
+        border-color: #1b3560;
+        color: #ffffff;
+      }
+
+      .admin-chip.active .chip-count {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+      }
+
+      .admin-group-control {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .admin-group-control > span {
+        color: #5b6b84;
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+
+      .admin-date-groups {
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+      }
+
+      .admin-date-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .admin-date-head {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+      }
+
+      .admin-date-head strong {
+        color: #16294a;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .admin-date-head .admin-date-count {
+        background: #fdf0e7;
+        border-radius: 999px;
+        color: #b04a12;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 3px 10px;
+        white-space: nowrap;
+      }
+
+      .admin-date-head .admin-date-line {
+        background: #e4e9f2;
+        flex: 1;
+        height: 1px;
+      }
+
+      .admin-record-cards {
         display: grid;
-        gap: 18px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+      }
+
+      .admin-record-card,
+      .admin-unlock-card {
+        background: #fbfcfe;
+        border: 1px solid #e4e9f2;
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+        padding: 16px;
+      }
+
+      .admin-record-top {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: space-between;
+      }
+
+      .admin-record-top .admin-record-ago {
+        color: #8593a9;
+        font-size: 12px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      .admin-badge {
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        padding: 4px 9px;
+        white-space: nowrap;
+      }
+
+      .admin-badge.t-propiedad {
+        background: #e7eef9;
+        color: #1f3b63;
+      }
+
+      .admin-badge.t-busqueda {
+        background: #ecf0f4;
+        color: #46536b;
+      }
+
+      .admin-badge.t-vehiculo {
+        background: #fbe9dc;
+        color: #b04a12;
+      }
+
+      .admin-badge.t-busqueda-vehiculo {
+        background: #f8efdc;
+        color: #8a6116;
+      }
+
+      .admin-badge.tier-top {
+        background: #1b3560;
+        color: #ffffff;
+      }
+
+      .admin-badge.tier-alt {
+        background: #fdf0e7;
+        color: #b04a12;
+      }
+
+      .admin-badge.score {
+        background: #e7eef9;
+        color: #1f3b63;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .admin-record-card h3,
+      .admin-unlock-card h3 {
+        color: #16294a;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.35;
+        margin: 0;
+      }
+
+      .admin-record-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .admin-record-fields div {
+        align-items: baseline;
+        display: flex;
+        font-size: 13px;
+        gap: 12px;
+        justify-content: space-between;
+      }
+
+      .admin-record-fields div > span:first-child {
+        color: #5b6b84;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .admin-record-fields div > span:last-child {
+        color: #2a3a56;
+        font-weight: 600;
+        text-align: right;
+      }
+
+      .admin-record-foot {
+        align-items: baseline;
+        border-top: 1px dashed #dde4ef;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        margin-top: auto;
+        padding-top: 11px;
+      }
+
+      .admin-record-foot span {
+        color: #5b6b84;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .admin-record-foot strong {
+        color: #16294a;
+        font-size: 17px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+
+      .admin-unlock-cards {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      }
+
+      .admin-audit-box {
+        background: #fbf6ea;
+        border: 1px solid #ebdfc0;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 10px 12px;
+      }
+
+      .admin-audit-box span:first-child {
+        color: #8a6116;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .admin-audit-box span:last-child {
+        color: #5b4a16;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .admin-empty-state {
+        padding: 56px 20px;
+        text-align: center;
+      }
+
+      .admin-empty-state p:first-child {
+        color: #16294a;
+        font-size: 15px;
+        font-weight: 700;
+        margin: 0 0 5px;
+      }
+
+      .admin-empty-state p:last-child {
+        color: #5b6b84;
+        font-size: 13.5px;
+        font-weight: 500;
+        margin: 0;
       }
 
       .user-dashboard-tabs {
@@ -4758,13 +5308,6 @@
         padding: 10px;
       }
 
-      .admin-match {
-        align-items: start;
-        display: grid;
-        gap: 18px;
-        grid-template-columns: minmax(0, 1fr) minmax(260px, 0.42fr);
-      }
-
       .admin-actions,
       .review-heading {
         display: flex;
@@ -4782,192 +5325,337 @@
       }
 
       .admin-credit-panel {
-        align-items: start;
-        display: grid;
+        align-items: flex-start;
+        display: flex;
+        flex-wrap: wrap;
         gap: 18px;
-        grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.75fr);
       }
 
-      .admin-client-tools {
-        display: grid;
+      .admin-client-list {
+        display: flex;
+        flex: 1.5;
+        flex-direction: column;
         gap: 10px;
-        grid-template-columns: minmax(0, 1fr) auto;
-        margin-bottom: 14px;
+        min-width: 320px;
       }
 
       .admin-client-tools input {
-        background: #f8fbff;
-        border: 1px solid #d8e5f2;
-        border-radius: 999px;
-        color: var(--navy);
+        background: #ffffff;
+        border: 1px solid #dce3ee;
+        border-radius: 12px;
+        color: #16294a;
         font: inherit;
-        min-height: 46px;
-        padding: 0 18px;
+        font-size: 14px;
+        outline: none;
+        padding: 12px 16px;
+        width: 100%;
+      }
+
+      .admin-client-tools input:focus {
+        border-color: #1b3560;
+      }
+
+      .admin-client-list .data-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
       }
 
       .admin-client-row {
         align-items: center;
         background: #ffffff;
-        border: 1px solid #dce7f4;
+        border: 1.5px solid #e4e9f2;
         border-radius: 14px;
         color: inherit;
         cursor: pointer;
         display: grid;
         font: inherit;
         gap: 12px;
-        grid-template-columns: 48px minmax(0, 1fr) auto;
-        padding: 14px;
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        padding: 12px 14px;
         text-align: left;
-        transition:
-          border-color 160ms ease,
-          box-shadow 160ms ease,
-          transform 160ms ease;
         width: 100%;
       }
 
       .admin-client-row:hover {
-        border-color: #c5dcf3;
-        box-shadow: 0 12px 26px rgba(10, 47, 85, 0.08);
-        transform: translateY(-1px);
+        border-color: #c9d5e6;
       }
 
-      .admin-client-row.review {
-        background: #fff8f1;
-        border-color: #ffd3ad;
+      .admin-client-row.selected {
+        background: #fffaf5;
+        border-color: #d98e5f;
       }
 
       .admin-client-avatar {
         align-items: center;
-        background: #eaf3ff;
-        border: 1px solid #d1e4fb;
+        background: #e7eef9;
         border-radius: 999px;
-        color: var(--navy);
+        color: #1f3b63;
         display: inline-flex;
-        font-weight: 950;
-        height: 48px;
+        font-size: 13px;
+        font-weight: 700;
+        height: 40px;
         justify-content: center;
-        width: 48px;
+        width: 40px;
       }
 
       .admin-client-main {
         display: grid;
-        gap: 4px;
+        gap: 2px;
+        min-width: 0;
       }
 
       .admin-client-main strong {
-        color: var(--navy);
-        font-size: 17px;
+        color: #16294a;
+        font-size: 14px;
+        font-weight: 700;
       }
 
-      .admin-client-main span,
-      .admin-client-meta span,
-      .admin-movement span {
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 800;
+      .admin-client-main span {
+        color: #5b6b84;
+        font-size: 12.5px;
+        font-weight: 500;
       }
 
-      .admin-client-meta strong {
-        color: var(--navy);
-        font-size: 15px;
+      .admin-client-main span:last-child {
+        color: #46536b;
+        font-size: 12px;
+        font-weight: 600;
       }
 
       .admin-client-meta {
-        align-items: end;
+        align-items: flex-end;
         display: grid;
-        gap: 4px;
+        gap: 2px;
         justify-items: end;
         text-align: right;
       }
 
+      .admin-client-meta strong {
+        color: #16294a;
+        font-size: 13.5px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+
+      .admin-client-meta span {
+        color: #8593a9;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .admin-client-meta span.warn {
+        color: #b04a12;
+        font-weight: 700;
+      }
+
+      .admin-client-detail {
+        flex: 1;
+        min-width: 300px;
+      }
+
       .admin-client-detail-card {
-        background: #ffffff;
-        border: 1px solid #dce7f4;
+        background: #fbfcfe;
+        border: 1px solid #e4e9f2;
         border-radius: 16px;
-        box-shadow: var(--soft-shadow);
         display: grid;
-        gap: 12px;
-        padding: 16px;
+        gap: 16px;
+        padding: 18px;
       }
 
-      .admin-client-balance {
-        background: #f8fbff;
-        border: 1px solid #dce7f4;
-        border-radius: 12px;
-        display: grid;
-        gap: 6px;
-        padding: 14px;
+      .admin-badge.roles {
+        background: #e7eef9;
+        color: #1f3b63;
       }
 
-      .admin-client-balance span {
-        color: var(--muted);
-        font-weight: 850;
+      .admin-badge.status-ok {
+        background: #e6f4ec;
+        color: #1f7a4d;
       }
 
-      .admin-client-balance strong {
-        color: var(--navy);
-        font-size: 30px;
-        line-height: 1;
+      .admin-badge.status-blocked {
+        background: #fbe3dc;
+        color: #b04a12;
       }
 
-      .admin-credit-actions {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .admin-security-box {
-        background: #fff8f8;
-        border: 1px solid #ffd1d1;
-        border-radius: 12px;
-        display: grid;
-        gap: 10px;
-        padding: 14px;
-      }
-
-      .admin-security-box.safe {
-        background: #f4fbf6;
-        border-color: #bde8c5;
-      }
-
-      .admin-security-box p {
-        color: var(--muted);
-        font-size: 13px;
-        font-weight: 800;
+      .admin-client-detail-card h3 {
+        color: #16294a;
+        font-size: 17px;
+        font-weight: 700;
         margin: 0;
       }
 
+      .admin-client-detail-card .intro {
+        color: #5b6b84;
+        font-size: 13.5px;
+        font-weight: 500;
+        margin: 3px 0 0;
+      }
+
+      .admin-client-balance {
+        background: #1b3560;
+        border-radius: 14px;
+        display: grid;
+        gap: 8px;
+        padding: 16px 18px;
+      }
+
+      .admin-client-balance span {
+        color: #a9bcd9;
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+
+      .admin-client-balance span:first-child {
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .admin-client-balance strong {
+        color: #ffffff;
+        font-size: 28px;
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        line-height: 1;
+      }
+
       .admin-credit-form {
-        background: #fffdf9;
-        border: 1px solid #f5d4b9;
-        border-radius: 12px;
+        background: #fffcf9;
+        border: 1px solid #f3d8c2;
+        border-radius: 14px;
         display: grid;
         gap: 10px;
         padding: 14px;
       }
 
+      .admin-form-title {
+        color: #b04a12;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
       .admin-credit-form label {
-        color: var(--navy);
+        color: #16294a;
         display: grid;
-        gap: 6px;
-        font-size: 13px;
-        font-weight: 900;
+        font-size: 12.5px;
+        font-weight: 700;
+        gap: 5px;
       }
 
       .admin-credit-form input,
       .admin-credit-form select,
       .admin-credit-form textarea {
-        border: 1px solid #dce7f4;
-        border-radius: 9px;
-        color: var(--navy);
+        background: #ffffff;
+        border: 1px solid #dce3ee;
+        border-radius: 10px;
+        color: #16294a;
         font: inherit;
-        min-height: 42px;
-        padding: 8px 10px;
+        font-size: 13.5px;
+        font-weight: 500;
+        outline: none;
+        padding: 10px 12px;
+      }
+
+      .admin-credit-form input:focus,
+      .admin-credit-form select:focus,
+      .admin-credit-form textarea:focus {
+        border-color: #1b3560;
       }
 
       .admin-credit-form textarea {
-        min-height: 74px;
+        min-height: 58px;
         resize: vertical;
+      }
+
+      .admin-credit-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .admin-credit-actions button {
+        border: none;
+        border-radius: 10px;
+        color: #ffffff;
+        cursor: pointer;
+        flex: 1;
+        font: inherit;
+        font-size: 13.5px;
+        font-weight: 700;
+        min-width: 130px;
+        padding: 11px 14px;
+      }
+
+      .admin-credit-actions .btn-refund {
+        background: #c6431b;
+      }
+
+      .admin-credit-actions .btn-negative {
+        background: #1b3560;
+      }
+
+      .admin-credit-feedback {
+        color: #1f7a4d;
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+
+      .admin-security-box {
+        background: #f5faf6;
+        border: 1px solid #d9e7dd;
+        border-radius: 14px;
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+      }
+
+      .admin-security-box strong {
+        color: #1f7a4d;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .admin-security-box p {
+        color: #5b6b84;
+        font-size: 12.5px;
+        font-weight: 500;
+        line-height: 1.45;
+        margin: 0;
+      }
+
+      .admin-block-btn {
+        align-self: flex-start;
+        border-radius: 10px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        justify-self: start;
+        padding: 9px 14px;
+      }
+
+      .admin-block-btn.block {
+        background: #fff5f1;
+        border: 1.5px solid #c6431b;
+        color: #c6431b;
+      }
+
+      .admin-block-btn.unblock {
+        background: #1b3560;
+        border: 1.5px solid #1b3560;
+        color: #ffffff;
+      }
+
+      .admin-movements-title {
+        color: #16294a;
+        font-size: 13.5px;
+        font-weight: 700;
       }
 
       .admin-movement-list {
@@ -4977,28 +5665,47 @@
 
       .admin-movement {
         background: #ffffff;
-        border: 1px solid #dce7f4;
-        border-radius: 10px;
+        border: 1px solid #e4e9f2;
+        border-radius: 12px;
         display: grid;
         gap: 4px;
-        padding: 10px 12px;
-      }
-
-      .admin-movement.refund {
-        background: #f1fbf3;
-        border-color: #bde8c5;
-      }
-
-      .admin-movement.charge {
-        background: #fff8f1;
-        border-color: #ffd3ad;
+        padding: 12px 14px;
       }
 
       .admin-movement strong {
-        align-items: center;
+        align-items: baseline;
+        color: #16294a;
         display: flex;
-        justify-content: space-between;
+        font-size: 13px;
+        font-weight: 700;
         gap: 12px;
+        justify-content: space-between;
+        line-height: 1.35;
+      }
+
+      .admin-movement strong .amount {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      .admin-movement strong .amount.neg {
+        color: #b04a12;
+      }
+
+      .admin-movement strong .amount.pos {
+        color: #1f7a4d;
+      }
+
+      .admin-movement .mv-sub {
+        color: #5b6b84;
+        font-size: 12.5px;
+        font-weight: 500;
+      }
+
+      .admin-movement .mv-date {
+        color: #8593a9;
+        font-size: 12px;
+        font-weight: 500;
       }
 
       .toast {
@@ -5056,10 +5763,215 @@
         text-align: center;
       }
 
-      footer {
-        color: var(--muted);
-        padding: 24px;
+      .site-footer {
+        background: var(--navy);
+        color: #ffffff;
+        margin-top: 48px;
+        padding: 40px clamp(18px, 5vw, 72px) 20px;
+      }
+      .footer-grid {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: 1.4fr 1fr 1fr 1fr;
+        margin: 0 auto 26px;
+        max-width: 1180px;
+      }
+      .footer-brand strong {
+        font-size: 22px;
+        font-weight: 950;
+      }
+      .footer-brand strong span {
+        color: var(--orange-2);
+      }
+      .footer-brand p {
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 13.5px;
+        line-height: 1.5;
+        margin: 10px 0 14px;
+        max-width: 320px;
+      }
+      .footer-social {
+        display: flex;
+        gap: 10px;
+      }
+      .footer-social a {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 10px;
+        color: #ffffff;
+        display: inline-flex;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+      .footer-social a:hover {
+        background: var(--orange);
+        border-color: var(--orange);
+      }
+      .footer-social svg {
+        height: 19px;
+        width: 19px;
+      }
+      .footer-col {
+        display: grid;
+        align-content: start;
+        gap: 9px;
+      }
+      .footer-col strong {
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+      }
+      .footer-col a {
+        color: rgba(255, 255, 255, 0.88);
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .footer-col a:hover {
+        color: var(--orange-2);
+      }
+      .footer-bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.14);
+        color: rgba(255, 255, 255, 0.55);
+        font-size: 12.5px;
+        margin: 0 auto;
+        max-width: 1180px;
+        padding-top: 16px;
         text-align: center;
+      }
+
+      .wa-float {
+        align-items: center;
+        background: #25d366;
+        border-radius: 999px;
+        bottom: 22px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+        color: #ffffff;
+        display: inline-flex;
+        height: 58px;
+        justify-content: center;
+        position: fixed;
+        right: 22px;
+        transition: transform 140ms ease;
+        width: 58px;
+        z-index: 80;
+      }
+      .wa-float:hover {
+        background: #1eb85a;
+        transform: scale(1.06);
+      }
+      .wa-float svg {
+        height: 30px;
+        width: 30px;
+      }
+
+      .legal-page {
+        margin: 0 auto;
+        max-width: 860px;
+      }
+      .legal-updated {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        margin: -6px 0 18px;
+      }
+      .legal-body {
+        background: #ffffff;
+        border: 1px solid #dce5ef;
+        border-radius: 16px;
+        padding: 26px clamp(18px, 3vw, 34px);
+      }
+      .legal-body h3 {
+        color: var(--navy);
+        font-size: 16.5px;
+        margin: 20px 0 6px;
+      }
+      .legal-body h3:first-child {
+        margin-top: 0;
+      }
+      .legal-body p {
+        color: #47566b;
+        font-size: 14.5px;
+        line-height: 1.6;
+        margin: 0 0 8px;
+      }
+      .legal-body a {
+        color: var(--blue);
+        font-weight: 800;
+      }
+
+      .faq-list {
+        display: grid;
+        gap: 10px;
+      }
+      .faq-item {
+        background: #ffffff;
+        border: 1px solid #dce5ef;
+        border-radius: 14px;
+        padding: 0 18px;
+      }
+      .faq-item summary {
+        color: var(--navy);
+        cursor: pointer;
+        font-size: 15.5px;
+        font-weight: 900;
+        list-style: none;
+        padding: 16px 0;
+        position: relative;
+      }
+      .faq-item summary::-webkit-details-marker {
+        display: none;
+      }
+      .faq-item summary::after {
+        color: var(--orange);
+        content: "+";
+        font-size: 20px;
+        position: absolute;
+        right: 2px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      .faq-item[open] summary::after {
+        content: "–";
+      }
+      .faq-item p {
+        color: #47566b;
+        font-size: 14.5px;
+        line-height: 1.6;
+        margin: 0;
+        padding: 0 0 16px;
+      }
+      .faq-item a {
+        color: var(--blue);
+      }
+
+      @media (max-width: 900px) {
+        .footer-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 560px) {
+        .footer-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .home-flow-steps {
+          padding: 22px 20px;
+        }
+
+        .home-flow-track {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 14px;
+        }
+
+        .home-flow-connector {
+          display: none;
+        }
       }
 
       @media (max-width: 1180px) {
@@ -5206,10 +6118,6 @@
 
         .home-actions-panel {
           justify-self: stretch;
-        }
-
-        .home-choice-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .contact-grid {
@@ -5399,7 +6307,31 @@
         }
 
         .home-choice-card {
-          min-height: 124px;
+          gap: 14px;
+          padding: 16px 18px;
+        }
+
+        .home-choice-icon {
+          height: 52px;
+          width: 52px;
+        }
+
+        .home-choice-icon svg {
+          height: 24px;
+          width: 24px;
+        }
+
+        .home-choice-text strong {
+          font-size: 17px;
+          white-space: normal;
+        }
+
+        .home-choice-text > span {
+          font-size: 13.5px;
+        }
+
+        .home-choice-chev {
+          display: block;
         }
       }
     </style>
@@ -5418,7 +6350,7 @@
       </a>
       <nav class="nav" aria-label="Principal">
         <a class="tab-link active" href="#inicio" data-tab="inicio">Inicio</a>
-        <a class="tab-link" href="#matches" data-tab="matches">Resultados Inteligentes</a>
+        <a class="tab-link" href="#matches" data-tab="matches">Cómo funciona</a>
         <a class="tab-link" href="#login" data-tab="login">LOGIN</a>
         <a class="tab-link" href="#admin" data-tab="admin" data-dashboard-target="admin">ADMIN</a>
       </nav>
@@ -5441,31 +6373,45 @@
         <aside class="home-actions-panel" aria-label="Flujos disponibles">
           <span class="eyebrow">Flujos disponibles</span>
           <h2>¿Qué quieres hacer hoy?</h2>
-          <div class="home-choice-grid">
-            <button class="home-choice-card" type="button" data-tab-button="propietario">
-              <span class="home-choice-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><path d="M10 20v-5h4v5"></path></svg>
-              </span>
-              <span><strong>Publicar inmueble</strong><span>Venta o alquiler</span></span>
-            </button>
-            <button class="home-choice-card" type="button" data-tab-button="busqueda">
-              <span class="home-choice-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
-              </span>
-              <span><strong>Buscar inmueble</strong><span>Para ti o tu empresa</span></span>
-            </button>
-            <button class="home-choice-card" type="button" data-tab-button="vehiculoOferta">
-              <span class="home-choice-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9h11l1.5 4H5l1.5-4Z"></path><path d="M5 13v4h2"></path><path d="M17 17h2v-4"></path><circle cx="8.5" cy="17" r="1.5"></circle><circle cx="15.5" cy="17" r="1.5"></circle></svg>
-              </span>
-              <span><strong>Publicar vehículo</strong><span>Autos, motos, flotas</span></span>
-            </button>
-            <button class="home-choice-card" type="button" data-tab-button="vehiculoBusqueda">
-              <span class="home-choice-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path><path d="M8 10.5h5"></path></svg>
-              </span>
-              <span><strong>Buscar vehículo</strong><span>Opciones compatibles</span></span>
-            </button>
+          <div class="home-choice-groups">
+            <div class="home-choice-group">
+              <p class="home-choice-label">Inmuebles</p>
+              <div class="home-choice-grid">
+                <button class="home-choice-card" type="button" data-tab-button="propietario">
+                  <span class="home-choice-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><path d="M10 20v-5h4v5"></path></svg>
+                  </span>
+                  <span class="home-choice-text"><strong>Publicar inmueble</strong><span>Venta o alquiler</span></span>
+                  <span class="home-choice-chev" aria-hidden="true">›</span>
+                </button>
+                <button class="home-choice-card" type="button" data-tab-button="busqueda">
+                  <span class="home-choice-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
+                  </span>
+                  <span class="home-choice-text"><strong>Buscar inmueble</strong><span>Para ti o tu empresa</span></span>
+                  <span class="home-choice-chev" aria-hidden="true">›</span>
+                </button>
+              </div>
+            </div>
+            <div class="home-choice-group">
+              <p class="home-choice-label">Vehículos</p>
+              <div class="home-choice-grid">
+                <button class="home-choice-card" type="button" data-tab-button="vehiculoOferta">
+                  <span class="home-choice-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9h11l1.5 4H5l1.5-4Z"></path><path d="M5 13v4h2"></path><path d="M17 17h2v-4"></path><circle cx="8.5" cy="17" r="1.5"></circle><circle cx="15.5" cy="17" r="1.5"></circle></svg>
+                  </span>
+                  <span class="home-choice-text"><strong>Publicar vehículo</strong><span>Autos, motos, flotas</span></span>
+                  <span class="home-choice-chev" aria-hidden="true">›</span>
+                </button>
+                <button class="home-choice-card" type="button" data-tab-button="vehiculoBusqueda">
+                  <span class="home-choice-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path><path d="M8 10.5h5"></path></svg>
+                  </span>
+                  <span class="home-choice-text"><strong>Buscar vehículo</strong><span>Opciones compatibles</span></span>
+                  <span class="home-choice-chev" aria-hidden="true">›</span>
+                </button>
+              </div>
+            </div>
           </div>
         </aside>
       </section>
@@ -5498,15 +6444,32 @@
           </div>
           <div class="home-flow-steps">
             <span class="home-flow-label">Cómo funciona</span>
-            <span class="home-flow-step">1 · Registra</span>
-            <span class="flow-arrow">›</span>
-            <span class="home-flow-step">2 · La IA analiza</span>
-            <span class="flow-arrow">›</span>
-            <span class="home-flow-step">3 · Recibes resultados</span>
-            <span class="flow-arrow">›</span>
-            <span class="home-flow-step">4 · Desbloqueas</span>
-            <span class="flow-arrow">›</span>
-            <span class="home-flow-step">5 · Contactas</span>
+            <div class="home-flow-track">
+              <div class="home-flow-step">
+                <span class="home-flow-num">1</span>
+                <span class="home-flow-text">Registra</span>
+              </div>
+              <span class="home-flow-connector"></span>
+              <div class="home-flow-step">
+                <span class="home-flow-num">2</span>
+                <span class="home-flow-text">La IA analiza</span>
+              </div>
+              <span class="home-flow-connector"></span>
+              <div class="home-flow-step">
+                <span class="home-flow-num">3</span>
+                <span class="home-flow-text">Recibes resultados</span>
+              </div>
+              <span class="home-flow-connector"></span>
+              <div class="home-flow-step">
+                <span class="home-flow-num">4</span>
+                <span class="home-flow-text">Desbloqueas</span>
+              </div>
+              <span class="home-flow-connector"></span>
+              <div class="home-flow-step">
+                <span class="home-flow-num">5</span>
+                <span class="home-flow-text">Contactas</span>
+              </div>
+            </div>
           </div>
         </section>
       </section>
@@ -6427,9 +7390,11 @@
 
       <section class="container tab-panel" id="admin">
         <section class="section">
-          <span class="eyebrow">Panel de control</span>
-          <h2 id="dashboardTitle">Dashboard usuario / cliente</h2>
-          <p class="intro" id="dashboardIntro">Revisa tus propiedades, solicitudes, resultados y créditos.</p>
+          <div id="dashboardHeader">
+            <span class="eyebrow">Panel de control</span>
+            <h2 id="dashboardTitle">Dashboard usuario / cliente</h2>
+            <p class="intro" id="dashboardIntro">Revisa tus propiedades, solicitudes, resultados y créditos.</p>
+          </div>
 
           <div class="dashboard-view active" data-dashboard-view="user">
             <div class="wallet-panel">
@@ -6504,24 +7469,34 @@
           <div class="dashboard-view" data-dashboard-view="admin">
             <div class="admin-console">
               <div class="admin-console-head">
-                <div>
-                  <span class="eyebrow">Panel interno</span>
-                  <h2>Consola admin</h2>
-                  <p class="intro">Administra clientes, créditos, registros y validaciones desde una sola vista.</p>
+                <div class="admin-head-copy">
+                  <span class="admin-eyebrow">Panel de control</span>
+                  <h2>Administración</h2>
+                  <p class="intro">Clientes, créditos, registros y validaciones en una sola vista.</p>
                 </div>
-                <div class="admin-danger-zone">
-                  <button class="button dark" type="button" onclick="clearDemoDatabase()">Limpiar BD demo</button>
-                  <span>Borra registros, resultados, saldo e historial de este navegador.</span>
+                <div class="admin-maintenance">
+                  <div>
+                    <div class="admin-maintenance-title">Zona de mantenimiento</div>
+                    <div class="admin-maintenance-desc">Borra registros, resultados, saldo e historial de este navegador.</div>
+                  </div>
+                  <div id="adminMaintenanceActions">
+                    <button class="admin-clean-btn" type="button" onclick="startDemoClean()">Limpiar BD demo</button>
+                  </div>
                 </div>
               </div>
 
-              <div class="admin-panel-tabs vertical-filter" aria-label="Filtro por vertical">
-                <button class="active" type="button" data-admin-vertical-filter="all">Todos</button>
-                <button type="button" data-admin-vertical-filter="property">Inmuebles</button>
-                <button type="button" data-admin-vertical-filter="vehicle">Vehículos</button>
+              <div class="admin-metrics">
+                <div class="admin-metrics-head">
+                  <h3>Métricas de la plataforma</h3>
+                  <div class="admin-seg" aria-label="Filtro por vertical">
+                    <button class="active" type="button" data-admin-vertical-filter="all">Todos</button>
+                    <button type="button" data-admin-vertical-filter="property">Inmuebles</button>
+                    <button type="button" data-admin-vertical-filter="vehicle">Vehículos</button>
+                  </div>
+                </div>
+                <div class="admin-kpi-grid" id="adminStats"></div>
+                <div class="admin-money-grid" id="adminMoney"></div>
               </div>
-
-              <div class="admin-kpi-grid" id="adminStats"></div>
 
               <div class="admin-workspace">
                 <div class="admin-panel-tabs" aria-label="Secciones del admin">
@@ -6542,7 +7517,6 @@
                     <div class="admin-client-list">
                       <div class="admin-client-tools">
                         <input id="adminClientSearch" placeholder="Buscar por email, nombre o teléfono" oninput="renderAdminClients()" />
-                        <button class="button dark small" type="button" onclick="renderAdminClients()">Buscar</button>
                       </div>
                       <div class="data-list" id="adminClients"></div>
                     </div>
@@ -6556,32 +7530,24 @@
                 </section>
 
                 <section class="admin-panel-pane" data-admin-panel-pane="records">
-                  <div class="admin-record-grid">
+                  <div class="admin-section-title">
                     <div>
-                      <div class="admin-section-title">
-                        <h3>Propiedades registradas</h3>
-                      </div>
-                      <div class="data-list compact" id="adminProperties"></div>
-                    </div>
-                    <div>
-                      <div class="admin-section-title">
-                        <h3>Búsquedas registradas</h3>
-                      </div>
-                      <div class="data-list compact" id="adminSearches"></div>
-                    </div>
-                    <div>
-                      <div class="admin-section-title">
-                        <h3>Vehículos publicados</h3>
-                      </div>
-                      <div class="data-list compact" id="adminVehicleOffers"></div>
-                    </div>
-                    <div>
-                      <div class="admin-section-title">
-                        <h3>Búsquedas de vehículos</h3>
-                      </div>
-                      <div class="data-list compact" id="adminVehicleSearches"></div>
+                      <h3>Registros</h3>
+                      <p>Todo lo publicado en la plataforma, agrupado por fecha.</p>
                     </div>
                   </div>
+                  <div class="admin-records-toolbar">
+                    <div class="admin-chips" id="adminRecordChips"></div>
+                    <div class="admin-group-control">
+                      <span>Agrupar por</span>
+                      <div class="admin-seg compact" id="adminRecordGroupSeg">
+                        <button class="active" type="button" onclick="setAdminRecordGroup('dia')">Día</button>
+                        <button type="button" onclick="setAdminRecordGroup('mes')">Mes</button>
+                        <button type="button" onclick="setAdminRecordGroup('ano')">Año</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="admin-date-groups" id="adminRecords"></div>
                 </section>
 
                 <section class="admin-panel-pane" data-admin-panel-pane="unlocks">
@@ -6590,8 +7556,9 @@
                       <h3>Contactos desbloqueados</h3>
                       <p>Historial de contactos pagados y datos internos para auditoría.</p>
                     </div>
+                    <div class="admin-chips" id="adminUnlockChips"></div>
                   </div>
-                  <div class="grid" id="adminMatches"></div>
+                  <div class="admin-unlock-cards" id="adminMatches"></div>
                 </section>
 
                 <section class="admin-panel-pane" data-admin-panel-pane="validation">
@@ -6608,6 +7575,121 @@
           </div>
         </section>
       </section>
+      <section class="container tab-panel" id="faq">
+        <section class="section legal-page">
+          <span class="eyebrow">Ayuda</span>
+          <h2>Preguntas frecuentes</h2>
+          <div class="faq-list">
+            <details class="faq-item">
+              <summary>¿Cuánto cuesta usar KonektaYa?</summary>
+              <p>Publicar y buscar es <strong>gratis</strong> para todos. Solo quien publicó una oferta paga cuando decide desbloquear el contacto de un interesado calificado. No cobramos comisión por cierre.</p>
+            </details>
+            <details class="faq-item">
+              <summary>¿Quién puede ver mis datos de contacto?</summary>
+              <p>Nadie, hasta que corresponda. Tu nombre, teléfono y email permanecen <strong>ocultos</strong>. Solo se comparten cuando quien publicó decide desbloquear tu contacto (si eres buscador) o cuando tú decides desbloquear el de un interesado (si publicaste).</p>
+            </details>
+            <details class="faq-item">
+              <summary>¿Cómo funciona el matching?</summary>
+              <p>Nuestra IA cruza ubicación, precio, características y urgencia entre ofertas y búsquedas. Cada coincidencia recibe un nivel según su compatibilidad (de Básico 70%+ a Exclusiva 100%), para que sepas qué tan fuerte es cada resultado.</p>
+            </details>
+            <details class="faq-item">
+              <summary>¿Cómo pago los créditos?</summary>
+              <p>Puedes comprar crédito con <strong>tarjeta</strong> o por <strong>Yappy</strong>. El crédito se usa únicamente para desbloquear contactos calificados.</p>
+            </details>
+            <details class="faq-item">
+              <summary>¿Qué pasa si el contacto que desbloqueé es inválido?</summary>
+              <p>Aplica la <strong>Garantía KonektaYa</strong>: si el teléfono o email son inválidos, la identidad es falsa, o la persona se presentó como cliente final siendo broker/intermediario, se devuelve el crédito utilizado.</p>
+            </details>
+            <details class="faq-item">
+              <summary>¿Puedo pausar mi publicación?</summary>
+              <p>Sí. En tu panel puedes marcar cualquier oferta como <strong>No disponible</strong> y reactivarla cuando quieras. Mientras esté pausada, los interesados verán que ya no está disponible.</p>
+            </details>
+            <details class="faq-item">
+              <summary>¿KonektaYa participa en la negociación o cobra comisión?</summary>
+              <p>No. KonektaYa conecta a las partes; la negociación y el cierre son directamente entre ustedes. No cobramos comisión por cierre ni participamos en la transacción.</p>
+            </details>
+            <details class="faq-item">
+              <summary>¿Cómo contacto al soporte?</summary>
+              <p>Por WhatsApp al <a href="https://wa.me/50764905233?text=Hola%20KonektaYa%2C%20necesito%20ayuda." target="_blank" rel="noopener"><strong>+507 6490-5233</strong></a>. Con gusto te ayudamos.</p>
+            </details>
+          </div>
+        </section>
+      </section>
+
+      <section class="container tab-panel" id="nosotros">
+        <section class="section legal-page">
+          <span class="eyebrow">KonektaYa</span>
+          <h2>Quiénes somos</h2>
+          <div class="legal-body">
+            <p><strong>KonektaYa</strong> es una plataforma panameña que conecta a quienes ofrecen propiedades y vehículos con personas realmente interesadas, usando matching inteligente en lugar de anuncios masivos.</p>
+            <p>Nacimos para resolver dos problemas de siempre: los dueños pierden tiempo con contactos que no califican, y los buscadores no encuentran opciones que de verdad se ajusten a lo que necesitan. Nuestra IA cruza ubicación, precio, características y urgencia para que cada conexión valga la pena.</p>
+            <p>Creemos en tres principios simples: <strong>publicar y buscar debe ser gratis</strong>, <strong>tus datos de contacto son tuyos</strong> (permanecen protegidos hasta que decidas conectar) y <strong>sin comisiones por cierre</strong> — la negociación es tuya.</p>
+            <p>Operamos desde Ciudad de Panamá. ¿Ideas o comentarios? Escríbenos por WhatsApp al <a href="https://wa.me/50764905233?text=Hola%20KonektaYa." target="_blank" rel="noopener"><strong>+507 6490-5233</strong></a>.</p>
+          </div>
+        </section>
+      </section>
+
+      <section class="container tab-panel" id="terminos">
+        <section class="section legal-page">
+          <span class="eyebrow">Legal</span>
+          <h2>Términos y condiciones</h2>
+          <p class="legal-updated">Última actualización: julio de 2026</p>
+          <div class="legal-body">
+            <h3>1. Aceptación</h3>
+            <p>Al usar konektaya.com (la "Plataforma") aceptas estos Términos y Condiciones. Si no estás de acuerdo, por favor no utilices la Plataforma.</p>
+            <h3>2. El servicio</h3>
+            <p>KonektaYa es un servicio de conexión ("matching") entre personas que publican propiedades o vehículos y personas que los buscan. KonektaYa <strong>no es corredor de bienes raíces, ni concesionario, ni parte de ninguna transacción</strong> entre usuarios. La verificación final de las partes, la negociación y el cierre son responsabilidad exclusiva de los usuarios.</p>
+            <h3>3. Registro y veracidad</h3>
+            <p>Te comprometes a proporcionar información verdadera, exacta y actualizada, incluyendo tu identidad, datos de contacto y las características de lo que publicas o buscas. Presentarse como cliente final siendo intermediario, o publicar información falsa, es causal de suspensión y de pérdida de créditos.</p>
+            <h3>4. Créditos y pagos</h3>
+            <p>Publicar y buscar es gratuito. Quien publica puede comprar créditos para desbloquear los datos de contacto de interesados calificados. Los créditos no son transferibles ni canjeables por dinero, y no caducan mientras la cuenta esté activa. Los precios de desbloqueo se muestran antes de confirmar cada operación.</p>
+            <h3>5. Garantía de contacto</h3>
+            <p>Si un contacto desbloqueado tiene teléfono o email inválido, identidad falsa, o se presentó como cliente final siendo broker/intermediario, se devolverá el crédito utilizado. La garantía no aplica si el interesado no concreta la transacción, cambia de opinión o las partes no llegan a un acuerdo.</p>
+            <h3>6. Conducta prohibida</h3>
+            <p>Está prohibido: incluir datos de contacto en campos de texto libre para evadir la protección de contactos; usar la Plataforma para spam o fines distintos a los previstos; extraer datos de forma automatizada; y cualquier uso fraudulento del sistema de créditos.</p>
+            <h3>7. Disponibilidad</h3>
+            <p>La Plataforma se ofrece "tal cual" y puede experimentar interrupciones, actualizaciones o cambios de funcionalidad. Haremos esfuerzos razonables por mantener el servicio disponible, sin garantizar disponibilidad ininterrumpida.</p>
+            <h3>8. Limitación de responsabilidad</h3>
+            <p>KonektaYa no garantiza que se concreten transacciones ni responde por los actos de los usuarios, la exactitud de las publicaciones, ni por daños derivados de las negociaciones entre las partes. Nuestra responsabilidad máxima se limita al valor de los créditos pagados por el usuario en los últimos 3 meses.</p>
+            <h3>9. Propiedad intelectual</h3>
+            <p>La marca KonektaYa, el diseño y el software de la Plataforma son propiedad de KonektaYa. El contenido de las publicaciones es responsabilidad de quien lo publica, quien autoriza su uso en la Plataforma para fines del servicio.</p>
+            <h3>10. Modificaciones</h3>
+            <p>Podemos actualizar estos términos; los cambios se publicarán en esta página con su fecha. El uso continuado de la Plataforma implica la aceptación de la versión vigente.</p>
+            <h3>11. Ley aplicable</h3>
+            <p>Estos términos se rigen por las leyes de la República de Panamá. Cualquier controversia se someterá a los tribunales panameños.</p>
+            <p>Contacto: WhatsApp <a href="https://wa.me/50764905233" target="_blank" rel="noopener">+507 6490-5233</a>.</p>
+          </div>
+        </section>
+      </section>
+
+      <section class="container tab-panel" id="privacidad">
+        <section class="section legal-page">
+          <span class="eyebrow">Legal</span>
+          <h2>Política de privacidad</h2>
+          <p class="legal-updated">Última actualización: julio de 2026 · Conforme a la Ley 81 de 2019 de Protección de Datos Personales de Panamá</p>
+          <div class="legal-body">
+            <h3>1. Responsable</h3>
+            <p>KonektaYa (konektaya.com), Ciudad de Panamá, es responsable del tratamiento de los datos personales recolectados en la Plataforma. Contacto: WhatsApp <a href="https://wa.me/50764905233" target="_blank" rel="noopener">+507 6490-5233</a>.</p>
+            <h3>2. Datos que recolectamos</h3>
+            <p>Nombre y apellido, teléfono, correo electrónico, contraseña de acceso, y la información de las ofertas o búsquedas que registras (ubicación, precios, características). También datos técnicos básicos de uso del sitio (analítica anónima).</p>
+            <h3>3. Para qué los usamos</h3>
+            <p>(a) Crear y administrar tu cuenta; (b) generar coincidencias entre ofertas y búsquedas; (c) compartir tus datos de contacto <strong>únicamente</strong> cuando ocurre un desbloqueo conforme a las reglas de la Plataforma; (d) gestionar créditos y pagos; (e) comunicarnos contigo por asuntos del servicio; (f) mejorar la Plataforma.</p>
+            <h3>4. Base del tratamiento</h3>
+            <p>Tu consentimiento, otorgado al registrarte y aceptar esta política, y la ejecución del servicio que solicitas. Puedes retirar tu consentimiento en cualquier momento solicitando la eliminación de tu cuenta.</p>
+            <h3>5. Con quién se comparten</h3>
+            <p>Con otros usuarios, solo tus datos de contacto y solo al producirse un desbloqueo. Con proveedores tecnológicos necesarios para operar (alojamiento web y procesadores de pago), bajo sus propias medidas de seguridad. <strong>No vendemos tus datos</strong> a terceros.</p>
+            <h3>6. Conservación</h3>
+            <p>Conservamos tus datos mientras mantengas tu cuenta activa o mientras sea necesario para el servicio y las obligaciones legales. Puedes solicitar su eliminación en cualquier momento.</p>
+            <h3>7. Tus derechos (ARCO)</h3>
+            <p>Conforme a la Ley 81 de 2019, tienes derecho a <strong>acceder</strong>, <strong>rectificar</strong>, <strong>cancelar</strong> y <strong>oponerte</strong> al tratamiento de tus datos, así como a la portabilidad. Para ejercerlos, escríbenos por WhatsApp al +507 6490-5233 indicando tu solicitud; responderemos en los plazos legales.</p>
+            <h3>8. Seguridad</h3>
+            <p>Aplicamos medidas razonables para proteger tu información. Los datos de contacto permanecen ocultos entre usuarios hasta que se produce un desbloqueo autorizado. Ningún sistema es infalible; te recomendamos usar contraseñas únicas.</p>
+            <h3>9. Cambios</h3>
+            <p>Publicaremos cualquier cambio de esta política en esta página, con su fecha de actualización.</p>
+          </div>
+        </section>
+      </section>
+
       <div class="results-modal-overlay hidden" id="resultsModal" role="dialog" aria-modal="true" aria-label="Resultados de la selección">
         <div class="results-modal">
           <div class="results-modal-head">
@@ -6666,7 +7748,53 @@
       </div>
     </main>
 
-    <footer>KonektaYa · Plataforma de matching inteligente</footer>
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <strong>Konekta<span>Ya</span></strong>
+          <p>Conectamos oferta y necesidad de propiedades y vehículos en Panamá. Publicar y buscar es gratis, sin comisión por cierre.</p>
+          <div class="footer-social" aria-label="Redes sociales">
+            <a href="https://www.instagram.com/konektaya" target="_blank" rel="noopener" aria-label="Instagram">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle cx="17.2" cy="6.8" r="0.8" fill="currentColor" stroke="none"></circle></svg>
+            </a>
+            <a href="https://www.facebook.com/konektaya" target="_blank" rel="noopener" aria-label="Facebook">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h-2.5A3.5 3.5 0 0 0 9 6.5V9H6.5v3H9v9h3v-9h2.6l.4-3H12V6.8c0-.5.4-.8.9-.8H15V3Z"></path></svg>
+            </a>
+            <a href="https://www.tiktok.com/@konektaya" target="_blank" rel="noopener" aria-label="TikTok">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"></path><path d="M14 6.5c.8 1.6 2.4 2.8 4.5 3"></path></svg>
+            </a>
+          </div>
+        </div>
+        <div class="footer-col">
+          <strong>Plataforma</strong>
+          <a href="#matches" data-tab="matches">Cómo funciona</a>
+          <a href="#faq" data-tab="faq">Preguntas frecuentes</a>
+          <a href="#nosotros" data-tab="nosotros">Quiénes somos</a>
+        </div>
+        <div class="footer-col">
+          <strong>Legal</strong>
+          <a href="#terminos" data-tab="terminos">Términos y condiciones</a>
+          <a href="#privacidad" data-tab="privacidad">Política de privacidad</a>
+        </div>
+        <div class="footer-col">
+          <strong>Contacto</strong>
+          <a href="https://wa.me/50764905233?text=Hola%20KonektaYa%2C%20necesito%20ayuda." target="_blank" rel="noopener">WhatsApp +507 6490-5233</a>
+          <a href="#login" data-tab="login">Ingresar a mi cuenta</a>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 KonektaYa · Panamá · Plataforma de matching inteligente</div>
+    </footer>
+
+    <a
+      class="wa-float"
+      href="https://wa.me/50764905233?text=Hola%20KonektaYa%2C%20necesito%20ayuda."
+      target="_blank"
+      rel="noopener"
+      aria-label="Soporte por WhatsApp"
+      title="¿Dudas? Escríbenos por WhatsApp"
+    >
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+    </a>
 
     <script>
       const money = new Intl.NumberFormat("es-PA", {
@@ -8867,16 +9995,17 @@
           views.forEach((view) => {
             view.classList.toggle("active", view.dataset.dashboardView === target);
           });
+          const header = document.getElementById("dashboardHeader");
+          if (header) {
+            header.hidden = target === "admin";
+          }
           const title = document.getElementById("dashboardTitle");
           const intro = document.getElementById("dashboardIntro");
           if (title) {
-            title.textContent = target === "admin" ? "Administración" : "Dashboard usuario / cliente";
+            title.textContent = "Dashboard usuario / cliente";
           }
           if (intro) {
-            intro.textContent =
-              target === "admin"
-                ? "Vista interna de administración de la plataforma."
-                : "Revisa tus propiedades, solicitudes, resultados y créditos.";
+            intro.textContent = "Revisa tus propiedades, solicitudes, resultados y créditos.";
           }
         };
       }
@@ -10531,9 +11660,17 @@
         list.innerHTML = propertyResultsHtml + vehicleResultsHtml;
       };
 
+      let adminUnlockFilter = "todos";
+
+      function setAdminUnlockFilter(id) {
+        adminUnlockFilter = id;
+        renderAdmin();
+      }
+
       renderAdmin = function () {
         const list = document.getElementById("adminMatches");
-        const unlockedRecords = Object.entries(machUnlocks)
+        if (!list) return;
+        const allUnlockedRecords = Object.entries(machUnlocks)
           .map(([key, info]) => {
             const matchId = key.includes(":") ? key.split(":")[0] : key;
             const match = matches.find((item) => item.id === matchId);
@@ -10541,67 +11678,91 @@
             const vehicleMatch = vehicleMatches.find((item) => item.id === matchId);
             return vehicleMatch ? { key, info, match: vehicleMatch, vertical: "vehicle" } : null;
           })
-          .filter(Boolean)
-          .filter((item) => adminVerticalFilter === "all" || item.vertical === adminVerticalFilter);
+          .filter(Boolean);
+
+        const chipsTarget = document.getElementById("adminUnlockChips");
+        if (chipsTarget) {
+          chipsTarget.innerHTML = [
+            { id: "todos", label: "Todos" },
+            { id: "property", label: "Inmuebles" },
+            { id: "vehicle", label: "Vehículos" }
+          ]
+            .map((chip) => {
+              const count =
+                chip.id === "todos"
+                  ? allUnlockedRecords.length
+                  : allUnlockedRecords.filter((item) => item.vertical === chip.id).length;
+              return `
+                <button class="admin-chip ${chip.id === adminUnlockFilter ? "active" : ""}" type="button" onclick="setAdminUnlockFilter('${chip.id}')">
+                  ${chip.label}
+                  <span class="chip-count">${count}</span>
+                </button>
+              `;
+            })
+            .join("");
+        }
+
+        const unlockedRecords = allUnlockedRecords
+          .filter((item) => adminUnlockFilter === "todos" || item.vertical === adminUnlockFilter)
+          .sort(
+            (a, b) =>
+              new Date(b.info.unlockedAt || b.info.date || 0) - new Date(a.info.unlockedAt || a.info.date || 0)
+          );
+
         if (!unlockedRecords.length) {
-          list.innerHTML =
-            '<article class="card empty"><h3>Sin contactos desbloqueados</h3><p>Cuando se desbloquee un contacto, aparecerá aquí según su vertical.</p></article>';
+          list.innerHTML = `
+            <div class="admin-empty-state">
+              <p>Sin desbloqueos</p>
+              <p>No hay contactos desbloqueados que coincidan con este filtro.</p>
+            </div>
+          `;
           return;
         }
 
         list.innerHTML = unlockedRecords
-          .map(
-            ({ match, info, vertical }) => vertical === "property" ? `
-              <article class="card admin-match">
-                <div>
-                  <div class="review-heading">
-                    <span class="pill ${match.mach.badge}">${match.mach.displayLabel || publicMachLabel(match.mach.label)}</span>
-                    <span class="pill success">Contacto desbloqueado</span>
-                    <span class="pill">Score ${match.score}%</span>
-                  </div>
-                  <h3>${match.property.name}</h3>
-                  <div class="meta">
-                    <span>Contacto: ${match.search.name} · ${match.search.role}</span>
-                    <span>PH / edificio: ${match.property.phName || "No especificado"}</span>
-                    <span>Calle o barriada propiedad: ${match.property.streetOrNeighborhood || "No especificada"}</span>
-                    <span>Calle o barriada deseada: ${match.search.desiredStreetOrNeighborhood || "No especificada"}</span>
-                    <span>PH deseado: ${match.search.desiredPh || "No especificado"}</span>
-                    <span>Pagado por: ${info.source === "search" ? "Broker de búsqueda" : "Propietario / broker de propiedad"}</span>
-                    <span>Monto pagado: ${money.format(info.price || match.mach.price)}</span>
-                  </div>
-                  <div class="locked-contact">
-                    <strong>Datos internos</strong>
-                    <span>Interesado: ${match.search.email} · ${match.search.phone}</span>
-                  </div>
+          .map(({ match, info, vertical }) => {
+            const tier = match.mach.displayLabel || publicMachLabel(match.mach.label);
+            const tierClass = /^AAA/.test(String(tier)) ? "tier-top" : "tier-alt";
+            const isProperty = vertical === "property";
+            const title = isProperty ? propertyHeader(match.property) : vehicleOfferTitle(match.offer);
+            const fields = isProperty
+              ? [
+                  ["Contacto", `${fullName(match.search) || match.search.name || ""} · ${label(match.search.role)}`],
+                  ["Precio", money.format(matchPropertyPrice(match))],
+                  ["Zona", `${match.property.zone}, ${match.property.province}`],
+                  ["Pagado por", info.source === "search" ? "Broker de búsqueda" : "Propietario / broker"]
+                ]
+              : [
+                  ["Contacto", `${fullName(match.search)} · ${vehicleApplicantLabel(match.search)}`],
+                  ["Año / km", `${match.offer.year} · ${Number(match.offer.mileage || 0).toLocaleString("es-PA")} km`],
+                  ["Precio", vehiclePriceSummary(match.offer)],
+                  ["Zona", `${match.offer.zone}, ${match.offer.province}`],
+                  ["Pagado por", info.source === "vehicleSearch" ? "Interesado" : "Dueño / dealer"]
+                ];
+            return `
+              <article class="admin-unlock-card">
+                <div class="admin-record-top">
+                  <span class="admin-badge ${tierClass}">${tier}</span>
+                  <span style="display:flex;align-items:center;gap:6px;">
+                    <span class="admin-badge ${isProperty ? "t-propiedad" : "t-vehiculo"}">${isProperty ? "Inmueble" : "Vehículo"}</span>
+                    <span class="admin-badge score">Score ${match.score}%</span>
+                  </span>
+                </div>
+                <h3>${escapeHtml(title)}</h3>
+                <div class="admin-record-fields">
+                  ${fields.map(([l, v]) => `<div><span>${l}</span><span>${escapeHtml(String(v))}</span></div>`).join("")}
+                </div>
+                <div class="admin-audit-box">
+                  <span>Datos internos · Auditoría</span>
+                  <span>${escapeHtml(match.search.email || "")} · ${escapeHtml(match.search.phone || "")}</span>
+                </div>
+                <div class="admin-record-foot">
+                  <span>Monto pagado${adminTimeAgo(info.unlockedAt || info.date) ? ` · ${adminTimeAgo(info.unlockedAt || info.date)}` : ""}</span>
+                  <strong>${money.format(info.price || match.mach.price)}</strong>
                 </div>
               </article>
-            ` : `
-              <article class="card admin-match">
-                <div>
-                  <div class="review-heading">
-                    <span class="pill ${match.mach.badge}">${match.mach.displayLabel}</span>
-                    <span class="pill success">Contacto desbloqueado</span>
-                    <span class="pill">Vehículo</span>
-                    <span class="pill">Score ${match.score}%</span>
-                  </div>
-                  <h3>${vehicleOfferTitle(match.offer)}</h3>
-                  <div class="meta">
-                    <span>Contacto: ${fullName(match.search)} · ${vehicleApplicantLabel(match.search)}</span>
-                    <span>Vehículo: ${vehicleLabel(match.offer.vehicleType)} ${match.offer.brand} ${match.offer.model}</span>
-                    <span>Año / km: ${match.offer.year} · ${Number(match.offer.mileage || 0).toLocaleString("es-PA")} km</span>
-                    <span>Precio: ${vehiclePriceSummary(match.offer)}</span>
-                    <span>Zona: ${match.offer.zone}, ${match.offer.province}</span>
-                    <span>Pagado por: ${info.source === "vehicleSearch" ? "Interesado" : "Dueño / dealer"}</span>
-                    <span>Monto pagado: ${money.format(info.price || match.mach.price)}</span>
-                  </div>
-                  <div class="locked-contact">
-                    <strong>Datos internos</strong>
-                    <span>Interesado: ${match.search.email} · ${match.search.phone}</span>
-                  </div>
-                </div>
-              </article>
-            `
-          )
+            `;
+          })
           .join("");
       };
 
@@ -10760,8 +11921,11 @@
         return movements.sort((a, b) => new Date(b.date) - new Date(a.date));
       }
 
+      let adminCreditFeedback = "";
+
       function selectAdminClient(email) {
         selectedAdminClientEmail = email;
+        adminCreditFeedback = "";
         save();
         renderAdminClients();
       }
@@ -10772,7 +11936,8 @@
         const noteInput = document.getElementById("adminCreditNote");
         const amount = Math.abs(Number(amountInput?.value || 0));
         if (!amount) {
-          alert("Ingresa un monto válido para ajustar el saldo.");
+          adminCreditFeedback = "";
+          amountInput?.focus();
           return;
         }
         const signedAmount = mode === "charge" ? -amount : amount;
@@ -10789,6 +11954,12 @@
           createdAt: new Date().toISOString()
         });
         selectedAdminClientEmail = email;
+        const clientRecord = allAdminClients().find(
+          (client) => adminClientKey(client.email) === adminClientKey(email)
+        );
+        adminCreditFeedback = `${signedAmount >= 0 ? "+" : "−"} ${money.format(amount)} aplicado a ${
+          (clientRecord && fullName(clientRecord)) || email
+        }.`;
         save();
         render();
       }
@@ -10805,7 +11976,7 @@
         });
 
         if (!clients.length) {
-          list.innerHTML = '<article class="card empty"><h3>Sin clientes</h3><p>No hay registros que coincidan con la búsqueda.</p></article>';
+          list.innerHTML = '<p style="margin:8px 0 0;text-align:center;font-size:13px;color:#5b6b84;">Sin resultados para esta búsqueda.</p>';
           detail.innerHTML = '<article class="card empty"><h3>Selecciona un cliente</h3><p>El detalle aparecerá aquí.</p></article>';
           return;
         }
@@ -10826,7 +11997,7 @@
                 .map((part) => part.charAt(0).toUpperCase())
                 .join("") || "PY";
             return `
-              <button class="admin-client-row ${client.reports || blocked ? "review" : ""}" type="button" onclick="selectAdminClient('${jsString(client.email)}')" style="${active ? "border-color:#ef7b34; box-shadow:0 10px 24px rgba(239,123,52,.12);" : ""}">
+              <button class="admin-client-row ${active ? "selected" : ""}" type="button" onclick="selectAdminClient('${jsString(client.email)}')">
                 <span class="admin-client-avatar">${initials}</span>
                 <span class="admin-client-main">
                   <strong>${escapeHtml(fullName(client) || client.email)}</strong>
@@ -10835,9 +12006,9 @@
                 </span>
                 <span class="admin-client-meta">
                   <strong>${money.format(clientAdminBalance(client.email))}</strong>
-                  ${blocked ? `<span>Bloqueado</span>` : ""}
+                  ${blocked ? `<span class="warn">Bloqueado</span>` : ""}
                   <span>${client.unlocked} desbloqueo${client.unlocked === 1 ? "" : "s"}</span>
-                  ${client.reports ? `<span>${client.reports} reporte${client.reports === 1 ? "" : "s"}</span>` : ""}
+                  ${client.reports ? `<span class="warn">${client.reports} reporte${client.reports === 1 ? "" : "s"}</span>` : ""}
                 </span>
               </button>
             `;
@@ -10850,15 +12021,9 @@
         const blockedSelected = isUserBlocked(selected.email);
         detail.innerHTML = `
           <article class="admin-client-detail-card">
-            <div class="review-heading">
-              <span class="pill">${Array.from(selected.roles).join(" · ")}</span>
-              ${
-                blockedSelected
-                  ? `<span class="pill warn">Usuario bloqueado</span>`
-                  : selected.reports
-                    ? `<span class="pill warn">Requiere revisión</span>`
-                    : `<span class="pill success">Activo</span>`
-              }
+            <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;">
+              <span class="admin-badge roles">${Array.from(selected.roles).join(" · ")}</span>
+              <span class="admin-badge ${blockedSelected ? "status-blocked" : "status-ok"}">${blockedSelected ? "Bloqueado" : "Activo"}</span>
             </div>
             <div>
               <h3>${escapeHtml(fullName(selected) || selected.email)}</h3>
@@ -10870,38 +12035,40 @@
               <span>${selected.properties} propiedades · ${selected.searches} solicitudes · ${selected.unlocked} desbloqueos</span>
             </div>
             <form class="admin-credit-form" onsubmit="return false">
-              <label>Monto
+              <span class="admin-form-title">Ajuste de crédito</span>
+              <label>Monto (USD)
                 <input id="adminCreditAmount" type="number" min="1" step="1" value="25" />
               </label>
               <label>Motivo
                 <select id="adminCreditReason">
                   <option>Garantía por contacto inválido</option>
-                  <option>Broker no declarado</option>
-                  <option>Ajuste comercial</option>
-                  <option>Corrección administrativa</option>
+                  <option>Ajuste administrativo</option>
+                  <option>Promoción / cortesía</option>
+                  <option>Corrección de saldo</option>
                 </select>
               </label>
               <label>Nota interna
                 <textarea id="adminCreditNote" placeholder="Ejemplo: se verificó teléfono inválido y se devuelve saldo."></textarea>
               </label>
               <div class="admin-credit-actions">
-                <button class="button primary" type="button" onclick="adminAdjustClientBalance('${jsString(selected.email)}', 'refund')">Devolver crédito</button>
-                <button class="button dark" type="button" onclick="adminAdjustClientBalance('${jsString(selected.email)}', 'charge')">Ajuste negativo</button>
+                <button class="btn-refund" type="button" onclick="adminAdjustClientBalance('${jsString(selected.email)}', 'refund')">Devolver crédito</button>
+                <button class="btn-negative" type="button" onclick="adminAdjustClientBalance('${jsString(selected.email)}', 'charge')">Ajuste negativo</button>
               </div>
+              ${adminCreditFeedback ? `<span class="admin-credit-feedback">${escapeHtml(adminCreditFeedback)}</span>` : ""}
             </form>
-            <div class="admin-security-box ${blockedSelected ? "" : "safe"}">
-              <strong>${blockedSelected ? "Usuario bloqueado por seguridad" : "Seguridad de usuario"}</strong>
+            <div class="admin-security-box">
+              <strong>Seguridad de usuario</strong>
               <p>${
                 blockedSelected
                   ? "Este email no puede iniciar sesión ni registrar nuevas solicitudes hasta que el admin lo desbloquee."
                   : "Bloquea este usuario si detectas abuso, datos falsos o intento de evadir el sistema."
               }</p>
-              <button class="button ${blockedSelected ? "dark" : "reject"}" type="button" onclick="blockAdminUser('${jsString(selected.email)}', '${blockedSelected ? "unblock" : "block"}')">${
+              <button class="admin-block-btn ${blockedSelected ? "unblock" : "block"}" type="button" onclick="blockAdminUser('${jsString(selected.email)}', '${blockedSelected ? "unblock" : "block"}')">${
                 blockedSelected ? "Desbloquear usuario" : "Bloquear usuario"
               }</button>
             </div>
-            <div>
-              <h3>Movimientos recientes</h3>
+            <div style="display:grid;gap:8px;">
+              <span class="admin-movements-title">Movimientos recientes</span>
               <div class="admin-movement-list">
                 ${
                   movements.length
@@ -10909,15 +12076,17 @@
                         .slice(0, 8)
                         .map(
                           (item) => `
-                            <div class="admin-movement ${item.type}">
-                              <strong>${escapeHtml(item.title)} <span>${item.amount >= 0 ? "+" : ""}${money.format(item.amount)}</span></strong>
-                              <span>${escapeHtml(item.detail)}</span>
-                              <span>${formatDate(item.date)}</span>
+                            <div class="admin-movement">
+                              <strong>${escapeHtml(item.title)} <span class="amount ${item.amount < 0 ? "neg" : "pos"}">${
+                                item.amount < 0 ? "− " : "+ "
+                              }${money.format(Math.abs(item.amount))}</span></strong>
+                              <span class="mv-sub">${escapeHtml(item.detail)}</span>
+                              <span class="mv-date">${formatDate(item.date)}</span>
                             </div>
                           `
                         )
                         .join("")
-                    : '<div class="admin-movement"><strong>Sin movimientos</strong><span>Este cliente no tiene desbloqueos ni ajustes todavía.</span></div>'
+                    : '<span class="mv-sub" style="color:#8593a9;font-size:12.5px;">Sin movimientos registrados.</span>'
                 }
               </div>
             </div>
@@ -11089,48 +12258,54 @@
           `;
         }
 
-        const adminStats =
+        const kpiOffers =
           adminVerticalFilter === "property"
-            ? [
-                ["Ofertas inmuebles", properties.length],
-                ["Búsquedas inmuebles", searches.length],
-                ["Resultados inmuebles", matches.length],
-                ["Contactos desbloqueados", unlockedCount],
-                ["Clientes registrados", allAdminClients().length],
-                ["Ingresos por inmuebles", money.format(totalSpent)],
-                ["Promedio por desbloqueo", money.format(avg)]
-              ]
+            ? properties.length
             : adminVerticalFilter === "vehicle"
-              ? [
-                  ["Ofertas vehículos", vehicleOffers.length],
-                  ["Búsquedas vehículos", vehicleSearches.length],
-                  ["Resultados vehículos", vehicleMatches.length],
-                  ["Contactos desbloqueados", unlockedCount],
-                  ["Clientes registrados", allAdminClients().length],
-                  ["Ingresos por vehículos", money.format(totalSpent)],
-                  ["Promedio por desbloqueo", money.format(avg)]
-                ]
-              : [
-                  ["Ofertas publicadas", properties.length + vehicleOffers.length],
-                  ["Solicitudes creadas", searches.length + vehicleSearches.length],
-                  ["Resultados IA", matches.length + vehicleMatches.length],
-                  ["Contactos desbloqueados", unlockedCount],
-                  ["Clientes registrados", allAdminClients().length],
-                  ["Usuarios bloqueados", Object.keys(blockedUsers).length],
-                  [
-                    "Reportes / validación",
-                    validationReports.length +
-                      searches.filter((search) => classifyInterested(search) === "pendiente_validacion").length
-                  ],
-                  ["Ingresos estimados", money.format(totalSpent)],
-                  ["Promedio por desbloqueo", money.format(avg)]
-                ];
-        document.getElementById("adminStats").innerHTML = adminStats
-          .map(
-            ([labelText, value]) =>
-              `<article class="card stat"><span>${labelText}</span><strong>${value}</strong></article>`
-          )
-          .join("");
+              ? vehicleOffers.length
+              : properties.length + vehicleOffers.length;
+        const kpiSearches =
+          adminVerticalFilter === "property"
+            ? searches.length
+            : adminVerticalFilter === "vehicle"
+              ? vehicleSearches.length
+              : searches.length + vehicleSearches.length;
+        const kpiResults =
+          adminVerticalFilter === "property"
+            ? matches.length
+            : adminVerticalFilter === "vehicle"
+              ? vehicleMatches.length
+              : matches.length + vehicleMatches.length;
+        const adminStats = [
+          ["Ofertas publicadas", kpiOffers],
+          ["Solicitudes creadas", kpiSearches],
+          ["Resultados IA", kpiResults],
+          ["Contactos desbloqueados", unlockedCount],
+          ["Clientes registrados", allAdminClients().length],
+          ["Usuarios bloqueados", Object.keys(blockedUsers).length],
+          [
+            "Reportes / validación",
+            validationReports.length +
+              searches.filter((search) => classifyInterested(search) === "pendiente_validacion").length
+          ]
+        ];
+        const adminStatsTarget = document.getElementById("adminStats");
+        if (adminStatsTarget) {
+          adminStatsTarget.innerHTML = adminStats
+            .map(
+              ([labelText, value]) =>
+                `<article class="admin-kpi"><span>${labelText}</span><strong>${value}</strong></article>`
+            )
+            .join("");
+        }
+        const adminMoneyTarget = document.getElementById("adminMoney");
+        if (adminMoneyTarget) {
+          adminMoneyTarget.innerHTML = `
+            <div class="admin-money navy"><span>Ingresos estimados</span><strong>${money.format(totalSpent)}</strong></div>
+            <div class="admin-money orange"><span>Promedio por desbloqueo</span><strong>${money.format(avg)}</strong></div>
+          `;
+        }
+        renderAdminMaintenance();
       };
 
       renderPackages = function () {
@@ -11786,98 +12961,223 @@
           }
         }
 
-        const propertiesTarget = document.getElementById("adminProperties");
-        if (propertiesTarget) {
-          propertiesTarget.innerHTML = adminVerticalFilter === "vehicle"
-            ? '<article class="card empty"><h3>Filtro vehículos activo</h3><p>Las propiedades quedan ocultas mientras revisas vehículos.</p></article>'
-            : renderAdminDateGroups(
-            properties,
-            (property) => `
-                <article class="data-row">
-                  <strong>${propertyHeader(property)}</strong>
-                  <span>Propietario: ${fullName(property)}</span>
-                  <span>${label(property.propertyType)} · ${availabilityLabel(property)} · ${property.zone}, ${property.province}</span>
-                  <span>Equipamiento: ${equipmentLabel(property.equipment)}</span>
-                  <span>Disponibilidad: ${urgencyLabel(property.availabilityNeed, "property")}</span>
-                  <span>Calle o barriada: ${property.streetOrNeighborhood || "No especificada"}</span>
-                  <span>Registrada por: ${label(property.registeredBy || "propietario")} · ${propertyPriceSummary(property)}</span>
-                  <span>Publicado: ${publicationLabel(property.publishedAt)}</span>
-                  <span>Acepta broker: ${property.acceptsBroker ? "Sí" : "No"}</span>
-                </article>
-              `,
-            "No hay propiedades registradas todavía.",
-            "properties"
-          );
+        renderAdminRecords();
+      }
+
+      let adminRecordFilter = "todos";
+      let adminRecordGroup = "dia";
+
+      function setAdminRecordFilter(id) {
+        adminRecordFilter = id;
+        renderAdminRecords();
+      }
+
+      function setAdminRecordGroup(id) {
+        adminRecordGroup = id;
+        renderAdminRecords();
+      }
+
+      function adminTimeAgo(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "";
+        const diff = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000));
+        return diff === 0 ? "hoy" : diff === 1 ? "hace 1 día" : `hace ${diff} días`;
+      }
+
+      const adminMonthShort = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+      const adminMonthLong = [
+        "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+      ];
+
+      const adminRecordTypes = {
+        propiedad: { badge: "Propiedad", chip: "Propiedades" },
+        busqueda: { badge: "Búsqueda inmueble", chip: "Búsquedas" },
+        vehiculo: { badge: "Vehículo", chip: "Vehículos" },
+        "busqueda-vehiculo": { badge: "Búsqueda vehículo", chip: "Búsq. vehículos" }
+      };
+
+      function allAdminRecords() {
+        const records = [];
+        properties.forEach((property) => {
+          const fields = [
+            ["Propietario", fullName(property)],
+            ["Tipo", `${label(property.propertyType)} · ${availabilityLabel(property)}`],
+            ["Equipamiento", equipmentLabel(property.equipment)],
+            ["Disponibilidad", urgencyLabel(property.availabilityNeed, "property")],
+            ["Calle o barriada", property.streetOrNeighborhood || "No especificada"],
+            ["Registrada por", `${label(property.registeredBy || "propietario")} · ${property.acceptsBroker ? "Acepta broker" : "Sin broker"}`]
+          ];
+          const hasSale = Number(property.salePrice) > 0;
+          const hasRent = Number(property.rentalPrice) > 0;
+          if (hasSale && hasRent) fields.push(["Alquiler", money.format(property.rentalPrice)]);
+          records.push({
+            type: "propiedad",
+            date: property.publishedAt || "",
+            title: propertyHeader(property),
+            fields,
+            amountLabel: hasSale ? "Venta" : hasRent ? "Alquiler" : "Precio",
+            amount: hasSale
+              ? money.format(property.salePrice)
+              : hasRent
+                ? money.format(property.rentalPrice)
+                : "No definido"
+          });
+        });
+        searches.forEach((search) => {
+          records.push({
+            type: "busqueda",
+            date: search.publishedAt || "",
+            title: searchHeader(search),
+            fields: [
+              ["Solicitante", `${fullName(search)} · ${label(search.role)}`],
+              ["Zona", `${search.desiredZone}, ${search.province}`],
+              ["Metraje mínimo", `${Number(search.minSizeM2 || 0).toLocaleString("es-PA")} m2`],
+              ["Urgencia", urgencyLabel(search.urgency)]
+            ],
+            amountLabel: "Presupuesto máx.",
+            amount: money.format(search.maxBudget)
+          });
+        });
+        vehicleOffers.forEach((offer) => {
+          records.push({
+            type: "vehiculo",
+            date: offer.publishedAt || "",
+            title: vehicleOfferTitle(offer),
+            fields: [
+              ["Vendedor", `${fullName(offer)} · ${vehicleSourceLabel(offer)}`],
+              ["Año / km", `${offer.year} · ${Number(offer.mileage || 0).toLocaleString("es-PA")} km`],
+              ["Ubicación", `${offer.zone}, ${offer.province}`],
+              ["Estado", vehicleLabel(offer.status)]
+            ],
+            amountLabel: "Precio",
+            amount: vehiclePriceSummary(offer)
+          });
+        });
+        vehicleSearches.forEach((search) => {
+          records.push({
+            type: "busqueda-vehiculo",
+            date: search.publishedAt || "",
+            title: vehicleSearchTitle(search),
+            fields: [
+              ["Solicitante", `${fullName(search)} · ${vehicleApplicantLabel(search)}`],
+              ["Año mínimo", `${search.minYear || "Indiferente"} · Km máx. ${Number(search.maxMileage || 0).toLocaleString("es-PA")}`],
+              ["Zona", `${search.zone}, ${search.province}`],
+              ["Urgencia", vehicleLabel(search.urgency)]
+            ],
+            amountLabel: "Presupuesto máx.",
+            amount: money.format(search.maxBudget)
+          });
+        });
+        return records;
+      }
+
+      function renderAdminRecords() {
+        const target = document.getElementById("adminRecords");
+        const chipsTarget = document.getElementById("adminRecordChips");
+        if (!target || !chipsTarget) return;
+
+        const records = allAdminRecords();
+
+        const chipDefs = [{ id: "todos", label: "Todos" }].concat(
+          Object.keys(adminRecordTypes).map((key) => ({ id: key, label: adminRecordTypes[key].chip }))
+        );
+        chipsTarget.innerHTML = chipDefs
+          .map((chip) => {
+            const count = chip.id === "todos" ? records.length : records.filter((r) => r.type === chip.id).length;
+            return `
+              <button class="admin-chip ${chip.id === adminRecordFilter ? "active" : ""}" type="button" onclick="setAdminRecordFilter('${chip.id}')">
+                ${chip.label}
+                <span class="chip-count">${count}</span>
+              </button>
+            `;
+          })
+          .join("");
+
+        const groupSeg = document.getElementById("adminRecordGroupSeg");
+        if (groupSeg) {
+          const groupIds = ["dia", "mes", "ano"];
+          Array.from(groupSeg.querySelectorAll("button")).forEach((button, index) => {
+            button.classList.toggle("active", groupIds[index] === adminRecordGroup);
+          });
         }
 
-        const searchesTarget = document.getElementById("adminSearches");
-        if (searchesTarget) {
-          searchesTarget.innerHTML = adminVerticalFilter === "vehicle"
-            ? '<article class="card empty"><h3>Filtro vehículos activo</h3><p>Las búsquedas de inmuebles quedan ocultas mientras revisas vehículos.</p></article>'
-            : renderAdminDateGroups(
-            searches,
-            (search) => `
-                <article class="data-row">
-                  <strong>${searchHeader(search)}</strong>
-                  <span>Solicitante: ${fullName(search)} · ${label(search.role)}</span>
-                  <span>Clasificación: ${classificationLabel(classifyInterested(search))}</span>
-                  <span>${label(search.role)} · Busca ${label(search.desiredOperation)} ${label(search.propertyType)}</span>
-                  <span>Equipamiento deseado: ${equipmentLabel(search.desiredEquipment || "indiferente")}</span>
-                  <span>Urgencia: ${urgencyLabel(search.urgency)}</span>
-                  ${search.role === "broker" ? `<span>Cliente final: ${finalClientName(search)}</span>` : ""}
-                  <span>${search.desiredZone}, ${search.province} · Presupuesto máximo: ${money.format(search.maxBudget)}</span>
-                  <span>Calle o barriada deseada: ${search.desiredStreetOrNeighborhood || "No especificada"}</span>
-                  <span>Publicado: ${publicationLabel(search.publishedAt)}</span>
-                  <span>Metraje mínimo: ${search.minSizeM2} m2 · Uso: ${label(search.useCase)}</span>
-                </article>
-              `,
-            "No hay búsquedas registradas todavía.",
-            "searches"
-          );
+        const visible = records
+          .filter((record) => adminRecordFilter === "todos" || record.type === adminRecordFilter)
+          .sort((a, b) => String(b.date).localeCompare(String(a.date)));
+
+        if (!visible.length) {
+          target.innerHTML = `
+            <div class="admin-empty-state">
+              <p>Sin registros</p>
+              <p>No hay registros que coincidan con este filtro.</p>
+            </div>
+          `;
+          return;
         }
 
-        const vehicleOffersTarget = document.getElementById("adminVehicleOffers");
-        if (vehicleOffersTarget) {
-          vehicleOffersTarget.innerHTML = adminVerticalFilter === "property"
-            ? '<article class="card empty"><h3>Filtro inmuebles activo</h3><p>Los vehículos quedan ocultos mientras revisas inmuebles.</p></article>'
-            : renderAdminDateGroups(
-                vehicleOffers,
-                (offer) => `
-                  <article class="data-row">
-                    <strong>${vehicleOfferTitle(offer)}</strong>
-                    <span>Ofertante: ${fullName(offer)} · ${vehicleSourceLabel(offer)}</span>
-                    <span>${vehiclePriceSummary(offer)}</span>
-                    <span>${offer.year} · ${Number(offer.mileage || 0).toLocaleString("es-PA")} km · ${vehicleLabel(offer.transmission)} · ${vehicleLabel(offer.fuel)}</span>
-                    <span>${offer.zone}, ${offer.province} · Estado: ${vehicleLabel(offer.status)}</span>
-                    <span>Color: ${offer.color || "No especificado"}</span>
-                    <span>Publicado: ${publicationLabel(offer.publishedAt)}</span>
-                  </article>
-                `,
-                "No hay vehículos publicados todavía.",
-                "vehicle-offers"
-              );
-        }
+        const groupsMap = new Map();
+        visible.forEach((record) => {
+          const date = new Date(record.date);
+          const valid = !Number.isNaN(date.getTime());
+          let key = "sin-fecha";
+          let groupLabel = "Sin fecha";
+          if (valid) {
+            const y = date.getFullYear();
+            const m = date.getMonth();
+            const d = date.getDate();
+            if (adminRecordGroup === "dia") {
+              key = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+              groupLabel = `${String(d).padStart(2, "0")} ${adminMonthShort[m]} ${y}`;
+            } else if (adminRecordGroup === "mes") {
+              key = `${y}-${String(m + 1).padStart(2, "0")}`;
+              groupLabel = `${adminMonthLong[m]} de ${y}`;
+            } else {
+              key = String(y);
+              groupLabel = `Año ${y}`;
+            }
+          }
+          if (!groupsMap.has(key)) groupsMap.set(key, { label: groupLabel, items: [] });
+          groupsMap.get(key).items.push(record);
+        });
 
-        const vehicleSearchesTarget = document.getElementById("adminVehicleSearches");
-        if (vehicleSearchesTarget) {
-          vehicleSearchesTarget.innerHTML = adminVerticalFilter === "property"
-            ? '<article class="card empty"><h3>Filtro inmuebles activo</h3><p>Las búsquedas de vehículos quedan ocultas mientras revisas inmuebles.</p></article>'
-            : renderAdminDateGroups(
-                vehicleSearches,
-                (search) => `
-                  <article class="data-row">
-                    <strong>${vehicleSearchTitle(search)}</strong>
-                    <span>Solicitante: ${fullName(search)} · ${vehicleApplicantLabel(search)}</span>
-                    <span>Presupuesto máximo: ${money.format(search.maxBudget)}</span>
-                    <span>Año mínimo: ${search.minYear || "No definido"} · Km máximo: ${Number(search.maxMileage || 0).toLocaleString("es-PA")}</span>
-                    <span>${search.zone}, ${search.province} · Urgencia: ${vehicleLabel(search.urgency)}</span>
-                    <span>Publicado: ${publicationLabel(search.publishedAt)}</span>
-                  </article>
-                `,
-                "No hay búsquedas de vehículos todavía.",
-                "vehicle-searches"
-              );
-        }
+        target.innerHTML = Array.from(groupsMap.values())
+          .map(
+            (group) => `
+              <div class="admin-date-group">
+                <div class="admin-date-head">
+                  <strong>${group.label}</strong>
+                  <span class="admin-date-count">${group.items.length} registro${group.items.length === 1 ? "" : "s"}</span>
+                  <div class="admin-date-line"></div>
+                </div>
+                <div class="admin-record-cards">
+                  ${group.items
+                    .map(
+                      (record) => `
+                        <article class="admin-record-card">
+                          <div class="admin-record-top">
+                            <span class="admin-badge t-${record.type}">${adminRecordTypes[record.type].badge}</span>
+                            <span class="admin-record-ago">${adminTimeAgo(record.date)}</span>
+                          </div>
+                          <h3>${escapeHtml(record.title)}</h3>
+                          <div class="admin-record-fields">
+                            ${record.fields
+                              .map(([l, v]) => `<div><span>${l}</span><span>${escapeHtml(String(v))}</span></div>`)
+                              .join("")}
+                          </div>
+                          <div class="admin-record-foot">
+                            <span>${record.amountLabel}</span>
+                            <strong>${record.amount}</strong>
+                          </div>
+                        </article>
+                      `
+                    )
+                    .join("")}
+                </div>
+              </div>
+            `
+          )
+          .join("");
       }
 
       function addDemoBalance(amount) {
@@ -11887,11 +13187,95 @@
         render();
       }
 
+      const demoDatabaseKeys = [
+        "propertyYaProperties",
+        "propertyYaSearches",
+        "propertyYaVehicleOffers",
+        "propertyYaVehicleSearches",
+        "propertyYaOwnerCredits",
+        "propertyYaUnlockedContacts",
+        "propertyYaCreditPurchases",
+        "propertyYaOwnerBalance",
+        "propertyYaMachUnlocks",
+        "propertyYaContactRequests",
+        "propertyYaValidationReports",
+        "propertyYaBlockedUsers",
+        "propertyYaBalanceAdds",
+        "propertyYaAdminCreditAdjustments",
+        "propertyYaSelectedAdminClientEmail",
+        "propertyYaAdminVerticalFilter",
+        "propertyYaUserDashboardVerticalFilter",
+        "propertyYaCurrentUserEmail",
+        "propertyYaUserAccounts"
+      ];
+
+      let adminCleanStep = "idle";
+
+      function renderAdminMaintenance() {
+        const target = document.getElementById("adminMaintenanceActions");
+        if (!target) return;
+        const hasBackup = Boolean(localStorage.getItem("propertyYaDemoBackup"));
+        const databaseEmpty =
+          !properties.length && !searches.length && !vehicleOffers.length && !vehicleSearches.length;
+        const step = adminCleanStep === "idle" && hasBackup && databaseEmpty ? "done" : adminCleanStep;
+        if (step === "confirm") {
+          target.innerHTML = `
+            <div class="admin-clean-row">
+              <button class="admin-clean-confirm" type="button" onclick="confirmDemoClean()">Confirmar limpieza</button>
+              <button class="admin-clean-cancel" type="button" onclick="cancelDemoClean()">Cancelar</button>
+            </div>
+          `;
+        } else if (step === "done") {
+          target.innerHTML = `
+            <div class="admin-clean-row">
+              <span class="admin-clean-done">Datos de demo eliminados.</span>
+              ${hasBackup ? '<button class="admin-clean-restore" type="button" onclick="restoreDemoDatabase()">Restaurar demo</button>' : ""}
+            </div>
+          `;
+        } else {
+          target.innerHTML =
+            '<button class="admin-clean-btn" type="button" onclick="startDemoClean()">Limpiar BD demo</button>';
+        }
+      }
+
+      function startDemoClean() {
+        adminCleanStep = "confirm";
+        renderAdminMaintenance();
+      }
+
+      function cancelDemoClean() {
+        adminCleanStep = "idle";
+        renderAdminMaintenance();
+      }
+
+      function confirmDemoClean() {
+        const backup = {};
+        demoDatabaseKeys.forEach((key) => {
+          const value = localStorage.getItem(key);
+          if (value !== null) backup[key] = value;
+        });
+        localStorage.setItem("propertyYaDemoBackup", JSON.stringify(backup));
+        adminCleanStep = "done";
+        clearDemoDatabase();
+      }
+
+      function restoreDemoDatabase() {
+        const raw = localStorage.getItem("propertyYaDemoBackup");
+        if (!raw) return;
+        let backup = {};
+        try {
+          backup = JSON.parse(raw);
+        } catch (error) {
+          localStorage.removeItem("propertyYaDemoBackup");
+          return;
+        }
+        demoDatabaseKeys.forEach((key) => localStorage.removeItem(key));
+        Object.entries(backup).forEach(([key, value]) => localStorage.setItem(key, value));
+        localStorage.removeItem("propertyYaDemoBackup");
+        window.location.reload();
+      }
+
       function clearDemoDatabase() {
-        const confirmed = window.confirm(
-          "¿Seguro que quieres limpiar la BD demo? Se eliminarán propiedades, solicitudes, saldo e historial guardados en este navegador."
-        );
-        if (!confirmed) return;
         properties = [];
         searches = [];
         matches = [];
@@ -11942,7 +13326,7 @@
         ].forEach((key) => localStorage.removeItem(key));
         save();
         render();
-        showTab("inicio");
+        renderAdminMaintenance();
       }
 
       function logoutUser() {
