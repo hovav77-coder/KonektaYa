@@ -658,10 +658,661 @@
         display: none;
       }
 
-      .results-filter-card,
-      .results-scale,
-      .results-example-action strong {
-        display: none !important;
+      .vehicle-type-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+
+      .vehicle-type-card {
+        align-items: center;
+        background: #ffffff;
+        border: 1.5px solid #dce7f4;
+        border-radius: 14px;
+        color: inherit;
+        cursor: pointer;
+        display: flex;
+        font: inherit;
+        gap: 11px;
+        padding: 13px 14px;
+        position: relative;
+        text-align: left;
+        transition:
+          border-color 150ms ease,
+          background 150ms ease;
+      }
+
+      .vehicle-type-card:hover {
+        border-color: #b6c9e2;
+      }
+
+      .vt-icon {
+        align-items: center;
+        background: #eef4fb;
+        border-radius: 11px;
+        color: var(--navy);
+        display: inline-flex;
+        flex-shrink: 0;
+        height: 40px;
+        justify-content: center;
+        width: 40px;
+      }
+
+      .vt-icon svg {
+        height: 22px;
+        width: 22px;
+      }
+
+      .vt-text {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .vt-text strong {
+        color: var(--navy);
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .vt-text span {
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+
+      .vt-check {
+        align-items: center;
+        background: var(--orange);
+        border-radius: 50%;
+        color: #ffffff;
+        display: none;
+        height: 18px;
+        justify-content: center;
+        position: absolute;
+        right: 9px;
+        top: 9px;
+        width: 18px;
+      }
+
+      .vt-check svg {
+        height: 12px;
+        width: 12px;
+      }
+
+      .vehicle-type-card.vt-otro {
+        background: #fff7f2;
+        border: 1.5px dashed #e79b74;
+      }
+
+      .vehicle-type-card.vt-otro .vt-icon {
+        background: #fff0e8;
+        color: var(--orange);
+      }
+
+      .vehicle-type-card.selected {
+        background: var(--navy);
+        border: 1.5px solid var(--navy);
+      }
+
+      .vehicle-type-card.selected .vt-icon {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+      }
+
+      .vehicle-type-card.selected .vt-text strong {
+        color: #ffffff;
+      }
+
+      .vehicle-type-card.selected .vt-text span {
+        color: #b9c6da;
+      }
+
+      .vehicle-type-card.selected .vt-check {
+        display: inline-flex;
+      }
+
+      .vehicle-type-other {
+        background: #fff7f2;
+        border: 1.5px dashed #e79b74;
+        border-radius: 14px;
+        display: grid;
+        gap: 8px;
+        margin-top: 2px;
+        padding: 13px 14px;
+      }
+
+      .vehicle-type-other[hidden] {
+        display: none;
+      }
+
+      .vehicle-type-other .vto-label {
+        color: var(--orange);
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .vehicle-type-other input {
+        background: #ffffff;
+        border: 1px solid #e79b74;
+        border-radius: 10px;
+        color: var(--navy);
+        font: inherit;
+        min-height: 44px;
+        outline: none;
+        padding: 8px 14px;
+      }
+
+      .vehicle-type-other input:focus {
+        border-color: var(--orange);
+      }
+
+      .property-type-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      }
+
+      .property-type-card {
+        align-items: center;
+        background: #ffffff;
+        border: 1.5px solid #dce7f4;
+        border-radius: 14px;
+        color: inherit;
+        cursor: pointer;
+        display: flex;
+        font: inherit;
+        gap: 11px;
+        padding: 13px 14px;
+        position: relative;
+        text-align: left;
+        transition:
+          border-color 150ms ease,
+          background 150ms ease;
+      }
+
+      .property-type-card:hover {
+        border-color: #b6c9e2;
+      }
+
+      .property-type-card.selected {
+        background: var(--navy);
+        border: 1.5px solid var(--navy);
+      }
+
+      .property-type-card.selected .vt-icon {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+      }
+
+      .property-type-card.selected .vt-text strong {
+        color: #ffffff;
+      }
+
+      .property-type-card.selected .vt-text span {
+        color: #b9c6da;
+      }
+
+      .property-type-card.selected .vt-check {
+        display: inline-flex;
+      }
+
+      .qf-section {
+        padding: 0;
+      }
+
+      .qf-inner {
+        background: #16294a;
+        border-radius: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        padding: clamp(28px, 4vw, 56px);
+      }
+
+      .qf-head {
+        align-items: start;
+        display: grid;
+        gap: clamp(24px, 4vw, 56px);
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      }
+
+      .qf-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .qf-eyebrow {
+        color: #ef8e63;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .qf-copy h2 {
+        color: #ffffff;
+        font-size: clamp(28px, 3.6vw, 40px);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        line-height: 1.05;
+        margin: 0;
+      }
+
+      .qf-copy p {
+        color: #b9c6da;
+        font-size: 16px;
+        line-height: 1.6;
+        margin: 0;
+        max-width: 560px;
+      }
+
+      .qf-steps {
+        display: flex;
+        flex-direction: column;
+        padding-top: 6px;
+      }
+
+      .qf-step {
+        display: flex;
+        gap: 16px;
+      }
+
+      .qf-step-marker {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 0;
+      }
+
+      .qf-step-num {
+        align-items: center;
+        background: rgba(239, 142, 99, 0.14);
+        border: 1px solid rgba(239, 142, 99, 0.35);
+        border-radius: 999px;
+        color: #ef8e63;
+        display: flex;
+        font-size: 15px;
+        font-weight: 700;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .qf-step-line {
+        background: rgba(255, 255, 255, 0.12);
+        flex: 1;
+        margin: 4px 0;
+        min-height: 18px;
+        width: 2px;
+      }
+
+      .qf-step-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding-bottom: 16px;
+      }
+
+      .qf-step-title {
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .qf-step-text {
+        color: #93a5c0;
+        font-size: 13.5px;
+        line-height: 1.5;
+      }
+
+      .qf-levels-block {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .qf-levels-label {
+        color: #93a5c0;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .qf-levels {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+
+      .qf-level {
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 12px 16px;
+      }
+
+      .qf-level-name {
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .qf-level-pct {
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .qf-level.lvl-basico {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .qf-level.lvl-basico .qf-level-name {
+        color: #d7e0ee;
+      }
+
+      .qf-level.lvl-basico .qf-level-pct {
+        color: #8a9cb8;
+      }
+
+      .qf-level.lvl-calificado {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+      }
+
+      .qf-level.lvl-calificado .qf-level-name {
+        color: #e6ecf5;
+      }
+
+      .qf-level.lvl-calificado .qf-level-pct {
+        color: #93a5c0;
+      }
+
+      .qf-level.lvl-premium {
+        background: rgba(255, 255, 255, 0.11);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+
+      .qf-level.lvl-premium .qf-level-name {
+        color: #ffffff;
+      }
+
+      .qf-level.lvl-premium .qf-level-pct {
+        color: #a9b8d0;
+      }
+
+      .qf-level.lvl-prioritaria {
+        background: rgba(239, 142, 99, 0.14);
+        border: 1px solid rgba(239, 142, 99, 0.4);
+      }
+
+      .qf-level.lvl-prioritaria .qf-level-name {
+        color: #f5a987;
+      }
+
+      .qf-level.lvl-prioritaria .qf-level-pct {
+        color: #d98f6f;
+      }
+
+      .qf-level.lvl-exclusiva {
+        background: #c6431b;
+        border: 1px solid #c6431b;
+      }
+
+      .qf-level.lvl-exclusiva .qf-level-name {
+        color: #ffffff;
+      }
+
+      .qf-level.lvl-exclusiva .qf-level-pct {
+        color: rgba(255, 255, 255, 0.85);
+      }
+
+      .qf-examples {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      }
+
+      .qf-example {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 18px 44px rgba(6, 15, 32, 0.28);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 26px;
+      }
+
+      .qf-example-top {
+        align-items: flex-start;
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+      }
+
+      .qf-example-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .qf-example-tags {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .qf-chip {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 12.5px;
+        font-weight: 700;
+        gap: 7px;
+        padding: 6px 13px;
+      }
+
+      .qf-chip-property {
+        background: #fdf0e7;
+        color: #c6431b;
+      }
+
+      .qf-chip-vehicle {
+        background: #e7eef9;
+        color: #1f3b63;
+      }
+
+      .qf-example-label {
+        color: #8a97ac;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+      }
+
+      .qf-example-copy h3 {
+        color: #16294a;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.15;
+        margin: 0;
+      }
+
+      .qf-example-sub {
+        color: #5b6b84;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .qf-ring {
+        flex-shrink: 0;
+        height: 72px;
+        position: relative;
+        width: 72px;
+      }
+
+      .qf-ring-label {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        inset: 0;
+        justify-content: center;
+        position: absolute;
+      }
+
+      .qf-ring-score {
+        color: #16294a;
+        font-size: 17px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .qf-ring-match {
+        color: #8a97ac;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        margin-top: 2px;
+      }
+
+      .qf-stats {
+        background: #f6f8fb;
+        border: 1px solid #e9eef5;
+        border-radius: 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .qf-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        padding: 14px 16px;
+      }
+
+      .qf-stat + .qf-stat {
+        border-left: 1px solid #e9eef5;
+      }
+
+      .qf-stat span {
+        color: #8a97ac;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+      }
+
+      .qf-stat strong {
+        color: #16294a;
+        font-size: 15px;
+        font-weight: 700;
+      }
+
+      .qf-stat strong.hl {
+        color: #c6431b;
+      }
+
+      .qf-example-foot {
+        align-items: center;
+        border-top: 1px solid #edf1f7;
+        display: flex;
+        gap: 8px;
+        padding-top: 16px;
+      }
+
+      .qf-example-foot span {
+        color: #5b6b84;
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+
+      .qf-example-foot svg {
+        flex-shrink: 0;
+      }
+
+      .qf-guarantee {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        padding: clamp(22px, 3vw, 32px);
+      }
+
+      .qf-guarantee-head {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+      }
+
+      .qf-guarantee-icon {
+        align-items: center;
+        background: rgba(126, 214, 166, 0.14);
+        border-radius: 12px;
+        display: flex;
+        flex-shrink: 0;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .qf-guarantee-head h3 {
+        color: #ffffff;
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .qf-guarantee-cols {
+        display: grid;
+        gap: clamp(18px, 3vw, 40px);
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+
+      .qf-guarantee-col {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .qf-guarantee-label {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .qf-guarantee-label.yes {
+        color: #7ed6a6;
+      }
+
+      .qf-guarantee-label.no {
+        color: #93a5c0;
+      }
+
+      .qf-guarantee-item {
+        align-items: flex-start;
+        display: flex;
+        gap: 9px;
+      }
+
+      .qf-guarantee-item svg {
+        flex-shrink: 0;
+        margin-top: 3px;
+      }
+
+      .qf-guarantee-item span {
+        color: #c7d2e4;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .qf-guarantee-item.no span {
+        color: #93a5c0;
       }
 
       .pay-amounts {
@@ -6494,17 +7145,11 @@
                     <option value="broker">Broker</option>
                   </select>
                 </label>
-                <label class="field">
-                  Tipo
-                  <select name="propertyType">
-                    <option value="apartamento">Apartamento</option>
-                    <option value="casa">Casa</option>
-                    <option value="local">Local</option>
-                    <option value="oficina">Oficina</option>
-                    <option value="galera">Galera</option>
-                    <option value="terreno">Terreno</option>
-                  </select>
-                </label>
+                <div class="field full">
+                  Tipo de propiedad
+                  <input type="hidden" name="propertyType" value="apartamento" />
+                  <div class="property-type-grid" data-property-type-grid="property"></div>
+                </div>
                 <label class="field">
                   Disponible para
                   <select name="operation">
@@ -6621,17 +7266,11 @@
                     <option value="venta">Comprar</option>
                   </select>
                 </label>
-                <label class="field">
-                  Tipo buscado
-                  <select name="propertyType">
-                    <option value="apartamento">Apartamento</option>
-                    <option value="casa">Casa</option>
-                    <option value="local">Local</option>
-                    <option value="oficina">Oficina</option>
-                    <option value="galera">Galera</option>
-                    <option value="terreno">Terreno</option>
-                  </select>
-                </label>
+                <div class="field full">
+                  Tipo de propiedad buscada
+                  <input type="hidden" name="propertyType" value="apartamento" />
+                  <div class="property-type-grid" data-property-type-grid="search"></div>
+                </div>
                 <label class="field">
                   Provincia
                   <select name="province" data-location-province="search" required></select>
@@ -6696,13 +7335,6 @@
                   </select>
                 </label>
                 <label class="field full">Comentarios<textarea name="comments"></textarea></label>
-                <label class="field full declaration-field">
-                  <input name="declarationAccepted" type="checkbox" required />
-                  <span>
-                    Declaro que estoy buscando para mí o para mi empresa, y que no actúo como
-                    broker, corredor, asesor o intermediario.
-                  </span>
-                </label>
               </div>
               <div class="form-error" data-form-error></div>
               <div class="account-create-box" data-account-box>
@@ -6767,17 +7399,11 @@
                     <option value="venta">Comprar</option>
                   </select>
                 </label>
-                <label class="field">
-                  Tipo buscado
-                  <select name="propertyType">
-                    <option value="apartamento">Apartamento</option>
-                    <option value="casa">Casa</option>
-                    <option value="local">Local</option>
-                    <option value="oficina">Oficina</option>
-                    <option value="galera">Galera</option>
-                    <option value="terreno">Terreno</option>
-                  </select>
-                </label>
+                <div class="field full">
+                  Tipo de propiedad buscada
+                  <input type="hidden" name="propertyType" value="apartamento" />
+                  <div class="property-type-grid" data-property-type-grid="broker"></div>
+                </div>
                 <label class="field">
                   Provincia
                   <select name="province" data-location-province="broker" required></select>
@@ -6882,19 +7508,15 @@
                     <option value="dealer">Dealer / Agencia</option>
                   </select>
                 </label>
-                <label class="field full">
-                  Tipo
-                  <select name="vehicleType">
-                    <option value="carro">Carro</option>
-                    <option value="suv">SUV</option>
-                    <option value="pickup">Pickup</option>
-                    <option value="moto">Moto</option>
-                    <option value="camion">Camión</option>
-                    <option value="bus">Bus</option>
-                    <option value="busito">Busito</option>
-                    <option value="flota">Flota</option>
-                  </select>
-                </label>
+                <div class="field full">
+                  Tipo de vehículo
+                  <input type="hidden" name="vehicleType" value="carro" />
+                  <div class="vehicle-type-grid" data-vehicle-type-grid="vehicleOffer"></div>
+                  <label class="vehicle-type-other" data-vehicle-type-other="vehicleOffer" hidden>
+                    <span class="vto-label">Especifica el tipo de vehículo</span>
+                    <input name="vehicleTypeOther" placeholder="Ej. cuatriciclo, van de carga, grúa…" />
+                  </label>
+                </div>
                 <label class="field">
                   Marca
                   <select name="brand" data-brand-select="vehicleOffer" required></select>
@@ -6953,7 +7575,6 @@
                   <select name="color" data-color-select="vehicleOffer"></select>
                 </label>
                 <label class="field" data-color-other-field="vehicleOffer" hidden>Especifica el color<input name="colorOther" /></label>
-                <label class="field full">Fotos opcionales<input name="photos" type="file" multiple accept="image/*" /></label>
                 <label class="field full">Comentarios<textarea name="vehicleComments"></textarea></label>
               </div>
               <div class="form-error" data-form-error></div>
@@ -7004,19 +7625,15 @@
                     <option value="broker">Broker / Intermediario</option>
                   </select>
                 </label>
-                <label class="field">
+                <div class="field full">
                   Tipo de vehículo buscado
-                  <select name="vehicleType">
-                    <option value="carro">Carro</option>
-                    <option value="suv">SUV</option>
-                    <option value="pickup">Pickup</option>
-                    <option value="moto">Moto</option>
-                    <option value="camion">Camión</option>
-                    <option value="bus">Bus</option>
-                    <option value="busito">Busito</option>
-                    <option value="flota">Flota</option>
-                  </select>
-                </label>
+                  <input type="hidden" name="vehicleType" value="carro" />
+                  <div class="vehicle-type-grid" data-vehicle-type-grid="vehicleSearch"></div>
+                  <label class="vehicle-type-other" data-vehicle-type-other="vehicleSearch" hidden>
+                    <span class="vto-label">Especifica el tipo de vehículo</span>
+                    <input name="vehicleTypeOther" placeholder="Ej. cuatriciclo, van de carga, grúa…" />
+                  </label>
+                </div>
                 <label class="field">
                   Marca deseada
                   <select name="desiredBrand" data-brand-select="vehicleSearch" required></select>
@@ -7080,10 +7697,6 @@
                   </select>
                 </label>
                 <label class="field full">Comentarios<textarea name="vehicleSearchComments"></textarea></label>
-                <label class="field full declaration-field">
-                  <input name="declarationAccepted" type="checkbox" required />
-                  <span>Declaro que no incluyo datos de contacto en campos libres.</span>
-                </label>
               </div>
               <div class="form-error" data-form-error></div>
               <div class="account-create-box" data-account-box>
@@ -7104,266 +7717,173 @@
       </section>
 
       <section class="container tab-panel" id="matches">
-        <section class="section results-showcase">
-          <div class="results-hero-panel">
-            <div class="results-copy">
-              <span class="eyebrow">Resultados inteligentes</span>
-              <h2>Resultados calificados</h2>
-              <p class="intro">
-                Nuestra IA cruza ubicación, precio, urgencia y características para conectarte solo con
-                personas realmente interesadas. Tu contacto permanece protegido hasta que decides conectar.
-                Publicar y buscar es gratis, sin comisión por cierre.
-              </p>
-            </div>
-            <aside class="results-filter-card" aria-label="Filtro de resultados por categoría">
-              <span class="eyebrow">Categoría</span>
-              <h3>Escala para inmuebles y vehículos</h3>
-              <div class="results-segment">
-                <button class="active" type="button" data-results-filter="all">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="2" /></svg>
-                  Todos
-                </button>
-                <button type="button" data-results-filter="property">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v9H6v-7h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-                  Inmuebles
-                </button>
-                <button type="button" data-results-filter="vehicle">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h14l-2-5H7zM7 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></svg>
-                  Vehículos
-                </button>
+        <section class="qf-section">
+          <div class="qf-inner">
+            <div class="qf-head">
+              <div class="qf-copy">
+                <span class="qf-eyebrow">Resultados inteligentes</span>
+                <h2>Resultados calificados, no listas infinitas.</h2>
+                <p>
+                  Nuestra IA cruza ubicación, precio, urgencia y características para conectarte solo con
+                  personas realmente interesadas — sea un inmueble o un vehículo. Tu contacto permanece
+                  protegido hasta que decides conectar. Publicar y buscar es gratis, sin comisión por cierre.
+                </p>
               </div>
-              <div class="results-quick-stats">
-                <div class="results-stat"><span>Desde</span><strong>$5</strong></div>
-                <div class="results-stat"><span>Hasta</span><strong>$100</strong></div>
-                <div class="results-stat"><span>Mínimo</span><strong>70%</strong></div>
-              </div>
-            </aside>
-          </div>
-
-          <div class="results-concept" style="display:grid;gap:18px;margin:4px 0 8px;">
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;">
-              <div style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:16px 18px;">
-                <strong style="display:block;color:var(--navy);font-size:16px;font-weight:900;">1. Publica o busca</strong>
-                <span style="color:var(--muted);font-size:13.5px;">Gratis, en minutos.</span>
-              </div>
-              <div style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:16px 18px;">
-                <strong style="display:block;color:var(--navy);font-size:16px;font-weight:900;">2. La IA conecta</strong>
-                <span style="color:var(--muted);font-size:13.5px;">Encuentra coincidencias reales.</span>
-              </div>
-              <div style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:16px 18px;">
-                <strong style="display:block;color:var(--navy);font-size:16px;font-weight:900;">3. Contacto protegido</strong>
-                <span style="color:var(--muted);font-size:13.5px;">Se libera cuando tú decides.</span>
-              </div>
-            </div>
-            <div>
-              <span class="eyebrow">Niveles de resultado según compatibilidad</span>
-              <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
-                <span class="pill mach-standard">Básico · 70%+</span>
-                <span class="pill mach-qualified">Calificado · 80%+</span>
-                <span class="pill mach-premium">Premium · 90%+</span>
-                <span class="pill mach-hot">Prioritaria · 95%+</span>
-                <span class="pill mach-exclusive">Exclusiva · 100%</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="opportunity-table results-scale" aria-label="Niveles de resultados">
-            <div class="opportunity-table-head" aria-hidden="true">
-              <span>Nivel</span>
-              <span>Compatibilidad</span>
-              <span>Cuándo aparece</span>
-              <span>Desbloqueo</span>
-            </div>
-            <article class="opportunity-row" data-results-kind="all">
-              <div class="opportunity-level">
-                <span class="pill mach-standard">Resultado Básico</span>
-                <strong>Validación inicial</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>70% - 74%</strong>
-                <span class="opportunity-score-bar"><i style="width: 38%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Coincidencia básica</strong>
-                <span>Zona compatible, pero requiere mayor revisión antes de contactar.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$5</strong></div>
-            </article>
-            <article class="opportunity-row" data-results-kind="all">
-              <div class="opportunity-level">
-                <span class="pill mach-standard">Resultado Básico+</span>
-                <strong>Señales adicionales</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>75% - 79%</strong>
-                <span class="opportunity-score-bar"><i style="width: 48%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Coincidencia inicial mejorada</strong>
-                <span>La oferta y la búsqueda tienen más de una condición alineada.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$7</strong></div>
-            </article>
-            <article class="opportunity-row" data-results-kind="all">
-              <div class="opportunity-level">
-                <span class="pill mach-qualified">Resultado Calificado</span>
-                <strong>Buen potencial</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>80% - 84%</strong>
-                <span class="opportunity-score-bar"><i style="width: 60%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Oferta y búsqueda alineadas</strong>
-                <span>Zona, tipo y presupuesto tienen compatibilidad razonable.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$10</strong></div>
-            </article>
-            <article class="opportunity-row" data-results-kind="all">
-              <div class="opportunity-level">
-                <span class="pill mach-qualified">Resultado Calificado+</span>
-                <strong>Compatibilidad alta</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>85% - 89%</strong>
-                <span class="opportunity-score-bar"><i style="width: 70%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Buena intención</strong>
-                <span>Características, precio y necesidad tienen buena relación.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$15</strong></div>
-            </article>
-            <article class="opportunity-row" data-results-kind="property">
-              <div class="opportunity-level">
-                <span class="pill mach-premium">Resultado Premium</span>
-                <strong>Muy compatible</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>90% - 92%</strong>
-                <span class="opportunity-score-bar"><i style="width: 82%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Oportunidad inmobiliaria de alta calidad</strong>
-                <span>Zona, PH, presupuesto y metraje tienen muy buena relación.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$25</strong></div>
-            </article>
-            <article class="opportunity-row" data-results-kind="vehicle">
-              <div class="opportunity-level">
-                <span class="pill mach-premium">Resultado Premium+</span>
-                <strong>Alta calidad</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>93% - 95%</strong>
-                <span class="opportunity-score-bar"><i style="width: 88%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Vehículo muy alineado</strong>
-                <span>Marca, modelo, año, precio y kilometraje coinciden con la búsqueda.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$35</strong></div>
-            </article>
-            <article class="opportunity-row featured" data-results-kind="all">
-              <div class="opportunity-level">
-                <span class="pill mach-hot">Oportunidad Prioritaria</span>
-                <strong>Necesidad activa</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>96% - 98%</strong>
-                <span class="opportunity-score-bar"><i style="width: 94%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Contacto con alta probabilidad</strong>
-                <span>Cliente final, urgencia clara y compatibilidad muy alta.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$50</strong></div>
-            </article>
-            <article class="opportunity-row featured" data-results-kind="all">
-              <div class="opportunity-level">
-                <span class="pill mach-hot">Oportunidad Prioritaria+</span>
-                <strong>Muy alta intención</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>99%</strong>
-                <span class="opportunity-score-bar"><i style="width: 98%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Contacto casi exacto</strong>
-                <span>Compatibilidad casi total con necesidad clara.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$75</strong></div>
-            </article>
-            <article class="opportunity-row featured" data-results-kind="all">
-              <div class="opportunity-level">
-                <span class="pill mach-exclusive">Oportunidad Exclusiva</span>
-                <strong>Máximo valor</strong>
-              </div>
-              <div class="opportunity-range">
-                <strong>100%</strong>
-                <span class="opportunity-score-bar"><i style="width: 100%"></i></span>
-              </div>
-              <div class="opportunity-when">
-                <strong>Coincidencia exacta y exclusiva</strong>
-                <span>Cliente final con necesidad inmediata y oportunidad no desbloqueada.</span>
-              </div>
-              <div class="opportunity-cost"><span>Desbloquear</span><strong>$100</strong></div>
-            </article>
-          </div>
-
-          <div class="results-examples" aria-label="Ejemplos de resultados calificados">
-            <article class="results-example-card" data-results-kind="property">
-              <div class="results-example-top">
-                <div class="results-example-title">
-                  <span class="pill mach-premium">Ejemplo inmueble</span>
-                  <strong>Apartamento en San Francisco</strong>
-                  <span>PH Vista del Sol · cliente final</span>
+              <div class="qf-steps">
+                <div class="qf-step">
+                  <div class="qf-step-marker">
+                    <span class="qf-step-num">1</span>
+                    <span class="qf-step-line"></span>
+                  </div>
+                  <div class="qf-step-body">
+                    <span class="qf-step-title">Publica o busca</span>
+                    <span class="qf-step-text">Gratis, en minutos. Inmuebles y vehículos.</span>
+                  </div>
                 </div>
-                <span class="results-example-score">92%</span>
-              </div>
-              <div class="results-mini-grid">
-                <div class="results-mini"><span>Busca</span><strong>Alquiler</strong></div>
-                <div class="results-mini"><span>Presupuesto</span><strong>USD 2,100</strong></div>
-                <div class="results-mini"><span>Nivel</span><strong>Premium</strong></div>
-              </div>
-              <div class="results-example-action">
-                <span>Contacto protegido hasta desbloquear.</span>
-                <strong>$25</strong>
-              </div>
-            </article>
-
-            <article class="results-example-card" data-results-kind="vehicle">
-              <div class="results-example-top">
-                <div class="results-example-title">
-                  <span class="pill mach-premium">Ejemplo vehículo</span>
-                  <strong>Toyota Prado 2021</strong>
-                  <span>SUV · 42,000 km · Panamá</span>
+                <div class="qf-step">
+                  <div class="qf-step-marker">
+                    <span class="qf-step-num">2</span>
+                    <span class="qf-step-line"></span>
+                  </div>
+                  <div class="qf-step-body">
+                    <span class="qf-step-title">La IA conecta</span>
+                    <span class="qf-step-text">Encuentra coincidencias reales según compatibilidad.</span>
+                  </div>
                 </div>
-                <span class="results-example-score">93%</span>
+                <div class="qf-step">
+                  <div class="qf-step-marker">
+                    <span class="qf-step-num">3</span>
+                  </div>
+                  <div class="qf-step-body">
+                    <span class="qf-step-title">Contacto protegido</span>
+                    <span class="qf-step-text">Se libera solo cuando tú decides.</span>
+                  </div>
+                </div>
               </div>
-              <div class="results-mini-grid">
-                <div class="results-mini"><span>Busca</span><strong>SUV Toyota</strong></div>
-                <div class="results-mini"><span>Presupuesto</span><strong>USD 35,000</strong></div>
-                <div class="results-mini"><span>Nivel</span><strong>Premium+</strong></div>
-              </div>
-              <div class="results-example-action">
-                <span>Contacto protegido hasta desbloquear.</span>
-                <strong>$35</strong>
-              </div>
-            </article>
-          </div>
+            </div>
 
-          <div class="guarantee-box">
-            <strong>Garantía KonektaYa</strong>
-            <span>
-              Si el contacto desbloqueado tiene teléfono inválido, email inválido, identidad falsa
-              o se presenta como cliente final pero resulta ser broker/intermediario, se devuelve
-              el crédito utilizado.
-            </span>
-            <span>
-              No aplica si el interesado no concreta la transacción, cambia de opinión, no le gusta
-              la propiedad, ya consiguió otra propiedad o el dueño decide no avanzar.
-            </span>
+            <div class="qf-levels-block">
+              <span class="qf-levels-label">Niveles de resultado según compatibilidad</span>
+              <div class="qf-levels">
+                <div class="qf-level lvl-basico">
+                  <span class="qf-level-name">Básico</span>
+                  <span class="qf-level-pct">70%+ compatibilidad</span>
+                </div>
+                <div class="qf-level lvl-calificado">
+                  <span class="qf-level-name">Calificado</span>
+                  <span class="qf-level-pct">80%+ compatibilidad</span>
+                </div>
+                <div class="qf-level lvl-premium">
+                  <span class="qf-level-name">Premium</span>
+                  <span class="qf-level-pct">90%+ compatibilidad</span>
+                </div>
+                <div class="qf-level lvl-prioritaria">
+                  <span class="qf-level-name">Prioritaria</span>
+                  <span class="qf-level-pct">95%+ compatibilidad</span>
+                </div>
+                <div class="qf-level lvl-exclusiva">
+                  <span class="qf-level-name">Exclusiva</span>
+                  <span class="qf-level-pct">100% compatibilidad</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="qf-examples">
+              <article class="qf-example">
+                <div class="qf-example-top">
+                  <div class="qf-example-copy">
+                    <div class="qf-example-tags">
+                      <span class="qf-chip qf-chip-property">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5M5 9.5V21h14V9.5M9 21v-6h6v6"></path></svg>
+                        Inmueble
+                      </span>
+                      <span class="qf-example-label">Ejemplo</span>
+                    </div>
+                    <h3>Apartamento en San Francisco</h3>
+                    <span class="qf-example-sub">PH Vista del Sol · Cliente final</span>
+                  </div>
+                  <div class="qf-ring">
+                    <svg width="72" height="72" viewBox="0 0 72 72">
+                      <circle cx="36" cy="36" r="30" fill="none" stroke="#edf1f7" stroke-width="6"></circle>
+                      <circle cx="36" cy="36" r="30" fill="none" stroke="#c6431b" stroke-width="6" stroke-linecap="round" stroke-dasharray="173.4 188.5" transform="rotate(-90 36 36)"></circle>
+                    </svg>
+                    <div class="qf-ring-label">
+                      <span class="qf-ring-score">92%</span>
+                      <span class="qf-ring-match">MATCH</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="qf-stats">
+                  <div class="qf-stat"><span>BUSCA</span><strong>Alquiler</strong></div>
+                  <div class="qf-stat"><span>PRESUPUESTO</span><strong>USD 2,100</strong></div>
+                  <div class="qf-stat"><span>NIVEL</span><strong class="hl">Premium</strong></div>
+                </div>
+                <div class="qf-example-foot">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5b6b84" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0v4M5 11h14v10H5zM12 15v3"></path></svg>
+                  <span>Contacto protegido hasta desbloquear</span>
+                </div>
+              </article>
+
+              <article class="qf-example">
+                <div class="qf-example-top">
+                  <div class="qf-example-copy">
+                    <div class="qf-example-tags">
+                      <span class="qf-chip qf-chip-vehicle">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.6-4.2A2 2 0 0 1 8.5 5.5h7a2 2 0 0 1 1.9 1.3L19 11M5 11h14M5 11a2 2 0 0 0-2 2v3.5h2M19 11a2 2 0 0 1 2 2v3.5h-2M5 16.5V19h2.5v-2.5M16.5 16.5V19H19v-2.5M5 16.5h14M8 13.8h.01M16 13.8h.01"></path></svg>
+                        Vehículo
+                      </span>
+                      <span class="qf-example-label">Ejemplo</span>
+                    </div>
+                    <h3>Toyota Prado 2021</h3>
+                    <span class="qf-example-sub">SUV · 42,000 km · Panamá</span>
+                  </div>
+                  <div class="qf-ring">
+                    <svg width="72" height="72" viewBox="0 0 72 72">
+                      <circle cx="36" cy="36" r="30" fill="none" stroke="#edf1f7" stroke-width="6"></circle>
+                      <circle cx="36" cy="36" r="30" fill="none" stroke="#c6431b" stroke-width="6" stroke-linecap="round" stroke-dasharray="175.3 188.5" transform="rotate(-90 36 36)"></circle>
+                    </svg>
+                    <div class="qf-ring-label">
+                      <span class="qf-ring-score">93%</span>
+                      <span class="qf-ring-match">MATCH</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="qf-stats">
+                  <div class="qf-stat"><span>BUSCA</span><strong>SUV Toyota</strong></div>
+                  <div class="qf-stat"><span>PRESUPUESTO</span><strong>USD 35,000</strong></div>
+                  <div class="qf-stat"><span>NIVEL</span><strong class="hl">Premium+</strong></div>
+                </div>
+                <div class="qf-example-foot">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5b6b84" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0v4M5 11h14v10H5zM12 15v3"></path></svg>
+                  <span>Contacto protegido hasta desbloquear</span>
+                </div>
+              </article>
+            </div>
+
+            <div class="qf-guarantee">
+              <div class="qf-guarantee-head">
+                <span class="qf-guarantee-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7ed6a6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6zM9 12l2 2 4-4"></path></svg>
+                </span>
+                <h3>Garantía KonektaYa</h3>
+              </div>
+              <div class="qf-guarantee-cols">
+                <div class="qf-guarantee-col">
+                  <span class="qf-guarantee-label yes">Te devolvemos el crédito si</span>
+                  <div class="qf-guarantee-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ed6a6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"></path></svg><span>El teléfono del contacto es inválido.</span></div>
+                  <div class="qf-guarantee-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ed6a6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"></path></svg><span>El email del contacto es inválido.</span></div>
+                  <div class="qf-guarantee-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ed6a6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"></path></svg><span>La identidad resulta ser falsa.</span></div>
+                  <div class="qf-guarantee-item"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7ed6a6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"></path></svg><span>Se presenta como cliente final pero es broker o intermediario.</span></div>
+                </div>
+                <div class="qf-guarantee-col">
+                  <span class="qf-guarantee-label no">No aplica si</span>
+                  <div class="qf-guarantee-item no"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8ba6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg><span>El interesado no concreta la transacción o cambia de opinión.</span></div>
+                  <div class="qf-guarantee-item no"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8ba6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg><span>No le gusta la propiedad o el vehículo.</span></div>
+                  <div class="qf-guarantee-item no"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8ba6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg><span>Ya consiguió otra opción.</span></div>
+                  <div class="qf-guarantee-item no"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8ba6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"></path></svg><span>El dueño decide no avanzar.</span></div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </section>
@@ -9004,8 +9524,7 @@
           desiredColor: "",
           urgency: "30_dias",
           publishedAt: "2026-06-26T10:00:00-05:00",
-          vehicleSearchComments: "Busca SUV familiar en buen estado.",
-          declarationAccepted: true
+          vehicleSearchComments: "Busca SUV familiar en buen estado."
         }
       ];
 
@@ -9024,7 +9543,6 @@
         searchFor: search.searchFor || (search.role === "broker" ? "broker_corredor" : "para_mi"),
         desiredEquipment: search.desiredEquipment || initialSearches[index]?.desiredEquipment || "indiferente",
         urgency: search.urgency || initialSearches[index]?.urgency || "sin_fecha",
-        declarationAccepted: search.declarationAccepted !== false,
         publishedAt: search.publishedAt || initialSearches[index]?.publishedAt || new Date().toISOString()
       }));
       vehicleOffers = vehicleOffers.map((offer, index) => ({
@@ -9039,7 +9557,6 @@
         desiredOperation: "vehiculo",
         role: search.role || "cliente_final",
         urgency: search.urgency || "sin_urgencia",
-        declarationAccepted: search.declarationAccepted !== false,
         publishedAt: search.publishedAt || initialVehicleSearches[index]?.publishedAt || new Date().toISOString()
       }));
       let ownerCredits = load("propertyYaOwnerCredits", 0);
@@ -9254,7 +9771,7 @@
       function vehicleMatchEngineV1(offer, search) {
         let score = 0;
         const factors = {};
-        factors.type = offer.vehicleType === search.vehicleType;
+        factors.type = normalize(offer.vehicleType || "") === normalize(search.vehicleType || "");
         if (factors.type) score += 10;
         factors.brand = normalize(offer.brand) === normalize(search.desiredBrand);
         if (factors.brand) score += 20;
@@ -9689,7 +10206,6 @@
 
       const vehicleBrandModels = {
         Audi: ["A3", "A4", "A5", "Q3", "Q5", "Q7"],
-        Bajaj: ["Boxer", "Dominar", "Pulsar"],
         BMW: ["Serie 3", "Serie 5", "X1", "X3", "X5", "X6"],
         BYD: ["Atto 3", "Dolphin", "Han", "Seal", "Song Plus", "Tang"],
         Changan: ["CS35", "CS55", "CS75", "Hunter", "UNI-T"],
@@ -9707,9 +10223,7 @@
         Isuzu: ["D-Max", "Elf", "MU-X", "NPR", "NQR"],
         JAC: ["JS2", "JS4", "S3", "T6", "T8"],
         Jeep: ["Cherokee", "Compass", "Grand Cherokee", "Renegade", "Wrangler"],
-        Kawasaki: ["KLR", "Ninja", "Versys", "Z"],
         Kia: ["Carnival", "Cerato", "Picanto", "Rio", "Seltos", "Sorento", "Sportage"],
-        Kymco: ["Agility", "Downtown", "Like", "People"],
         Lexus: ["ES", "GX", "IS", "NX", "RX"],
         Mazda: ["BT-50", "CX-3", "CX-30", "CX-5", "CX-9", "Mazda 2", "Mazda 3"],
         "Mercedes-Benz": ["Clase C", "Clase E", "GLA", "GLC", "GLE", "Sprinter"],
@@ -9722,13 +10236,27 @@
         Suzuki: ["APV", "Ciaz", "Dzire", "Grand Vitara", "Jimny", "Swift", "Vitara"],
         Tesla: ["Model 3", "Model S", "Model X", "Model Y"],
         Toyota: ["4Runner", "Corolla", "Fortuner", "Hiace", "Hilux", "Land Cruiser", "Prado", "RAV4", "Rush", "Yaris"],
-        TVS: ["Apache", "Ntorq", "Raider", "Sport"],
         Volkswagen: ["Amarok", "Gol", "Jetta", "Polo", "T-Cross", "Tiguan"],
-        Volvo: ["FH", "S60", "XC40", "XC60", "XC90"],
-        Yamaha: ["FZ", "MT", "NMAX", "R15", "Ténéré", "XMAX"]
+        Volvo: ["FH", "S60", "XC40", "XC60", "XC90"]
+      };
+
+      const motoBrandModels = {
+        Bajaj: ["Boxer", "CT100", "Dominar 250", "Dominar 400", "Pulsar 125", "Pulsar 160", "Pulsar 200", "Pulsar NS"],
+        "Harley-Davidson": ["Fat Boy", "Iron 883", "Pan America", "Road Glide", "Sportster S", "Street Bob"],
+        Hero: ["Dash", "Eco 100", "Eco Deluxe", "Hunk 150", "Hunk 160R", "Xpulse 200"],
+        Honda: ["CB125F", "CB190R", "CBF150", "CRF250", "Navi", "Wave 110", "XR150L", "XRE300"],
+        Kawasaki: ["KLR 650", "KLX 150", "Ninja 400", "Ninja 650", "Versys 300", "Z400", "Z650"],
+        KTM: ["250 Adventure", "390 Adventure", "Duke 200", "Duke 250", "Duke 390", "RC 390"],
+        Kymco: ["Agility 125", "Agility 200", "Downtown 300", "Like 150", "People 150"],
+        "Royal Enfield": ["Classic 350", "Himalayan", "Hunter 350", "Interceptor 650", "Meteor 350"],
+        Suzuki: ["AX100", "DR650", "Gixxer 150", "Gixxer 250", "GN125", "V-Strom 250"],
+        TVS: ["Apache RTR 160", "Apache RTR 200", "Ntorq 125", "Raider 125", "Sport 100", "Stryker 125"],
+        Vespa: ["GTS 300", "Primavera 150", "Sprint 150"],
+        Yamaha: ["Crypton", "FZ 150", "MT-03", "NMAX 155", "R15", "Ténéré 700", "XTZ125", "XTZ250"]
       };
 
       const knownVehicleBrands = Object.keys(vehicleBrandModels).sort((a, b) => a.localeCompare(b, "es"));
+      const knownMotoBrands = Object.keys(motoBrandModels).sort((a, b) => a.localeCompare(b, "es"));
       const vehicleColors = [
         "Azul",
         "Beige",
@@ -9769,19 +10297,25 @@
       }
 
       function knownVehicleBrandValue(value) {
-        return knownVehicleBrands.find((brand) => normalize(brand) === normalize(value)) || "";
+        return (
+          knownVehicleBrands.find((brand) => normalize(brand) === normalize(value)) ||
+          knownMotoBrands.find((brand) => normalize(brand) === normalize(value)) ||
+          ""
+        );
       }
 
       function setupVehicleBrandModelRules() {
         document.querySelectorAll("[data-brand-select]").forEach((select) => {
           const group = select.dataset.brandSelect;
+          const form = select.closest("form");
           const otherWrap = document.querySelector(`[data-brand-other-field="${group}"]`);
           const otherInput = otherWrap?.querySelector("input");
           const modelSelect = document.querySelector(`[data-model-select="${group}"]`);
           const modelOtherWrap = document.querySelector(`[data-model-other-field="${group}"]`);
           const modelOtherInput = modelOtherWrap?.querySelector("input");
           if (!otherWrap || !otherInput) return;
-          fillVehicleSelect(select, knownVehicleBrands, "Selecciona una marca", select.value);
+          const isMotoForm = () => form?.querySelector('input[name="vehicleType"]')?.value === "moto";
+          fillVehicleSelect(select, isMotoForm() ? knownMotoBrands : knownVehicleBrands, "Selecciona una marca", select.value);
           const syncVehicleBrand = () => {
             const isOther = select.value === "Otro";
             otherWrap.hidden = !isOther;
@@ -9791,7 +10325,7 @@
               updateProtectedFieldWarning(otherInput);
             }
             if (modelSelect) {
-              const models = vehicleBrandModels[select.value] || [];
+              const models = (isMotoForm() ? motoBrandModels : vehicleBrandModels)[select.value] || [];
               fillVehicleSelect(modelSelect, models, select.value === "Otro" ? "Selecciona modelo" : "Selecciona modelo", modelSelect.value);
             }
             if (modelOtherWrap && modelOtherInput) {
@@ -9824,6 +10358,7 @@
         });
         setupVehicleBrandModelRules();
         setupVehicleOtherSelectRules();
+        setupVehicleTypeGrids();
       }
 
       function setupVehicleOtherSelectRules() {
@@ -10147,7 +10682,7 @@
         setFormValue(form, "email", property.email);
         setFormValue(form, "phone", property.phone);
         setFormValue(form, "registeredBy", property.registeredBy || "propietario");
-        setFormValue(form, "propertyType", property.propertyType);
+        setPropertyTypeValue(form, property.propertyType);
         setFormValue(form, "operation", property.operation);
         setFormValue(form, "equipment", property.equipment || "sin_muebles");
         setParkingFormValue(form, "parkingSpaces", "parkingSpacesOther", property.parkingSpaces);
@@ -10201,7 +10736,7 @@
         setFormValue(form, "finalClientFirstName", search.finalClientFirstName);
         setFormValue(form, "finalClientLastName", search.finalClientLastName);
         setFormValue(form, "desiredOperation", search.desiredOperation);
-        setFormValue(form, "propertyType", search.propertyType);
+        setPropertyTypeValue(form, search.propertyType);
         setFormValue(form, "desiredEquipment", search.desiredEquipment || "indiferente");
         setParkingFormValue(form, "desiredParkingSpaces", "desiredParkingSpacesOther", search.desiredParkingSpaces);
         setFormValue(form, "desiredStorage", search.desiredStorage || "indiferente");
@@ -10227,8 +10762,6 @@
         setFormValue(form, "maxBudget", formatThousandsValue(search.maxBudget));
         setFormValue(form, "useCase", search.useCase);
         setFormValue(form, "comments", search.comments);
-        const declaration = form.querySelector('[name="declarationAccepted"]');
-        if (declaration) declaration.checked = true;
         setupSearchBrokerClientRule();
         setupBrokerFormPrivacy();
         form.querySelector('button[type="submit"]').textContent = "Guardar cambios";
@@ -10424,8 +10957,7 @@
       function friendlyFieldLabel(el) {
         const special = {
           accountPassword: "Contraseña (caja Crear cuenta)",
-          accountPasswordConfirm: "Confirmar contraseña (caja Crear cuenta)",
-          declarationAccepted: "Declaración de campos libres"
+          accountPasswordConfirm: "Confirmar contraseña (caja Crear cuenta)"
         };
         if (special[el.name]) return special[el.name];
         const label = el.closest("label.field");
@@ -10635,6 +11167,176 @@
         });
       }
 
+      const vehicleTypeIcons = {
+        carro:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13l1.7-4.5A2 2 0 0 1 7.6 7h8.8a2 2 0 0 1 1.9 1.5L20 13"/><path d="M3 13h18v4H3z"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>',
+        suv:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13V8.5A1.5 1.5 0 0 1 5.5 7h11A1.5 1.5 0 0 1 18 8.5V13"/><path d="M9 7v6"/><path d="M3 13h18v4H3z"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/></svg>',
+        pickup:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 14V9h8v5"/><path d="M11 11h4l3 3v3"/><path d="M3 14h18v3H3z"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/></svg>',
+        moto:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="16" r="3"/><circle cx="18.5" cy="16" r="3"/><path d="M5.5 16l4-5h4l2.5 3.5"/><path d="M9 8h3.5"/></svg>',
+        camion:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3z"/><path d="M14 10h4l3 3v3h-7z"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>',
+        bus:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="12" rx="2"/><path d="M4 12h16"/><path d="M8.5 5v7M12 5v7M15.5 5v7"/><circle cx="8" cy="18.5" r="1.3"/><circle cx="16" cy="18.5" r="1.3"/></svg>',
+        busito:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h10l4 4h4v4H3z"/><path d="M13 8v4"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17.5" cy="17.5" r="1.5"/></svg>',
+        otro:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>'
+      };
+
+      const vehicleTypeCheckIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
+
+      const vehicleTypeOptions = [
+        { value: "carro", label: "Carro", sub: "Sedán o hatchback" },
+        { value: "suv", label: "SUV", sub: "Familiar o 4x4" },
+        { value: "pickup", label: "Pickup", sub: "Trabajo o uso mixto" },
+        { value: "moto", label: "Moto", sub: "Personal" },
+        { value: "camion", label: "Camión", sub: "Carga o trabajo" },
+        { value: "bus", label: "Bus", sub: "Transporte grande" },
+        { value: "busito", label: "Busito", sub: "Pasajeros" },
+        { value: "otro", label: "Otro", sub: "Especificar" }
+      ];
+
+      function vehicleTypeCardHtml(option) {
+        return `
+          <button type="button" class="vehicle-type-card${option.value === "otro" ? " vt-otro" : ""}" data-vehicle-type="${option.value}">
+            <span class="vt-icon">${vehicleTypeIcons[option.value] || ""}</span>
+            <span class="vt-text"><strong>${option.label}</strong><span>${option.sub}</span></span>
+            <span class="vt-check">${vehicleTypeCheckIcon}</span>
+          </button>
+        `;
+      }
+
+      function syncVehicleTypeOther(form, value) {
+        const other = form?.querySelector("[data-vehicle-type-other]");
+        if (!other) return;
+        const show = value === "otro";
+        other.hidden = !show;
+        const input = other.querySelector("input");
+        if (input) {
+          input.required = show;
+          if (!show) input.value = "";
+        }
+      }
+
+      function setupVehicleTypeGrids() {
+        document.querySelectorAll("[data-vehicle-type-grid]").forEach((grid) => {
+          const form = grid.closest("form");
+          const hidden = form?.querySelector('input[name="vehicleType"]');
+          if (!grid.dataset.ready) {
+            grid.innerHTML = vehicleTypeOptions.map(vehicleTypeCardHtml).join("");
+            grid.addEventListener("click", (event) => {
+              const card = event.target.closest(".vehicle-type-card");
+              if (!card) return;
+              const value = card.dataset.vehicleType;
+              const wasMoto = hidden?.value === "moto";
+              if (hidden) hidden.value = value;
+              grid.querySelectorAll(".vehicle-type-card").forEach((item) =>
+                item.classList.toggle("selected", item === card)
+              );
+              syncVehicleTypeOther(form, value);
+              if (wasMoto !== (value === "moto")) setupVehicleBrandModelRules();
+            });
+            grid.dataset.ready = "true";
+          }
+          const current = hidden?.value || "carro";
+          grid.querySelectorAll(".vehicle-type-card").forEach((item) =>
+            item.classList.toggle("selected", item.dataset.vehicleType === current)
+          );
+          syncVehicleTypeOther(form, current);
+        });
+      }
+
+      function setVehicleTypeValue(form, value) {
+        const grid = form?.querySelector("[data-vehicle-type-grid]");
+        const hidden = form?.querySelector('input[name="vehicleType"]');
+        if (!grid || !hidden) return;
+        const known = vehicleTypeOptions.some((option) => option.value !== "otro" && option.value === value);
+        const selected = known ? value : value ? "otro" : "carro";
+        hidden.value = selected;
+        grid.querySelectorAll(".vehicle-type-card").forEach((item) =>
+          item.classList.toggle("selected", item.dataset.vehicleType === selected)
+        );
+        syncVehicleTypeOther(form, selected);
+        const otherInput = form?.querySelector("[data-vehicle-type-other] input");
+        if (otherInput) otherInput.value = selected === "otro" ? value || "" : "";
+        setupVehicleBrandModelRules();
+      }
+
+      const propertyTypeIcons = {
+        apartamento:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M4 21h16"/><path d="M9.5 7h1M13.5 7h1M9.5 11h1M13.5 11h1M9.5 15h1M13.5 15h1"/></svg>',
+        casa:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6 8 6"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/></svg>',
+        local:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9l1.2-4h13.6L20 9"/><path d="M4 9h16v2.2a2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0 2 2 0 0 1-4 0z"/><path d="M5 13v7h14v-7"/><path d="M10 20v-4h4v4"/></svg>',
+        oficina:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg>',
+        galera:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V8l9-4 9 4v13"/><path d="M3 21h18"/><path d="M7 21v-7h10v7"/><path d="M7 14h10"/></svg>',
+        terreno:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'
+      };
+
+      const propertyTypeOptions = [
+        { value: "apartamento", label: "Apartamento", sub: "Torre o PH" },
+        { value: "casa", label: "Casa", sub: "Independiente" },
+        { value: "local", label: "Local", sub: "Comercial" },
+        { value: "oficina", label: "Oficina", sub: "Corporativa" },
+        { value: "galera", label: "Galera", sub: "Bodega o industrial" },
+        { value: "terreno", label: "Terreno", sub: "Lote o parcela" }
+      ];
+
+      function propertyTypeCardHtml(option) {
+        return `
+          <button type="button" class="property-type-card" data-property-type="${option.value}">
+            <span class="vt-icon">${propertyTypeIcons[option.value] || ""}</span>
+            <span class="vt-text"><strong>${option.label}</strong><span>${option.sub}</span></span>
+            <span class="vt-check">${vehicleTypeCheckIcon}</span>
+          </button>
+        `;
+      }
+
+      function setupPropertyTypeGrids() {
+        document.querySelectorAll("[data-property-type-grid]").forEach((grid) => {
+          const form = grid.closest("form");
+          const hidden = form?.querySelector('input[name="propertyType"]');
+          if (!grid.dataset.ready) {
+            grid.innerHTML = propertyTypeOptions.map(propertyTypeCardHtml).join("");
+            grid.addEventListener("click", (event) => {
+              const card = event.target.closest(".property-type-card");
+              if (!card) return;
+              const value = card.dataset.propertyType;
+              if (hidden) hidden.value = value;
+              grid.querySelectorAll(".property-type-card").forEach((item) =>
+                item.classList.toggle("selected", item === card)
+              );
+              if (form && form.id === "propertyForm") syncPropertyTerrainFields();
+            });
+            grid.dataset.ready = "true";
+          }
+          const current = hidden?.value || "apartamento";
+          grid.querySelectorAll(".property-type-card").forEach((item) =>
+            item.classList.toggle("selected", item.dataset.propertyType === current)
+          );
+        });
+      }
+
+      function setPropertyTypeValue(form, value) {
+        const grid = form?.querySelector("[data-property-type-grid]");
+        const hidden = form?.querySelector('input[name="propertyType"]');
+        if (!grid || !hidden) return;
+        const known = propertyTypeOptions.some((option) => option.value === value);
+        const selected = known ? value : "apartamento";
+        hidden.value = selected;
+        grid.querySelectorAll(".property-type-card").forEach((item) =>
+          item.classList.toggle("selected", item.dataset.propertyType === selected)
+        );
+      }
+
       function syncPropertyTerrainFields() {
         const form = document.getElementById("propertyForm");
         if (!form) return;
@@ -10841,6 +11543,7 @@
         setupPropertyPricingRule();
         setupParkingSelects();
         setupAvailabilitySelects();
+        setupPropertyTypeGrids();
         syncPropertyTerrainFields();
         setupProtectedFreeTextValidation();
         save();
@@ -10863,7 +11566,6 @@
           ...data,
           name: fullName(data),
           searchFor: data.searchFor || (data.role === "broker" ? "broker_corredor" : "para_mi"),
-          declarationAccepted: data.declarationAccepted === "on",
           finalClientPrivacy: data.role === "broker" ? data.finalClientPrivacy || "visible" : "",
           finalClientFirstName:
             data.role === "broker" && data.finalClientPrivacy !== "anonymous" ? data.finalClientFirstName || "" : "",
@@ -10901,6 +11603,7 @@
         setupBrokerFormPrivacy();
         setupParkingSelects();
         setupUrgencySelects();
+        setupPropertyTypeGrids();
         setupProtectedFreeTextValidation();
         save();
         showToast(toastId);
@@ -10931,14 +11634,17 @@
         const selectedYear = data.year === "Otro" ? data.yearOther : data.year;
         const selectedPrice = data.salePrice === "Otro" ? data.salePriceOther : data.salePrice;
         const selectedColor = data.color === "Otro" ? data.colorOther : data.color;
+        const selectedVehicleType = data.vehicleType === "otro" ? (data.vehicleTypeOther || "").trim() : data.vehicleType;
         delete data.brandOther;
         delete data.modelOther;
         delete data.yearOther;
         delete data.salePriceOther;
         delete data.colorOther;
+        delete data.vehicleTypeOther;
         const payload = {
           ...data,
           operation: "vehiculo",
+          vehicleType: selectedVehicleType,
           brand: selectedBrand,
           model: selectedModel,
           name: fullName(data),
@@ -10989,18 +11695,20 @@
         const selectedMinYear = data.minYear === "Otro" ? data.minYearOther : data.minYear;
         const selectedMaxBudget = data.maxBudget === "Otro" ? data.maxBudgetOther : data.maxBudget;
         const selectedDesiredColor = data.desiredColor === "Otro" ? data.desiredColorOther : data.desiredColor;
+        const selectedVehicleType = data.vehicleType === "otro" ? (data.vehicleTypeOther || "").trim() : data.vehicleType;
         delete data.desiredBrandOther;
         delete data.desiredModelOther;
         delete data.minYearOther;
         delete data.maxBudgetOther;
         delete data.desiredColorOther;
+        delete data.vehicleTypeOther;
         const payload = {
           ...data,
           desiredOperation: "vehiculo",
+          vehicleType: selectedVehicleType,
           desiredBrand: selectedDesiredBrand,
           desiredModel: selectedDesiredModel,
           name: fullName(data),
-          declarationAccepted: data.declarationAccepted === "on",
           minYear: Number(selectedMinYear || 0),
           maxMileage: parseThousands(data.maxMileage),
           maxBudget: parseThousands(selectedMaxBudget),
@@ -11068,6 +11776,7 @@
         setupUrgencySelects();
         setupVehicleStatusSelects();
         setupPropertyTerrainRule();
+        setupPropertyTypeGrids();
         setupThousandsInputs();
         setupFriendlyValidation("propertyForm");
         setupFriendlyValidation("searchForm");
@@ -13744,6 +14453,7 @@
         });
         if (form.elements.mileage) form.elements.mileage.value = formatThousandsValue(offer.mileage);
         setupVehicleOptionLists();
+        setVehicleTypeValue(form, offer.vehicleType);
         setVehicleBrandValue(form, "brand", "brandOther", offer.brand);
         setVehicleSelectOrOther(form, "model", "modelOther", offer.model);
         setVehicleSelectOrOther(form, "year", "yearOther", offer.year);
@@ -13788,6 +14498,7 @@
         });
         if (form.elements.maxMileage) form.elements.maxMileage.value = formatThousandsValue(search.maxMileage);
         setupVehicleOptionLists();
+        setVehicleTypeValue(form, search.vehicleType);
         setVehicleBrandValue(form, "desiredBrand", "desiredBrandOther", search.desiredBrand);
         setVehicleSelectOrOther(form, "desiredModel", "desiredModelOther", search.desiredModel);
         setVehicleSelectOrOther(form, "minYear", "minYearOther", search.minYear);
@@ -13876,7 +14587,7 @@
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "role", "searchFor"] },
               { title: "Qué buscas", fields: ["desiredOperation", "propertyType", "minSizeM2", "desiredEquipment", "desiredParkingSpaces", "desiredParkingSpacesOther", "desiredStorage", "urgency", "urgencyOther", "useCase"] },
               { title: "Ubicación", fields: ["province", "desiredZone", "desiredStreetOrNeighborhood", "desiredPh"] },
-              { title: "Presupuesto y detalles", fields: ["maxBudget", "comments", "declarationAccepted"] }
+              { title: "Presupuesto y detalles", fields: ["maxBudget", "comments"] }
             ]
           },
           brokerForm: {
@@ -13909,7 +14620,7 @@
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "role", "useCase"] },
               { title: "Vehículo buscado", fields: ["vehicleType", "desiredBrand", "desiredBrandOther", "desiredModel", "desiredModelOther", "minYear", "minYearOther", "maxMileage"] },
               { title: "Preferencias", fields: ["maxBudget", "maxBudgetOther", "transmission", "fuel", "desiredColor", "desiredColorOther", "urgency"] },
-              { title: "Ubicación y detalles", fields: ["province", "zone", "vehicleSearchComments", "declarationAccepted"] }
+              { title: "Ubicación y detalles", fields: ["province", "zone", "vehicleSearchComments"] }
             ]
           }
         };
