@@ -808,6 +808,36 @@
         border-color: var(--orange);
       }
 
+      .field-locked {
+        opacity: 0.55;
+        pointer-events: none;
+        position: relative;
+      }
+
+      .identity-lock-note {
+        align-items: flex-start;
+        background: #fbf6ea;
+        border: 1px solid #ebdfc0;
+        border-radius: 12px;
+        color: #7a5a12;
+        display: flex;
+        font-size: 12.5px;
+        font-weight: 800;
+        gap: 9px;
+        grid-column: 1 / -1;
+        line-height: 1.45;
+        margin: 0;
+        padding: 11px 13px;
+      }
+
+      .identity-lock-note svg {
+        color: #b58a2a;
+        flex-shrink: 0;
+        height: 17px;
+        margin-top: 1px;
+        width: 17px;
+      }
+
       .property-type-grid {
         display: grid;
         gap: 10px;
@@ -3765,6 +3795,19 @@
         font-size: 11.5px;
         font-weight: 800;
         padding: 2px 10px;
+      }
+
+      .offer-type-pill.inactive {
+        background: #fbe0dc;
+        color: #a5281c;
+      }
+
+      .offer-card-row.row-inactive {
+        opacity: 0.62;
+      }
+
+      .offer-card-row.row-inactive .criteria-chips {
+        filter: grayscale(0.5);
       }
 
       .button.ghost {
@@ -7252,12 +7295,9 @@
         <div class="hero-copy">
           <span class="eyebrow">KonektaYa · Panamá</span>
           <h1>Vende, compra o alquila <span class="hero-accent">propiedades y vehículos</span> mediante el matching de IA.</h1>
-          <p>
-            KonektaYa conecta tu oferta o necesidad con personas realmente interesadas. Publicar y buscar es gratis.
-          </p>
+          <p>Publicar y buscar es gratis.</p>
           <div class="home-proof-pills" aria-label="Beneficios principales">
             <span>✓ Registro rápido</span>
-            <span>✓ Contactos protegidos</span>
             <span>✓ Sin comisión</span>
           </div>
         </div>
@@ -10780,6 +10820,7 @@
         setupVehicleBrandModelRules();
         setupVehicleOtherSelectRules();
         setupVehicleTypeGrids();
+        unlockVehicleIdentityFields();
       }
 
       function setupVehicleOtherSelectRules() {
@@ -11092,12 +11133,53 @@
         syncParkingSelect(select);
       }
 
+      function propertyHasPaidUnlock(propertyId) {
+        const prefix = `${propertyId}-`;
+        return Object.entries(machUnlocks).some(
+          ([key, info]) => !key.startsWith("vehicle-") && key.startsWith(prefix) && !info?.refunded
+        );
+      }
+
+      function unlockPropertyIdentityFields() {
+        const form = document.getElementById("propertyForm");
+        if (!form) return;
+        form.querySelectorAll(".field-locked").forEach((el) => el.classList.remove("field-locked"));
+        const note = form.querySelector("[data-identity-lock-note]");
+        if (note) note.hidden = true;
+      }
+
+      function lockPropertyIdentityFields(form) {
+        const targets = [
+          form.querySelector('[data-property-type-grid="property"]')?.closest(".field"),
+          form.querySelector('[name="operation"]')?.closest(".field"),
+          form.querySelector('[data-location-province="property"]')?.closest(".field"),
+          form.querySelector('[data-location-zone="property"]')?.closest(".field"),
+          form.querySelector('[name="streetOrNeighborhood"]')?.closest(".field"),
+          form.querySelector('[name="phName"]')?.closest(".field")
+        ].filter(Boolean);
+        targets.forEach((el) => el.classList.add("field-locked"));
+        let note = form.querySelector("[data-identity-lock-note]");
+        if (!note) {
+          note = document.createElement("p");
+          note.setAttribute("data-identity-lock-note", "");
+          note.className = "identity-lock-note";
+          const anchor = form.querySelector('[data-property-type-grid="property"]')?.closest(".field");
+          if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(note, anchor);
+        }
+        if (note) {
+          note.hidden = false;
+          note.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg><span>Tipo, operación, ubicación, calle o barriada y PH no se pueden cambiar: esta propiedad ya tuvo un contacto desbloqueado. Puedes editar precio, metraje, equipamiento, estacionamientos, depósito y disponibilidad.</span>';
+        }
+      }
+
       function editProperty(id) {
         const property = properties.find((item) => item.id === id);
         const form = document.getElementById("propertyForm");
         if (!property || !form) return;
 
         editingPropertyId = id;
+        unlockPropertyIdentityFields();
         setFormValue(form, "firstName", property.firstName);
         setFormValue(form, "lastName", property.lastName);
         setFormValue(form, "email", property.email);
@@ -11136,6 +11218,7 @@
         setupBrokerAcceptanceRule();
         setupPropertyPricingRule();
         syncPropertyTerrainFields();
+        if (propertyHasPaidUnlock(id)) lockPropertyIdentityFields(form);
         form.querySelector('button[type="submit"]').textContent = "Guardar cambios";
         showTab("propietario");
       }
@@ -11965,6 +12048,7 @@
         setupParkingSelects();
         setupAvailabilitySelects();
         setupPropertyTypeGrids();
+        unlockPropertyIdentityFields();
         syncPropertyTerrainFields();
         setupProtectedFreeTextValidation();
         save();
@@ -12624,6 +12708,7 @@
         vehicleMatches = [];
         properties.forEach((property) => {
           searches.forEach((search) => {
+            if (!isSearchActive(search)) return;
             const score = calculateScore(property, search);
             if (score >= 70) {
               const id = `${property.id}-${search.id}`;
@@ -12642,6 +12727,7 @@
         });
         vehicleOffers.forEach((offer) => {
           vehicleSearches.forEach((search) => {
+            if (!isSearchActive(search)) return;
             const result = vehicleMatchEngineV1(offer, search);
             if (result.score >= 70) {
               const id = `vehicle-${offer.id}-${search.id}`;
@@ -14005,11 +14091,12 @@
                   ${userSearches
                     .map((search, index) => {
                       const searchMatches = matches.filter((match) => match.search.id === search.id);
+                      const searchActive = isSearchActive(search);
                       return `
-                        <div class="offer-card-row">
+                        <div class="offer-card-row ${searchActive ? "" : "row-inactive"}">
                           <span class="offer-row-number">${index + 1}</span>
                           <div class="offer-card-main">
-                            <p class="offer-card-title">${label(search.propertyType)} en ${search.desiredZone} · ${search.desiredPh ? phDisplayName(search.desiredPh) : "PH no especificado"} <span class="offer-type-pill">${search.role === "broker" ? "Broker" : "Cliente final"}</span></p>
+                            <p class="offer-card-title">${label(search.propertyType)} en ${search.desiredZone} · ${search.desiredPh ? phDisplayName(search.desiredPh) : "PH no especificado"} <span class="offer-type-pill">${search.role === "broker" ? "Broker" : "Cliente final"}</span>${searchActive ? "" : ' <span class="offer-type-pill inactive">Dada de baja</span>'}</p>
                             <div class="criteria-chips">
                               <span class="criteria-chip">${label(search.desiredOperation)} ${label(search.propertyType)}</span>
                               <span class="criteria-chip">≤ ${money.format(search.maxBudget)}</span>
@@ -14026,11 +14113,12 @@
                             </div>
                           </div>
                           <div class="offer-card-actions">
+                            ${searchActiveSwitch(search.id, searchActive, "setSearchActive")}
                             <button class="button small ghost" type="button" onclick="editSearch(${search.id})">Modificar</button>
                             ${
                               searchMatches.length
                                 ? `<button class="button small primary" type="button" onclick="openResultsModal('propertySearch', ${search.id})">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
-                                : `<button class="button small results-empty" type="button" disabled>Sin resultados aún</button>`
+                                : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
                             }
                           </div>
                         </div>
@@ -14068,11 +14156,12 @@
                 ${userVehicleSearches
                   .map((search, index) => {
                     const searchMatches = vehicleMatches.filter((match) => match.search.id === search.id);
+                    const searchActive = isSearchActive(search);
                     return `
-                      <div class="offer-card-row">
+                      <div class="offer-card-row ${searchActive ? "" : "row-inactive"}">
                         <span class="offer-row-number">${index + 1}</span>
                         <div class="offer-card-main">
-                          <p class="offer-card-title">${vehicleSearchTitle(search)} <span class="offer-type-pill">${vehicleApplicantLabel(search)}</span></p>
+                          <p class="offer-card-title">${vehicleSearchTitle(search)} <span class="offer-type-pill">${vehicleApplicantLabel(search)}</span>${searchActive ? "" : ' <span class="offer-type-pill inactive">Dada de baja</span>'}</p>
                           <div class="criteria-chips">
                             <span class="criteria-chip">≤ ${money.format(search.maxBudget)}</span>
                             <span class="criteria-chip">${search.minYear ? `${search.minYear} o más nuevo` : "Año indiferente"}</span>
@@ -14083,11 +14172,12 @@
                           </div>
                         </div>
                         <div class="offer-card-actions">
+                          ${searchActiveSwitch(search.id, searchActive, "setVehicleSearchActive")}
                           <button class="button small ghost" type="button" onclick="editVehicleSearch(${search.id})">Modificar</button>
                           ${
                             searchMatches.length
                               ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleSearch', ${search.id})">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
-                              : `<button class="button small results-empty" type="button" disabled>Sin resultados aún</button>`
+                              : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
                           }
                         </div>
                       </div>
@@ -14520,6 +14610,29 @@
         return Boolean(offer) && offer.available !== false;
       }
 
+      function isSearchActive(search) {
+        return Boolean(search) && search.active !== false;
+      }
+
+      function setSearchActive(id, value) {
+        searches = searches.map((s) => (s.id === id ? { ...s, active: value } : s));
+        save();
+        render();
+      }
+
+      function setVehicleSearchActive(id, value) {
+        vehicleSearches = vehicleSearches.map((s) => (s.id === id ? { ...s, active: value } : s));
+        save();
+        render();
+      }
+
+      function searchActiveSwitch(id, active, fn) {
+        return `<div class="avail-switch" role="group" aria-label="Estado de la búsqueda">
+          <button type="button" class="avail-seg ${active ? "on-active" : ""}" onclick="${fn}(${id}, true)">Buscando</button>
+          <button type="button" class="avail-seg ${active ? "" : "off-active"}" onclick="${fn}(${id}, false)">Dar de baja</button>
+        </div>`;
+      }
+
       function togglePropertyAvailable(id) {
         properties = properties.map((p) => (p.id === id ? { ...p, available: p.available === false } : p));
         save();
@@ -14939,6 +15052,49 @@
         render();
       }
 
+      function vehicleOfferHasPaidUnlock(offerId) {
+        const prefix = `vehicle-${offerId}-`;
+        return Object.entries(machUnlocks).some(
+          ([key, info]) => key.startsWith(prefix) && !info?.refunded
+        );
+      }
+
+      function unlockVehicleIdentityFields() {
+        const form = document.getElementById("vehicleOfferForm");
+        if (!form) return;
+        form.querySelectorAll(".field-locked").forEach((el) => el.classList.remove("field-locked"));
+        const note = form.querySelector("[data-identity-lock-note]");
+        if (note) note.hidden = true;
+      }
+
+      function lockVehicleIdentityFields(form) {
+        const targets = [
+          form.querySelector("[data-vehicle-type-grid]")?.closest(".field"),
+          form.querySelector('[data-brand-select="vehicleOffer"]')?.closest(".field"),
+          form.querySelector('[data-brand-other-field="vehicleOffer"]'),
+          form.querySelector('[data-model-select="vehicleOffer"]')?.closest(".field"),
+          form.querySelector('[data-model-other-field="vehicleOffer"]'),
+          form.querySelector('[data-year-select="vehicleOffer"]')?.closest(".field"),
+          form.querySelector('[data-year-other-field="vehicleOffer"]'),
+          form.querySelector('[name="transmission"]')?.closest(".field"),
+          form.querySelector('[name="fuel"]')?.closest(".field")
+        ].filter(Boolean);
+        targets.forEach((el) => el.classList.add("field-locked"));
+        let note = form.querySelector("[data-identity-lock-note]");
+        if (!note) {
+          note = document.createElement("p");
+          note.setAttribute("data-identity-lock-note", "");
+          note.className = "identity-lock-note";
+          const anchor = form.querySelector("[data-vehicle-type-grid]")?.closest(".field");
+          if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(note, anchor);
+        }
+        if (note) {
+          note.hidden = false;
+          note.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg><span>Tipo, marca, modelo, año, transmisión y combustible no se pueden cambiar: este vehículo ya tuvo un contacto desbloqueado. Puedes editar precio, kilometraje, zona, color, fotos y disponibilidad.</span>';
+        }
+      }
+
       function editVehicleOffer(id) {
         const offer = vehicleOffers.find((item) => item.id === id);
         const form = document.getElementById("vehicleOfferForm");
@@ -14978,6 +15134,7 @@
         setupVehicleOtherSelectRules();
         setupLocationSelects("vehicleOffer", offer.province || "Panamá", offer.zone || "San Francisco");
         syncAccountBox(form);
+        if (vehicleOfferHasPaidUnlock(id)) lockVehicleIdentityFields(form);
         form.querySelector('button[type="submit"]').textContent = "Guardar cambios del vehículo";
         showTab("vehiculoOferta");
       }
