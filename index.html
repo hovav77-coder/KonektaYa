@@ -1395,6 +1395,40 @@
         color: var(--navy);
       }
 
+      .pay-paypal {
+        background: #f6f8fb;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+      }
+      .pay-paypal-logo {
+        color: #003087;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: -0.01em;
+      }
+      .pay-paypal-logo span {
+        color: #0070ba;
+      }
+      .pay-paypal p {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.45;
+        margin: 8px 0 0;
+      }
+      .pay-paypal-btn {
+        background: #ffc439;
+        border: none;
+        color: #003087;
+        font-weight: 950;
+        margin-top: 4px;
+        width: 100%;
+      }
+      .pay-paypal-btn:hover {
+        background: #f0b72e;
+      }
+
       .wa-btn {
         align-items: center;
         background: #25d366;
@@ -3013,6 +3047,212 @@
         color: #993c1d;
         font-size: 12.5px;
         font-weight: 700;
+      }
+
+      .comp-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .comp-row {
+        border: 1px solid #e4e9f2;
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+
+      .comp-row.comp-ok {
+        background: #f5faf6;
+        border-color: #d9e7dd;
+      }
+
+      .comp-row.comp-warn {
+        background: #fdf6f0;
+        border-color: #f3d8c2;
+      }
+
+      .comp-row.comp-diff,
+      .comp-row.comp-neutral {
+        background: #fbfcfe;
+        border-color: #e4e9f2;
+      }
+
+      .comp-row-head {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .comp-crit {
+        color: var(--navy);
+        font-size: 12px;
+        font-weight: 950;
+        letter-spacing: 0.02em;
+      }
+
+      .comp-status {
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 800;
+        padding: 3px 9px;
+        white-space: nowrap;
+      }
+
+      .comp-status-ok {
+        background: #e6f4ec;
+        color: #1f7a4d;
+      }
+
+      .comp-status-warn {
+        background: #faeeda;
+        color: #8a6116;
+      }
+
+      .comp-status-diff {
+        background: #eef1f6;
+        color: #5b6b84;
+      }
+
+      .comp-status-neutral {
+        background: #eef4fb;
+        color: #46536b;
+      }
+
+      .comp-values {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+
+      .comp-values > div span {
+        color: #8593a9;
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      .comp-values > div strong {
+        display: block;
+        font-size: 14px;
+        line-height: 1.3;
+      }
+
+      .comp-mine strong {
+        color: var(--navy);
+        font-weight: 900;
+      }
+
+      .comp-theirs strong {
+        color: #2a3a56;
+        font-weight: 700;
+      }
+
+      .ask-interest-btn {
+        align-items: center;
+        display: inline-flex;
+        gap: 7px;
+        justify-content: center;
+        width: 100%;
+      }
+
+      .ask-interest-btn svg {
+        height: 16px;
+        width: 16px;
+      }
+
+      .interest-mini {
+        border-radius: 10px;
+        font-size: 12.5px;
+        font-weight: 800;
+        line-height: 1.35;
+        margin: 0;
+        padding: 8px 10px;
+        text-align: center;
+      }
+
+      .interest-mini.pending {
+        background: #eef4fb;
+        color: #46536b;
+      }
+
+      .interest-mini.confirmed {
+        background: #d6f0df;
+        border: 1px solid #1f7a4d;
+        color: #14663d;
+      }
+
+      .interest-mini.declined {
+        background: #fbe0dc;
+        border: 1px solid #c0392b;
+        color: #a5281c;
+      }
+
+      .client-interest-ask {
+        align-items: center;
+        background: #eef4fb;
+        border: 1px solid #cfe0f2;
+        border-radius: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        padding: 12px 14px;
+      }
+
+      .cia-text {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .cia-text strong {
+        color: var(--navy);
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .cia-text span {
+        color: #46536b;
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+
+      .cia-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .client-interest-done {
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 10px 14px;
+      }
+
+      .client-interest-done.ok {
+        background: #e6f4ec;
+        color: #1f7a4d;
+      }
+
+      .client-interest-done.muted {
+        background: #f1f3f6;
+        color: #5b6b84;
+      }
+
+      .linklike {
+        background: none;
+        border: 0;
+        color: var(--orange);
+        cursor: pointer;
+        font: inherit;
+        font-weight: 900;
+        padding: 0;
+        text-decoration: underline;
       }
 
       .status-banner {
@@ -7011,7 +7251,7 @@
       <section class="hero tab-panel active" id="inicio">
         <div class="hero-copy">
           <span class="eyebrow">KonektaYa · Panamá</span>
-          <h1>Vende, compra o alquila <span class="hero-accent">propiedades y vehículos.</span></h1>
+          <h1>Vende, compra o alquila <span class="hero-accent">propiedades y vehículos</span> mediante el matching de IA.</h1>
           <p>
             KonektaYa conecta tu oferta o necesidad con personas realmente interesadas. Publicar y buscar es gratis.
           </p>
@@ -8242,10 +8482,19 @@
             </div>
             <input class="pay-input hidden" id="payAmountOther" type="text" inputmode="numeric" placeholder="Escribe el monto en USD" />
             <div class="pay-tabs">
-              <button type="button" class="pay-tab active" data-pay-method="card">Tarjeta</button>
+              <button type="button" class="pay-tab active" data-pay-method="paypal">PayPal</button>
+              <button type="button" class="pay-tab" data-pay-method="card">Tarjeta</button>
               <button type="button" class="pay-tab" data-pay-method="yappy">Yappy</button>
             </div>
-            <div class="pay-pane" data-pay-pane="card">
+            <div class="pay-pane" data-pay-pane="paypal">
+              <div class="pay-paypal">
+                <span class="pay-paypal-logo">Pay<span>Pal</span></span>
+                <p>Paga con tu <strong>tarjeta de crédito o débito</strong> (Visa / Mastercard) o con tu cuenta PayPal. No necesitas tener cuenta PayPal.</p>
+              </div>
+              <button class="button pay-paypal-btn" type="button" id="payPaypalBtn" onclick="submitPaypalPayment()">Pagar $25 con PayPal</button>
+              <p class="pay-note">Pago seguro procesado por PayPal. (Demo: acredita saldo simulado; al conectar la cuenta PayPal real, este botón abre el pago y el saldo se acredita al confirmarse.)</p>
+            </div>
+            <div class="pay-pane hidden" data-pay-pane="card">
               <input class="pay-input" id="payCardNumber" inputmode="numeric" placeholder="Número de tarjeta" />
               <div style="display:flex;gap:10px;">
                 <input class="pay-input" id="payCardExp" placeholder="MM/AA" />
@@ -8815,6 +9064,175 @@
         `;
       }
 
+      function compRow(labelText, offerVal, searchVal, status, labels) {
+        const chip = { ok: "Coincide", warn: "Parcial", diff: "Distinto", neutral: "Info" }[status] || "";
+        const offerLabel = labels?.offer || "Tú ofreces";
+        const searchLabel = labels?.search || "El cliente busca";
+        return `
+          <div class="comp-row comp-${status}">
+            <div class="comp-row-head">
+              <span class="comp-crit">${labelText}</span>
+              <span class="comp-status comp-status-${status}">${chip}</span>
+            </div>
+            <div class="comp-values">
+              <div class="comp-mine"><span>${offerLabel}</span><strong>${offerVal}</strong></div>
+              <div class="comp-theirs"><span>${searchLabel}</span><strong>${searchVal}</strong></div>
+            </div>
+          </div>
+        `;
+      }
+
+      function propertyMatchComparison(match, perspective = "owner") {
+        const labels = perspective === "client"
+          ? { offer: "La propiedad ofrece", search: "Tú buscas" }
+          : { offer: "Tú ofreces", search: "El cliente busca" };
+        const compRowP = (labelText, offerVal, searchVal, status) => compRow(labelText, offerVal, searchVal, status, labels);
+        const property = match.property;
+        const search = match.search;
+        const rows = [];
+        const zoneOk = normalize(property.zone) === normalize(search.desiredZone);
+        rows.push(
+          compRowP("Ubicación", `${property.zone}, ${property.province}`, `${search.desiredZone}, ${search.province}`, zoneOk ? "ok" : "diff")
+        );
+        rows.push(
+          compRowP(
+            "Operación y tipo",
+            `${label(property.operation)} · ${label(property.propertyType)}`,
+            `${label(search.desiredOperation)} · ${label(search.propertyType)}`,
+            "ok"
+          )
+        );
+        const priceValue = propertyPriceForOperation(property, search.desiredOperation);
+        const budget = Number(search.maxBudget || 0);
+        const priceExact = Boolean(budget) && priceValue <= budget * 1.1;
+        rows.push(
+          compRowP("Precio vs. presupuesto", propertyPriceSummary(property), `Hasta ${money.format(budget)}`, priceExact ? "ok" : "warn")
+        );
+        const minSize = Number(search.minSizeM2 || 0);
+        const sizeExact = !minSize || Number(property.sizeM2 || 0) >= minSize * 0.9;
+        rows.push(
+          compRowP("Metraje", `${Number(property.sizeM2 || 0).toLocaleString("es-PA")} m²`, minSize ? `Mínimo ${minSize.toLocaleString("es-PA")} m²` : "Indiferente", sizeExact ? "ok" : "warn")
+        );
+        if (hasDesiredPh(search)) {
+          const samePh = isSamePh(property, search);
+          rows.push(compRowP("PH / edificio", property.phName || "No registrado", search.desiredPh, samePh ? "ok" : "diff"));
+        }
+        const desiredEquipment = String(search.desiredEquipment || "").trim();
+        if (desiredEquipment && desiredEquipment !== "indiferente") {
+          const eqOk = property.equipment === search.desiredEquipment;
+          rows.push(compRowP("Equipamiento", equipmentLabel(property.equipment), equipmentLabel(search.desiredEquipment), eqOk ? "ok" : "warn"));
+        }
+        const desiredParking = Number(search.desiredParkingSpaces || 0);
+        if (desiredParking) {
+          const enough = Number(property.parkingSpaces || 0) >= desiredParking;
+          rows.push(compRowP("Estacionamientos", `${property.parkingSpaces || 0}`, `${desiredParking}+`, enough ? "ok" : "warn"));
+        }
+        if (search.desiredStorage === "si") {
+          const hasStorage = property.storage === "si";
+          rows.push(compRowP("Depósito", hasStorage ? "Sí" : "No", "Sí", hasStorage ? "ok" : "warn"));
+        }
+        rows.push(compRowP("Urgencia del cliente", "—", urgencyLabel(search.urgency), "neutral"));
+        return `<div class="comp-list">${rows.join("")}</div>`;
+      }
+
+      function vehicleMatchComparison(match, perspective = "owner") {
+        const labels = perspective === "client"
+          ? { offer: "El vehículo ofrece", search: "Tú buscas" }
+          : { offer: "Tú ofreces", search: "El cliente busca" };
+        const compRowP = (labelText, offerVal, searchVal, status) => compRow(labelText, offerVal, searchVal, status, labels);
+        const offer = match.offer;
+        const search = match.search;
+        const f = match.factors || {};
+        const rows = [];
+        rows.push(
+          compRowP(
+            "Tipo y marca",
+            `${vehicleLabel(offer.vehicleType)} · ${offer.brand || ""}`.trim(),
+            `${vehicleLabel(search.vehicleType)} · ${search.desiredBrand || "Indiferente"}`,
+            normalize(offer.vehicleType) === normalize(search.vehicleType) ? "ok" : "diff"
+          )
+        );
+        rows.push(
+          compRowP(
+            "Modelo",
+            offer.model || "—",
+            search.desiredModel || "Indiferente",
+            f.model === "exact" ? "ok" : "warn"
+          )
+        );
+        rows.push(
+          compRowP("Precio vs. presupuesto", vehiclePriceSummary(offer), `Hasta ${money.format(search.maxBudget)}`, f.price === "±10%" ? "ok" : "warn")
+        );
+        rows.push(
+          compRowP("Año", `${offer.year}`, search.minYear ? `${search.minYear} o más nuevo` : "Indiferente", f.year === true ? "ok" : "warn")
+        );
+        rows.push(
+          compRowP(
+            "Kilometraje",
+            `${Number(offer.mileage || 0).toLocaleString("es-PA")} km`,
+            `Hasta ${Number(search.maxMileage || 0).toLocaleString("es-PA")} km`,
+            f.mileage === "±10%" ? "ok" : "warn"
+          )
+        );
+        rows.push(
+          compRowP("Ubicación", `${offer.zone}, ${offer.province}`, `${search.zone}, ${search.province}`, f.zone ? "ok" : "diff")
+        );
+        rows.push(
+          compRowP(
+            "Transmisión y combustible",
+            `${vehicleLabel(offer.transmission)} · ${vehicleLabel(offer.fuel)}`,
+            `${vehicleLabel(search.transmission)} · ${vehicleLabel(search.fuel)}`,
+            f.transmission && f.fuel ? "ok" : "warn"
+          )
+        );
+        return `<div class="comp-list">${rows.join("")}</div>`;
+      }
+
+      function ownerInterestBlock(match, vertical) {
+        const state = interestState(match.id);
+        if (!state) {
+          return `
+            <button class="button ghost small ask-interest-btn" type="button" onclick="askClientInterest('${match.id}', '${vertical}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="M22 2 15 22l-4-9-9-4z"></path></svg>
+              Preguntar si le interesa
+            </button>
+            <p class="result-note">Gratis · confirma antes de gastar</p>
+          `;
+        }
+        if (state.status === "pending") {
+          return `<p class="interest-mini pending">Interés solicitado · esperando respuesta del cliente</p>`;
+        }
+        if (state.status === "confirmed") {
+          return `<p class="interest-mini confirmed">El cliente confirmó interés · desbloquea con seguridad</p>`;
+        }
+        return `<p class="interest-mini declined">El cliente indicó que no le interesa por ahora</p>`;
+      }
+
+      function clientInterestBanner(match, vertical) {
+        const state = interestState(match.id);
+        if (!state) return "";
+        const what = vertical === "vehicle" ? vehicleOfferTitle(match.offer) : propertyHeader(match.property);
+        const who = vertical === "vehicle" ? "Un vendedor" : "Un propietario";
+        if (state.status === "pending") {
+          return `
+            <div class="client-interest-ask">
+              <div class="cia-text">
+                <strong>${who} quiere contactarte</strong>
+                <span>“${escapeHtml(what)}” coincide con tu búsqueda. ¿Quieres que te contacte?</span>
+              </div>
+              <div class="cia-actions">
+                <button class="button small primary" type="button" onclick="respondClientInterest('${match.id}', 'yes')">Sí, me interesa</button>
+                <button class="button small ghost" type="button" onclick="respondClientInterest('${match.id}', 'no')">No, gracias</button>
+              </div>
+            </div>
+          `;
+        }
+        if (state.status === "confirmed") {
+          return `<div class="client-interest-done ok">Confirmaste tu interés · pronto podrían contactarte.</div>`;
+        }
+        return `<div class="client-interest-done muted">Indicaste que no te interesa por ahora. <button type="button" class="linklike" onclick="respondClientInterest('${match.id}', 'yes')">Cambiar: sí me interesa</button></div>`;
+      }
+
       function initialsFor(record) {
         return fullName(record)
           .split(/\s+/)
@@ -8965,7 +9383,7 @@
               </div>
               <p>${displayLabel}: la IA compara zona, PH, presupuesto, metraje, equipamiento y urgencia para explicar este resultado.</p>
             </div>
-            ${applicantInfoCards(match, source)}
+            ${source === "property" ? propertyMatchComparison(match, "owner") : propertyMatchComparison(match, "client")}
           </div>
         `;
       }
@@ -9206,6 +9624,7 @@
         return `
           <div class="result-row ${!offerAvailable || ownerClosed ? "row-closed" : ""}">
             ${statusBanner}
+            ${clientInterestBanner(match, "property")}
             <div class="result-row-top">
               <div class="result-rank">
                 <span class="result-rank-badge ${rankBadgeClass(match.mach.ranking)}">${match.mach.ranking || ""}</span>
@@ -9285,8 +9704,10 @@
               </div>
             </div>`
           : "";
+        const interest = interestState(match.id);
+        const highlightUnlock = requested || (interest && interest.status === "confirmed");
         const unlockButton = canUnlockHere
-          ? `<button class="button ${requested ? "primary" : "dark"}" type="button" onclick="unlockMach('${match.id}', '${source}')">Desbloquear contacto</button>`
+          ? `<button class="button ${highlightUnlock ? "primary" : "dark"}" type="button" onclick="unlockMach('${match.id}', '${source}')">Desbloquear contacto</button>`
           : `<button class="button dark" type="button" disabled>${model.validationRequired ? "Pendiente de validación" : "Lo desbloquea la propiedad"}</button>`;
         return `
           <div class="result-row ${requested ? "hot" : ""}">
@@ -9303,8 +9724,8 @@
               </div>
               <div class="result-side">
                 <p class="result-price-big">${canUnlockHere ? price : "Validar"}</p>
+                ${canUnlockHere ? ownerInterestBlock(match, "property") : ""}
                 ${unlockButton}
-                ${requested ? "" : `<p class="result-note">Sin solicitud del cliente aún</p>`}
                 <p class="result-note">Garantía: saldo devuelto si los datos son inválidos</p>
                 <div class="credit-warning" id="warn-${match.id}-${source}">Saldo insuficiente. Agrega saldo demo para desbloquear este contacto.</div>
               </div>
@@ -10800,7 +11221,7 @@
         const legacy = machUnlocks[matchId];
         const info = machUnlocks[key] || legacy;
         if (!info || info.refunded) return;
-        ownerBalance += Number(info.price || match.mach.price || 0);
+        addBalance(info.unlockedBy || currentUserEmail, Number(info.price || match.mach.price || 0));
         if (machUnlocks[key]) machUnlocks[key].refunded = true;
         if (legacy) machUnlocks[matchId].refunded = true;
       }
@@ -12049,9 +12470,35 @@
     </script>
     <script>
       // Modelo actual: saldo demo para desbloquear MACH por categoría.
-      let ownerBalance = load("propertyYaOwnerBalance", Number(ownerCredits || 0) * 10);
+      // Saldo POR USUARIO: mapa { emailNormalizado: monto }.
+      let ownerBalance = load("propertyYaOwnerBalance", Number(ownerCredits || 0) * 10); // legado (solo migración)
+      let balances = load("propertyYaBalances", null);
+      if (!balances) {
+        balances = {};
+        if (Number(ownerBalance) > 0 && currentUserEmail) {
+          balances[normalize(currentUserEmail)] = Number(ownerBalance);
+        }
+      }
+
+      function balanceStoreKey(email) {
+        return normalize(email || currentUserEmail || "__invitado__");
+      }
+
+      function getBalance(email) {
+        return Number(balances[balanceStoreKey(email)] || 0);
+      }
+
+      function setBalance(email, value) {
+        balances[balanceStoreKey(email)] = Math.max(0, Number(value) || 0);
+      }
+
+      function addBalance(email, delta) {
+        setBalance(email, getBalance(email) + Number(delta || 0));
+      }
+
       let machUnlocks = load("propertyYaMachUnlocks", unlockedContacts || {});
       let contactRequests = load("propertyYaContactRequests", {});
+      let interestRequests = load("propertyYaInterestRequests", {});
       let archivedItems = load("propertyYaArchivedItems", {});
       let validationReports = load("propertyYaValidationReports", []);
       let blockedUsers = load("propertyYaBlockedUsers", {});
@@ -12156,9 +12603,10 @@
         localStorage.setItem("propertyYaSearches", JSON.stringify(searches));
         localStorage.setItem("propertyYaVehicleOffers", JSON.stringify(vehicleOffers));
         localStorage.setItem("propertyYaVehicleSearches", JSON.stringify(vehicleSearches));
-        localStorage.setItem("propertyYaOwnerBalance", JSON.stringify(ownerBalance));
+        localStorage.setItem("propertyYaBalances", JSON.stringify(balances));
         localStorage.setItem("propertyYaMachUnlocks", JSON.stringify(machUnlocks));
         localStorage.setItem("propertyYaContactRequests", JSON.stringify(contactRequests));
+        localStorage.setItem("propertyYaInterestRequests", JSON.stringify(interestRequests));
         localStorage.setItem("propertyYaArchivedItems", JSON.stringify(archivedItems));
         localStorage.setItem("propertyYaValidationReports", JSON.stringify(validationReports));
         localStorage.setItem("propertyYaBlockedUsers", JSON.stringify(blockedUsers));
@@ -12484,11 +12932,7 @@
       }
 
       function clientAdminBalance(email) {
-        const key = adminClientKey(email);
-        if (currentUserEmail && key === adminClientKey(currentUserEmail)) return ownerBalance;
-        return adminCreditAdjustments
-          .filter((item) => adminClientKey(item.email) === key)
-          .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        return getBalance(email);
       }
 
       function allAdminClients() {
@@ -12650,9 +13094,7 @@
           return;
         }
         const signedAmount = mode === "charge" ? -amount : amount;
-        if (currentUserEmail && adminClientKey(email) === adminClientKey(currentUserEmail)) {
-          ownerBalance = Math.max(0, ownerBalance + signedAmount);
-        }
+        addBalance(email, signedAmount);
         adminCreditAdjustments.push({
           id: `admin-credit-${Date.now()}`,
           email,
@@ -12828,7 +13270,7 @@
             .join("") || "PY";
         }
         if (walletBalanceValue) {
-          walletBalanceValue.textContent = money.format(ownerBalance);
+          walletBalanceValue.textContent = money.format(getBalance(currentUserEmail));
         }
         const sessionStatusLabel = document.getElementById("sessionStatusLabel");
         if (sessionStatusLabel) {
@@ -13143,7 +13585,7 @@
               </div>
               <p>${displayLabel}: la IA compara tipo, marca, modelo, precio, año, kilometraje y zona.</p>
             </div>
-            ${vehicleFactorCards(match, source)}
+            ${source === "vehicleOffer" ? vehicleMatchComparison(match, "owner") : vehicleMatchComparison(match, "client")}
           </div>
         `;
       }
@@ -13177,6 +13619,7 @@
                   ? ""
                   : `<div class="status-banner unavailable"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg></span><div class="status-banner-text"><strong>Ya no disponible</strong><span>El ofertante marcó este vehículo como no disponible.</span></div></div>`
               }
+              ${clientInterestBanner(match, "vehicle")}
               <div class="result-row-top">
                 <div class="result-rank">
                   <span class="result-rank-badge ${rankBadgeClass(match.mach.ranking)}">${match.mach.ranking || ""}</span>
@@ -13247,8 +13690,8 @@
               </div>
               <div class="result-side">
                 <p class="result-price-big">${price}</p>
-                <button class="button ${requested ? "primary" : "dark"}" type="button" onclick="unlockVehicleMatch('${match.id}', '${source}')">Desbloquear contacto</button>
-                ${requested ? "" : `<p class="result-note">Sin solicitud del cliente aún</p>`}
+                ${ownerInterestBlock(match, "vehicle")}
+                <button class="button ${requested || (interestState(match.id) && interestState(match.id).status === "confirmed") ? "primary" : "dark"}" type="button" onclick="unlockVehicleMatch('${match.id}', '${source}')">Desbloquear contacto</button>
                 <p class="result-note">Garantía: saldo devuelto si los datos son inválidos</p>
                 <div class="credit-warning" id="warn-${match.id}-${source}">Saldo insuficiente. Agrega saldo demo para desbloquear este contacto.</div>
               </div>
@@ -13890,8 +14333,8 @@
       }
 
       function addDemoBalance(amount) {
-        ownerBalance += amount;
-        balanceAdds.push({ amount, date: new Date().toISOString() });
+        addBalance(currentUserEmail, amount);
+        balanceAdds.push({ amount, email: currentUserEmail, date: new Date().toISOString() });
         save();
         render();
       }
@@ -13905,8 +14348,10 @@
         "propertyYaUnlockedContacts",
         "propertyYaCreditPurchases",
         "propertyYaOwnerBalance",
+        "propertyYaBalances",
         "propertyYaMachUnlocks",
         "propertyYaContactRequests",
+        "propertyYaInterestRequests",
         "propertyYaValidationReports",
         "propertyYaBlockedUsers",
         "propertyYaBalanceAdds",
@@ -13995,8 +14440,10 @@
         unlockedContacts = {};
         creditPurchases = [];
         ownerBalance = 0;
+        balances = {};
         machUnlocks = {};
         contactRequests = {};
+        interestRequests = {};
         validationReports = [];
         blockedUsers = {};
         balanceAdds = [];
@@ -14021,8 +14468,10 @@
           "propertyYaUnlockedContacts",
           "propertyYaCreditPurchases",
           "propertyYaOwnerBalance",
+          "propertyYaBalances",
           "propertyYaMachUnlocks",
           "propertyYaContactRequests",
+          "propertyYaInterestRequests",
           "propertyYaValidationReports",
           "propertyYaBlockedUsers",
           "propertyYaBalanceAdds",
@@ -14229,14 +14678,18 @@
       });
 
       let payAmount = 25;
-      let payMethod = "card";
+      let payMethod = "paypal";
+      // Cuando tengas la cuenta PayPal Business, pon aquí tu usuario de PayPal.Me (ej. "konektaya")
+      const paypalMeHandle = "";
 
       function updatePayButtons() {
         const cardBtn = document.getElementById("payCardBtn");
         const yappyBtn = document.getElementById("payYappyBtn");
+        const paypalBtn = document.getElementById("payPaypalBtn");
         const label = payAmount > 0 ? `$${payAmount.toLocaleString("en-US")}` : "";
         if (cardBtn) cardBtn.textContent = `Pagar ${label}`.trim();
         if (yappyBtn) yappyBtn.textContent = `Ya pagué ${label}`.trim();
+        if (paypalBtn) paypalBtn.textContent = `Pagar ${label} con PayPal`.trim();
       }
 
       function setupPayModal() {
@@ -14285,7 +14738,7 @@
       function openPayModal(amount) {
         setupPayModal();
         payAmount = Number(amount) || 25;
-        payMethod = "card";
+        payMethod = "paypal";
         const overlay = document.getElementById("payModal");
         if (!overlay) return;
         const otherInput = overlay.querySelector("#payAmountOther");
@@ -14294,14 +14747,25 @@
           otherInput.value = "";
         }
         overlay.querySelectorAll("#payAmounts .pay-amount").forEach((b) => b.classList.toggle("active", Number(b.dataset.payAmount) === payAmount));
-        overlay.querySelectorAll(".pay-tab").forEach((t) => t.classList.toggle("active", t.dataset.payMethod === "card"));
-        overlay.querySelectorAll(".pay-pane").forEach((p) => p.classList.toggle("hidden", p.dataset.payPane !== "card"));
+        overlay.querySelectorAll(".pay-tab").forEach((t) => t.classList.toggle("active", t.dataset.payMethod === "paypal"));
+        overlay.querySelectorAll(".pay-pane").forEach((p) => p.classList.toggle("hidden", p.dataset.payPane !== "paypal"));
         updatePayButtons();
         overlay.classList.remove("hidden");
       }
 
       function closePayModal() {
         document.getElementById("payModal")?.classList.add("hidden");
+      }
+
+      function submitPaypalPayment() {
+        // Camino A (sin backend): abre PayPal si hay handle configurado y acredita saldo demo.
+        // En producción, el saldo se acredita al confirmar el pago (webhook/servidor).
+        if (!payAmount || payAmount < 1) return;
+        if (paypalMeHandle) {
+          window.open(`https://www.paypal.com/paypalme/${paypalMeHandle}/${payAmount}`, "_blank", "noopener");
+        }
+        addDemoBalance(payAmount);
+        closePayModal();
       }
 
       function submitCardPayment() {
@@ -14348,6 +14812,40 @@
         document.querySelector('[data-user-dashboard-pane="properties"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
 
+      function interestState(matchId) {
+        return interestRequests[matchId] || null;
+      }
+
+      function askClientInterest(id, vertical = "property") {
+        const list = vertical === "vehicle" ? vehicleMatches : matches;
+        const match = list.find((item) => item.id === id);
+        if (!match) return;
+        const existing = interestRequests[id];
+        if (existing && existing.status === "pending") return;
+        interestRequests[id] = {
+          vertical,
+          status: "pending",
+          askedAt: new Date().toISOString(),
+          askedByEmail: vertical === "vehicle" ? match.offer.email : match.property.email,
+          clientEmail: match.search.email,
+          respondedAt: ""
+        };
+        save();
+        render();
+      }
+
+      function respondClientInterest(id, answer) {
+        const request = interestRequests[id];
+        if (!request) return;
+        interestRequests[id] = {
+          ...request,
+          status: answer === "yes" ? "confirmed" : "declined",
+          respondedAt: new Date().toISOString()
+        };
+        save();
+        render();
+      }
+
       function requestOwnerContact(id) {
         const match = matches.find((item) => item.id === id);
         if (!match) return;
@@ -14389,12 +14887,12 @@
         const key = matchUnlockKey(match, source);
         if (machUnlocks[key]) return;
         if (!canUnlockMatch(match)) return;
-        if (ownerBalance < match.mach.price) {
+        if (getBalance(currentUserEmail) < match.mach.price) {
           const warning = document.getElementById(`warn-${id}-${source}`);
           if (warning) warning.classList.add("show");
           return;
         }
-        ownerBalance -= match.mach.price;
+        addBalance(currentUserEmail, -match.mach.price);
         machUnlocks[key] = {
           unlockedAt: new Date().toISOString(),
           source,
@@ -14417,12 +14915,12 @@
         if (!match || source !== "vehicleOffer") return;
         const key = vehicleMatchUnlockKey(match, source);
         if (machUnlocks[key]) return;
-        if (ownerBalance < match.mach.price) {
+        if (getBalance(currentUserEmail) < match.mach.price) {
           const warning = document.getElementById(`warn-${id}-${source}`);
           if (warning) warning.classList.add("show");
           return;
         }
-        ownerBalance -= match.mach.price;
+        addBalance(currentUserEmail, -match.mach.price);
         machUnlocks[key] = {
           unlockedAt: new Date().toISOString(),
           source,
