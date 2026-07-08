@@ -10820,7 +10820,7 @@
         setupVehicleBrandModelRules();
         setupVehicleOtherSelectRules();
         setupVehicleTypeGrids();
-        unlockVehicleIdentityFields();
+        if (typeof unlockVehicleIdentityFields === "function") unlockVehicleIdentityFields();
       }
 
       function setupVehicleOtherSelectRules() {
