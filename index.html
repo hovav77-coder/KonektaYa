@@ -1701,6 +1701,107 @@
         text-transform: uppercase;
       }
 
+      .broker-review-banner {
+        align-items: flex-start;
+        border-radius: 12px;
+        display: flex;
+        gap: 11px;
+        margin: 14px 0 0;
+        padding: 13px 15px;
+      }
+
+      .broker-review-banner strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      .broker-review-banner span {
+        font-size: 12.5px;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+
+      .broker-review-banner .brb-icon {
+        flex-shrink: 0;
+      }
+
+      .broker-review-banner .brb-icon svg {
+        height: 20px;
+        width: 20px;
+      }
+
+      .broker-review-banner.pending {
+        background: #fff8ea;
+        border: 1px solid #f3dca0;
+        color: #7a5a12;
+      }
+
+      .broker-review-banner.rejected {
+        background: #fbe0dc;
+        border: 1px solid #e79b8f;
+        color: #a5281c;
+      }
+
+      .broker-review-banner.approved {
+        background: #e6f4ec;
+        border: 1px solid #9fd8b6;
+        color: #14663d;
+      }
+
+      .broker-client-section {
+        background: #f8fbff;
+        border: 1px solid #cfe0f2;
+        border-radius: 12px;
+        display: none;
+        padding: 16px;
+      }
+
+      .broker-client-section.show {
+        display: block;
+      }
+
+      .broker-section-head {
+        display: grid;
+        gap: 3px;
+        margin-bottom: 12px;
+      }
+
+      .broker-section-head strong {
+        color: var(--navy);
+        font-size: 14px;
+        font-weight: 950;
+      }
+
+      .broker-section-head span {
+        color: var(--muted);
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+
+      .broker-section-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+
+      .broker-independent-row {
+        align-items: center;
+        display: flex;
+        flex-direction: row;
+        gap: 9px;
+      }
+
+      .broker-independent-row input {
+        height: 18px;
+        width: 18px;
+      }
+
+      .broker-independent-row span {
+        color: var(--navy);
+        font-weight: 800;
+      }
+
       .conditional-section {
         background: #f8fbff;
         border: 1px solid #d8e3ef;
@@ -7531,14 +7632,39 @@
                 <label class="field">Apellido<input name="lastName" required /></label>
                 <label class="field">Email<input name="email" type="email" required /></label>
                 <label class="field">Teléfono<input name="phone" required /></label>
-                <input name="role" type="hidden" value="cliente final" />
                 <label class="field">
+                  ¿Quién lo registra?
+                  <select name="role">
+                    <option value="cliente final">Cliente final</option>
+                    <option value="broker">Broker</option>
+                  </select>
+                </label>
+                <label class="field" data-client-only>
                   ¿Para quién estás buscando?
-                  <select name="searchFor" required>
+                  <select name="searchFor">
                     <option value="para_mi">Para mí</option>
                     <option value="para_mi_empresa">Para mi empresa</option>
                   </select>
                 </label>
+                <div class="field full broker-client-section" data-broker-client-section>
+                  <div class="broker-section-head">
+                    <strong>Datos del broker</strong>
+                    <span>Verificamos tu licencia antes de activar tu cuenta.</span>
+                  </div>
+                  <div class="broker-section-grid">
+                    <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
+                    <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o inmobiliaria" /></label>
+                    <label class="field full broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Trabajo de forma independiente (Broker independiente)</span></label>
+                    <label class="field">Privacidad del cliente final
+                      <select name="finalClientPrivacy" data-final-client-privacy>
+                        <option value="visible">Registrar nombre del cliente final</option>
+                        <option value="anonymous">Prefiere ser anónimo</option>
+                      </select>
+                    </label>
+                    <label class="field">Nombre del cliente final<input name="finalClientFirstName" data-final-client-name /></label>
+                    <label class="field">Apellido del cliente final<input name="finalClientLastName" data-final-client-name /></label>
+                  </div>
+                </div>
                 <label class="field">
                   Busco
                   <select name="desiredOperation">
@@ -7781,11 +7907,10 @@
                 <label class="field">Email<input name="email" type="email" required /></label>
                 <label class="field">Teléfono<input name="phone" required /></label>
                 <label class="field">
-                  Registrado por
+                  ¿Quién lo registra?
                   <select name="registeredBy">
                     <option value="propietario">Propietario</option>
-                    <option value="broker">Broker / Intermediario</option>
-                    <option value="dealer">Dealer / Agencia</option>
+                    <option value="broker">Broker</option>
                   </select>
                 </label>
                 <div class="field full">
@@ -7898,11 +8023,10 @@
                   </select>
                 </label>
                 <label class="field">
-                  Tipo de interesado
+                  ¿Quién lo registra?
                   <select name="role">
                     <option value="cliente_final">Cliente final</option>
-                    <option value="empresa_final">Empresa final</option>
-                    <option value="broker">Broker / Intermediario</option>
+                    <option value="broker">Broker</option>
                   </select>
                 </label>
                 <div class="field full">
@@ -8227,6 +8351,7 @@
                 <span>ⓘ</span>
                 <span>Demo sin pago real. Solo para probar desbloqueos.</span>
               </div>
+              <div id="brokerStatusBanner"></div>
               <div class="wallet-summary-strip" id="ownerStats"></div>
             </div>
             <div class="section user-dashboard-tabs">
@@ -10934,33 +11059,47 @@
       function setupSearchBrokerClientRule() {
         const form = document.getElementById("searchForm");
         const role = form?.querySelector('[name="role"]');
-        const searchFor = form?.querySelector('[name="searchFor"]');
         const section = form?.querySelector("[data-broker-client-section]");
-        const privacy = form?.querySelector("[data-final-client-privacy]");
-        const clientNameFields = form ? Array.from(form.querySelectorAll("[data-final-client-name]")) : [];
-        if (!role || !section || !privacy || !clientNameFields.length) return;
+        if (!role || !section) return;
+        const privacy = form.querySelector("[data-final-client-privacy]");
+        const clientNameFields = Array.from(form.querySelectorAll("[data-final-client-name]"));
+        const clientOnly = Array.from(form.querySelectorAll("[data-client-only]"));
+        const license = form.querySelector('[name="brokerLicense"]');
+        const company = form.querySelector('[name="brokerCompany"]');
+        const independent = form.querySelector("[data-broker-independent]");
 
         const syncBrokerClient = () => {
           const isBroker = role.value === "broker";
-          const isAnonymous = privacy.value === "anonymous";
+          const isAnonymous = privacy && privacy.value === "anonymous";
+          const isIndependent = independent && independent.checked;
           section.classList.toggle("show", isBroker);
-          privacy.disabled = !isBroker;
+          clientOnly.forEach((el) => (el.hidden = isBroker));
+          if (license) license.required = isBroker;
+          if (company) {
+            company.disabled = isBroker && isIndependent;
+            company.required = isBroker && !isIndependent;
+            if (isBroker && isIndependent) company.value = "Broker independiente";
+            else if (company.value === "Broker independiente") company.value = "";
+          }
+          if (privacy) privacy.disabled = !isBroker;
           clientNameFields.forEach((field) => {
             field.disabled = !isBroker || isAnonymous;
             field.required = isBroker && !isAnonymous;
             if (!isBroker || isAnonymous) field.value = "";
           });
+          if (!isBroker) {
+            if (license) license.value = "";
+            if (company) company.value = "";
+            if (independent) independent.checked = false;
+          }
         };
 
-        role.addEventListener("change", syncBrokerClient);
-        if (searchFor) {
-          searchFor.addEventListener("change", () => {
-            const brokerValues = ["para_un_cliente", "broker_corredor", "asesor_inmobiliario"];
-            role.value = brokerValues.includes(searchFor.value) ? "broker" : "cliente final";
-            syncBrokerClient();
-          });
-        }
-        privacy.addEventListener("change", syncBrokerClient);
+        [role, privacy, independent].forEach((el) => {
+          if (el && !el.dataset.brokerRuleReady) {
+            el.addEventListener("change", syncBrokerClient);
+            el.dataset.brokerRuleReady = "true";
+          }
+        });
         syncBrokerClient();
       }
 
@@ -11226,7 +11365,7 @@
       function editSearch(id) {
         const search = searches.find((item) => item.id === id);
         const isBrokerSearch = classifyInterested(search) === "broker_declarado" || search.role === "broker";
-        const form = document.getElementById(isBrokerSearch ? "brokerForm" : "searchForm");
+        const form = document.getElementById("searchForm");
         if (!search || !form) return;
 
         editingSearchId = id;
@@ -11234,11 +11373,16 @@
         setFormValue(form, "lastName", search.lastName);
         setFormValue(form, "email", search.email);
         setFormValue(form, "phone", search.phone);
-        setFormValue(form, "role", search.role);
-        setFormValue(form, "searchFor", search.searchFor || (search.role === "broker" ? "broker_corredor" : "para_mi"));
+        setFormValue(form, "role", isBrokerSearch ? "broker" : "cliente final");
+        setFormValue(form, "searchFor", isBrokerSearch ? "para_mi" : search.searchFor || "para_mi");
         setFormValue(form, "finalClientPrivacy", search.finalClientPrivacy || "visible");
         setFormValue(form, "finalClientFirstName", search.finalClientFirstName);
         setFormValue(form, "finalClientLastName", search.finalClientLastName);
+        const brokerAccount = getBrokerAccount(search.email);
+        setFormValue(form, "brokerLicense", brokerAccount?.license || "");
+        setFormValue(form, "brokerCompany", brokerAccount?.company || "");
+        const independentCheckbox = form.querySelector("[data-broker-independent]");
+        if (independentCheckbox) independentCheckbox.checked = Boolean(brokerAccount?.independent);
         setFormValue(form, "desiredOperation", search.desiredOperation);
         setPropertyTypeValue(form, search.propertyType);
         setFormValue(form, "desiredEquipment", search.desiredEquipment || "indiferente");
@@ -11259,7 +11403,7 @@
           }
           syncUrgencySelect(urgencySelect);
         }
-        setupLocationSelects(isBrokerSearch ? "broker" : "search", search.province || "Panamá", search.desiredZone || "Costa del Este");
+        setupLocationSelects("search", search.province || "Panamá", search.desiredZone || "Costa del Este");
         setFormValue(form, "desiredStreetOrNeighborhood", search.desiredStreetOrNeighborhood);
         setFormValue(form, "desiredPh", search.desiredPh);
         setFormValue(form, "minSizeM2", formatThousandsValue(search.minSizeM2));
@@ -11267,9 +11411,8 @@
         setFormValue(form, "useCase", search.useCase);
         setFormValue(form, "comments", search.comments);
         setupSearchBrokerClientRule();
-        setupBrokerFormPrivacy();
         form.querySelector('button[type="submit"]').textContent = "Guardar cambios";
-        showTab(isBrokerSearch ? "broker" : "busqueda");
+        showTab("busqueda");
       }
 
       function toggleResultDetail(id) {
@@ -12067,15 +12210,17 @@
         if (!validateProtectedFreeText(event.currentTarget, data)) return;
         if (!ensureAccountForForm(event.currentTarget, data)) return;
         removeAccountFields(data);
+        const isBrokerSearch = data.role === "broker";
+        if (isBrokerSearch) registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent);
         const searchPayload = {
           ...data,
           name: fullName(data),
-          searchFor: data.searchFor || (data.role === "broker" ? "broker_corredor" : "para_mi"),
-          finalClientPrivacy: data.role === "broker" ? data.finalClientPrivacy || "visible" : "",
+          searchFor: isBrokerSearch ? "broker_corredor" : data.searchFor || "para_mi",
+          finalClientPrivacy: isBrokerSearch ? data.finalClientPrivacy || "visible" : "",
           finalClientFirstName:
-            data.role === "broker" && data.finalClientPrivacy !== "anonymous" ? data.finalClientFirstName || "" : "",
+            isBrokerSearch && data.finalClientPrivacy !== "anonymous" ? data.finalClientFirstName || "" : "",
           finalClientLastName:
-            data.role === "broker" && data.finalClientPrivacy !== "anonymous" ? data.finalClientLastName || "" : "",
+            isBrokerSearch && data.finalClientPrivacy !== "anonymous" ? data.finalClientLastName || "" : "",
           minSizeM2: parseThousands(data.minSizeM2),
           maxBudget: parseThousands(data.maxBudget),
           desiredParkingSpaces: resolveParkingValue(data.desiredParkingSpaces, data.desiredParkingSpacesOther),
@@ -12402,9 +12547,49 @@
           .join("");
       };
 
+      function brokerActivityCount(email) {
+        const key = normalize(email);
+        const s = searches.filter((x) => normalize(x.email) === key).length;
+        const p = properties.filter((x) => normalize(x.email) === key).length;
+        const vo = vehicleOffers.filter((x) => normalize(x.email) === key).length;
+        const vs = vehicleSearches.filter((x) => normalize(x.email) === key).length;
+        return s + p + vo + vs;
+      }
+
       function renderValidationAdmin() {
         const target = document.getElementById("adminValidation");
         if (!target) return;
+        const brokerList = Object.values(brokerAccounts).sort((a, b) => {
+          const order = { pendiente: 0, rechazado: 1, aprobado: 2 };
+          return (order[a.status] ?? 3) - (order[b.status] ?? 3);
+        });
+        const brokerCards = brokerList.map((broker) => {
+          const statusPill =
+            broker.status === "aprobado"
+              ? '<span class="pill success">Broker aprobado</span>'
+              : broker.status === "rechazado"
+                ? '<span class="pill warn">Broker rechazado</span>'
+                : '<span class="pill" style="background:#eef4fb;color:#1f3b63;">Broker pendiente</span>';
+          const actions =
+            broker.status === "aprobado"
+              ? `<button class="button small reject" type="button" onclick="setBrokerStatus('${jsString(broker.email)}', 'rechazado')">Revocar</button>`
+              : broker.status === "rechazado"
+                ? `<button class="button small primary" type="button" onclick="setBrokerStatus('${jsString(broker.email)}', 'aprobado')">Aprobar</button>`
+                : `<button class="button small primary" type="button" onclick="setBrokerStatus('${jsString(broker.email)}', 'aprobado')">Aprobar broker</button><button class="button small reject" type="button" onclick="setBrokerStatus('${jsString(broker.email)}', 'rechazado')">Rechazar</button>`;
+          return `
+            <article class="card">
+              ${statusPill}
+              <h3>${escapeHtml(broker.company || "Broker")}</h3>
+              <div class="meta">
+                <span>Email: ${escapeHtml(broker.email)}</span>
+                <span>Licencia: ${escapeHtml(broker.license || "No indicada")}</span>
+                <span>${broker.independent ? "Broker independiente" : "Empresa: " + escapeHtml(broker.company || "—")}</span>
+                <span>Publicaciones/búsquedas: ${brokerActivityCount(broker.email)}</span>
+              </div>
+              <div class="data-row-actions">${actions}</div>
+            </article>
+          `;
+        });
         const possible = searches.filter((search) =>
           ["posible_broker", "pendiente_validacion", "blocked"].includes(classifyInterested(search))
         );
@@ -12446,8 +12631,8 @@
             </article>
           `
         );
-        target.innerHTML = [...reportCards, ...possibleCards].join("") ||
-          '<article class="card empty"><h3>Sin casos de validación</h3><p>No hay usuarios marcados o reportes pendientes.</p></article>';
+        target.innerHTML = [...brokerCards, ...reportCards, ...possibleCards].join("") ||
+          '<article class="card empty"><h3>Sin casos de validación</h3><p>No hay brokers pendientes, usuarios marcados ni reportes.</p></article>';
       }
 
       renderStats = function () {
@@ -12583,6 +12768,7 @@
       let machUnlocks = load("propertyYaMachUnlocks", unlockedContacts || {});
       let contactRequests = load("propertyYaContactRequests", {});
       let interestRequests = load("propertyYaInterestRequests", {});
+      let brokerAccounts = load("propertyYaBrokerAccounts", {});
       let archivedItems = load("propertyYaArchivedItems", {});
       let validationReports = load("propertyYaValidationReports", []);
       let blockedUsers = load("propertyYaBlockedUsers", {});
@@ -12691,6 +12877,7 @@
         localStorage.setItem("propertyYaMachUnlocks", JSON.stringify(machUnlocks));
         localStorage.setItem("propertyYaContactRequests", JSON.stringify(contactRequests));
         localStorage.setItem("propertyYaInterestRequests", JSON.stringify(interestRequests));
+        localStorage.setItem("propertyYaBrokerAccounts", JSON.stringify(brokerAccounts));
         localStorage.setItem("propertyYaArchivedItems", JSON.stringify(archivedItems));
         localStorage.setItem("propertyYaValidationReports", JSON.stringify(validationReports));
         localStorage.setItem("propertyYaBlockedUsers", JSON.stringify(blockedUsers));
@@ -12707,8 +12894,10 @@
         matches = [];
         vehicleMatches = [];
         properties.forEach((property) => {
+          if (property.registeredBy === "broker" && isBrokerBlockedFromMatching(property.email)) return;
           searches.forEach((search) => {
             if (!isSearchActive(search)) return;
+            if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
             const score = calculateScore(property, search);
             if (score >= 70) {
               const id = `${property.id}-${search.id}`;
@@ -12726,8 +12915,10 @@
           });
         });
         vehicleOffers.forEach((offer) => {
+          if (offer.registeredBy === "broker" && isBrokerBlockedFromMatching(offer.email)) return;
           vehicleSearches.forEach((search) => {
             if (!isSearchActive(search)) return;
+            if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
             const result = vehicleMatchEngineV1(offer, search);
             if (result.score >= 70) {
               const id = `vehicle-${offer.id}-${search.id}`;
@@ -13357,6 +13548,22 @@
         }
         if (walletBalanceValue) {
           walletBalanceValue.textContent = money.format(getBalance(currentUserEmail));
+        }
+        const brokerBanner = document.getElementById("brokerStatusBanner");
+        if (brokerBanner) {
+          const broker = getBrokerAccount(currentUserEmail);
+          if (broker && broker.status === "pendiente") {
+            brokerBanner.innerHTML =
+              '<div class="broker-review-banner pending"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><div><strong>Cuenta de broker en revisión</strong><span>Estamos verificando tu licencia. Tus publicaciones y búsquedas quedan en pausa (no hacen match) y no puedes comprar paquetes hasta que un administrador apruebe tu cuenta.</span></div></div>';
+          } else if (broker && broker.status === "rechazado") {
+            brokerBanner.innerHTML =
+              '<div class="broker-review-banner rejected"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M15 9l-6 6M9 9l6 6"></path></svg></span><div><strong>Cuenta de broker no aprobada</strong><span>Tu solicitud de broker fue rechazada. Escríbenos por WhatsApp para revisar tu caso.</span></div></div>';
+          } else if (broker && broker.status === "aprobado") {
+            brokerBanner.innerHTML =
+              '<div class="broker-review-banner approved"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><div><strong>Broker aprobado</strong><span>Tu cuenta está activa. Tus publicaciones hacen match y puedes comprar paquetes de desbloqueo.</span></div></div>';
+          } else {
+            brokerBanner.innerHTML = "";
+          }
         }
         const sessionStatusLabel = document.getElementById("sessionStatusLabel");
         if (sessionStatusLabel) {
@@ -14442,6 +14649,7 @@
         "propertyYaMachUnlocks",
         "propertyYaContactRequests",
         "propertyYaInterestRequests",
+        "propertyYaBrokerAccounts",
         "propertyYaValidationReports",
         "propertyYaBlockedUsers",
         "propertyYaBalanceAdds",
@@ -14534,6 +14742,7 @@
         machUnlocks = {};
         contactRequests = {};
         interestRequests = {};
+        brokerAccounts = {};
         validationReports = [];
         blockedUsers = {};
         balanceAdds = [];
@@ -14562,6 +14771,7 @@
           "propertyYaMachUnlocks",
           "propertyYaContactRequests",
           "propertyYaInterestRequests",
+          "propertyYaBrokerAccounts",
           "propertyYaValidationReports",
           "propertyYaBlockedUsers",
           "propertyYaBalanceAdds",
@@ -14923,6 +15133,54 @@
           return;
         }
         document.querySelector('[data-user-dashboard-pane="properties"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      function brokerKey(email) {
+        return normalize(email || "");
+      }
+
+      function getBrokerAccount(email) {
+        return brokerAccounts[brokerKey(email)] || null;
+      }
+
+      function isBrokerApproved(email) {
+        const account = getBrokerAccount(email);
+        return account ? account.status === "aprobado" : false;
+      }
+
+      function isBrokerPending(email) {
+        const account = getBrokerAccount(email);
+        return account ? account.status === "pendiente" : false;
+      }
+
+      // Solo se pausa del matching a un broker que SÍ se registró (tiene ficha) y aún no está aprobado.
+      // Los brokers heredados (sin ficha) no se bloquean, para no romper datos existentes.
+      function isBrokerBlockedFromMatching(email) {
+        const account = getBrokerAccount(email);
+        return Boolean(account) && account.status !== "aprobado";
+      }
+
+      function registerBrokerCredentials(email, license, company, independent) {
+        if (!email) return;
+        const key = brokerKey(email);
+        const existing = brokerAccounts[key] || {};
+        const indep = independent === "on" || independent === true;
+        brokerAccounts[key] = {
+          email,
+          license: license || existing.license || "",
+          company: indep ? "Broker independiente" : company || existing.company || "",
+          independent: indep,
+          status: existing.status === "aprobado" ? "aprobado" : existing.status || "pendiente",
+          createdAt: existing.createdAt || new Date().toISOString()
+        };
+      }
+
+      function setBrokerStatus(email, status) {
+        const key = brokerKey(email);
+        if (!brokerAccounts[key]) return;
+        brokerAccounts[key] = { ...brokerAccounts[key], status, decidedAt: new Date().toISOString() };
+        save();
+        render();
       }
 
       function interestState(matchId) {
