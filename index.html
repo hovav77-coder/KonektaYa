@@ -1973,19 +1973,37 @@
 
       .broker-independent-row {
         align-items: center;
+        background: #ffffff;
+        border: 1px solid #dbe6f2;
+        border-radius: 12px;
+        cursor: pointer;
         display: flex;
         flex-direction: row;
-        gap: 9px;
-      }
-
-      .broker-independent-row input {
-        height: 18px;
-        width: 18px;
+        gap: 10px;
+        grid-column: 1 / -1;
+        margin-top: 2px;
+        padding: 12px 14px;
       }
 
       .broker-independent-row span {
         color: var(--navy);
+        font-size: 14px;
         font-weight: 800;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+
+      .form.modern-form-ready .broker-independent-row input[type="checkbox"],
+      .broker-independent-row input[type="checkbox"] {
+        accent-color: var(--orange);
+        border: 2px solid #cdd9e8;
+        border-radius: 5px;
+        flex: 0 0 auto;
+        height: 20px;
+        margin: 0;
+        min-height: 0;
+        padding: 0;
+        width: 20px;
       }
 
       .conditional-section {
@@ -7720,7 +7738,7 @@
                   <div class="broker-section-grid">
                     <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
                     <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o inmobiliaria" /></label>
-                    <label class="field full broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Trabajo de forma independiente (Broker independiente)</span></label>
+                    <label class="broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Soy broker independiente</span></label>
                   </div>
                 </div>
                 <div class="field full">
@@ -7844,7 +7862,7 @@
                   <div class="broker-section-grid">
                     <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
                     <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o inmobiliaria" /></label>
-                    <label class="field full broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Trabajo de forma independiente (Broker independiente)</span></label>
+                    <label class="broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Soy broker independiente</span></label>
                     <label class="field">Privacidad del cliente final
                       <select name="finalClientPrivacy" data-final-client-privacy>
                         <option value="visible">Registrar nombre del cliente final</option>
@@ -8106,12 +8124,10 @@
                 <div class="field full broker-client-section" data-broker-credentials>
                   <div class="broker-section-head">
                     <strong>Datos del broker</strong>
-                    <span>Verificamos tu licencia antes de activar tu cuenta.</span>
+                    <span>Verificamos tu empresa antes de activar tu cuenta.</span>
                   </div>
                   <div class="broker-section-grid">
-                    <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
-                    <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o agencia" /></label>
-                    <label class="field full broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Trabajo de forma independiente (Broker independiente)</span></label>
+                    <label class="field full">Empresa o agencia<input name="brokerCompany" placeholder="Nombre de la empresa, agencia o el tuyo si eres individual" /></label>
                   </div>
                 </div>
                 <div class="field full">
@@ -8233,12 +8249,10 @@
                 <div class="field full broker-client-section" data-broker-credentials>
                   <div class="broker-section-head">
                     <strong>Datos del broker</strong>
-                    <span>Verificamos tu licencia antes de activar tu cuenta.</span>
+                    <span>Verificamos tu empresa antes de activar tu cuenta.</span>
                   </div>
                   <div class="broker-section-grid">
-                    <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
-                    <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o agencia" /></label>
-                    <label class="field full broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Trabajo de forma independiente (Broker independiente)</span></label>
+                    <label class="field full">Empresa o agencia<input name="brokerCompany" placeholder="Nombre de la empresa, agencia o el tuyo si eres individual" /></label>
                   </div>
                 </div>
                 <div class="field full">
@@ -15964,6 +15978,17 @@
               createdSteps.push(grid);
             }
           });
+          // La caja de datos del broker debe quedar justo debajo del selector de rol, en su mismo paso.
+          const brokerWrap = originalChildren.find(
+            (child) => child.matches && (child.matches("[data-broker-client-section]") || child.matches("[data-broker-credentials]"))
+          );
+          if (brokerWrap && !used.has(brokerWrap)) {
+            const roleNode = getFormFieldNode(form, "registeredBy") || getFormFieldNode(form, "role");
+            if (roleNode && roleNode.parentElement && used.has(roleNode)) {
+              roleNode.parentElement.insertBefore(brokerWrap, roleNode.nextSibling);
+              used.add(brokerWrap);
+            }
+          }
           const fallbackGrid = createdSteps[createdSteps.length - 1];
           originalChildren.forEach((child) => {
             if (!used.has(child) && sourceGrid.contains(child) && fallbackGrid) {
