@@ -1701,6 +1701,192 @@
         text-transform: uppercase;
       }
 
+      .b2b-panel {
+        background: #ffffff;
+        border: 1px solid #dce5ef;
+        border-radius: 16px;
+        box-shadow: var(--soft-shadow);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 18px;
+        padding: 22px;
+      }
+
+      .b2b-head {
+        align-items: center;
+        background: var(--navy);
+        border-radius: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        justify-content: space-between;
+        padding: 16px 18px;
+      }
+
+      .b2b-broker {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .b2b-broker-icon {
+        align-items: center;
+        background: rgba(126, 214, 166, 0.18);
+        border-radius: 11px;
+        color: #7ed6a6;
+        display: inline-flex;
+        flex-shrink: 0;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+      }
+
+      .b2b-broker-icon svg {
+        height: 21px;
+        width: 21px;
+      }
+
+      .b2b-broker-title {
+        align-items: center;
+        color: #ffffff;
+        display: flex;
+        font-size: 16px;
+        font-weight: 950;
+        gap: 8px;
+      }
+
+      .b2b-approved {
+        background: rgba(126, 214, 166, 0.16);
+        border-radius: 999px;
+        color: #7ed6a6;
+        font-size: 11px;
+        font-weight: 900;
+        padding: 2px 9px;
+      }
+
+      .b2b-broker-sub {
+        color: #b9c6da;
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+
+      .b2b-balance {
+        text-align: right;
+      }
+
+      .b2b-balance span {
+        color: #a9bcd9;
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .b2b-balance strong {
+        color: #ffffff;
+        font-size: 24px;
+      }
+
+      .b2b-title {
+        color: var(--navy);
+        font-size: 13px;
+        font-weight: 950;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .b2b-desc {
+        color: var(--muted);
+        font-size: 13.5px;
+        font-weight: 700;
+        margin: -8px 0 0;
+      }
+
+      .b2b-packages {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+
+      .b2b-pkg {
+        border: 1px solid #dce5ef;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 18px;
+        position: relative;
+      }
+
+      .b2b-pkg.featured {
+        border: 2px solid var(--orange);
+      }
+
+      .b2b-badge {
+        background: var(--orange);
+        border-radius: 999px;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 900;
+        left: 18px;
+        padding: 2px 10px;
+        position: absolute;
+        top: -11px;
+      }
+
+      .b2b-pkg-name {
+        color: var(--navy);
+        font-size: 15px;
+        font-weight: 950;
+      }
+
+      .b2b-pkg-price {
+        color: var(--navy);
+        font-size: 28px;
+        font-weight: 950;
+        line-height: 1;
+      }
+
+      .b2b-pkg-bonus {
+        color: #14663d;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .b2b-pkg .button {
+        margin-top: 6px;
+        width: 100%;
+      }
+
+      .b2b-foot,
+      .b2b-monthly {
+        align-items: center;
+        color: var(--muted);
+        display: flex;
+        font-size: 12.5px;
+        font-weight: 700;
+        gap: 8px;
+        margin: 0;
+      }
+
+      .b2b-foot svg {
+        flex-shrink: 0;
+        height: 15px;
+        width: 15px;
+      }
+
+      .b2b-monthly {
+        background: #f3f7fc;
+        border: 1px solid #dce7f4;
+        border-radius: 12px;
+        color: var(--navy);
+        padding: 12px 16px;
+      }
+
       .broker-review-banner {
         align-items: flex-start;
         border-radius: 12px;
@@ -7520,12 +7706,23 @@
                 <label class="field">Email<input name="email" type="email" required /></label>
                 <label class="field">Teléfono<input name="phone" required /></label>
                 <label class="field">
-                  Lo registra
+                  ¿Quién lo registra?
                   <select name="registeredBy">
                     <option value="propietario">Propietario</option>
                     <option value="broker">Broker</option>
                   </select>
                 </label>
+                <div class="field full broker-client-section" data-broker-credentials>
+                  <div class="broker-section-head">
+                    <strong>Datos del broker</strong>
+                    <span>Verificamos tu licencia antes de activar tu cuenta.</span>
+                  </div>
+                  <div class="broker-section-grid">
+                    <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
+                    <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o inmobiliaria" /></label>
+                    <label class="field full broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Trabajo de forma independiente (Broker independiente)</span></label>
+                  </div>
+                </div>
                 <div class="field full">
                   Tipo de propiedad
                   <input type="hidden" name="propertyType" value="apartamento" />
@@ -7913,6 +8110,17 @@
                     <option value="broker">Broker</option>
                   </select>
                 </label>
+                <div class="field full broker-client-section" data-broker-credentials>
+                  <div class="broker-section-head">
+                    <strong>Datos del broker</strong>
+                    <span>Verificamos tu licencia antes de activar tu cuenta.</span>
+                  </div>
+                  <div class="broker-section-grid">
+                    <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
+                    <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o agencia" /></label>
+                    <label class="field full broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Trabajo de forma independiente (Broker independiente)</span></label>
+                  </div>
+                </div>
                 <div class="field full">
                   Tipo de vehículo
                   <input type="hidden" name="vehicleType" value="carro" />
@@ -8029,6 +8237,17 @@
                     <option value="broker">Broker</option>
                   </select>
                 </label>
+                <div class="field full broker-client-section" data-broker-credentials>
+                  <div class="broker-section-head">
+                    <strong>Datos del broker</strong>
+                    <span>Verificamos tu licencia antes de activar tu cuenta.</span>
+                  </div>
+                  <div class="broker-section-grid">
+                    <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
+                    <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o agencia" /></label>
+                    <label class="field full broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Trabajo de forma independiente (Broker independiente)</span></label>
+                  </div>
+                </div>
                 <div class="field full">
                   Tipo de vehículo buscado
                   <input type="hidden" name="vehicleType" value="carro" />
@@ -8354,6 +8573,7 @@
               <div id="brokerStatusBanner"></div>
               <div class="wallet-summary-strip" id="ownerStats"></div>
             </div>
+            <div id="brokerB2BPanel"></div>
             <div class="section user-dashboard-tabs">
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
                 <div class="vertical-switch" aria-label="Vertical del dashboard">
@@ -11103,6 +11323,46 @@
         syncBrokerClient();
       }
 
+      function setupBrokerCredentials(form) {
+        if (!form) return;
+        const group = form.querySelector("[data-broker-credentials]");
+        const roleSel = form.querySelector('[name="registeredBy"]') || form.querySelector('[name="role"]');
+        if (!group || !roleSel) return;
+        const license = group.querySelector('[name="brokerLicense"]');
+        const company = group.querySelector('[name="brokerCompany"]');
+        const independent = group.querySelector("[data-broker-independent]");
+        const sync = () => {
+          const isBroker = roleSel.value === "broker";
+          const isIndependent = independent && independent.checked;
+          group.classList.toggle("show", isBroker);
+          if (license) license.required = isBroker;
+          if (company) {
+            company.disabled = isBroker && isIndependent;
+            company.required = isBroker && !isIndependent;
+            if (isBroker && isIndependent) company.value = "Broker independiente";
+            else if (company.value === "Broker independiente") company.value = "";
+          }
+          if (!isBroker) {
+            if (license) license.value = "";
+            if (company) company.value = "";
+            if (independent) independent.checked = false;
+          }
+        };
+        [roleSel, independent].forEach((el) => {
+          if (el && !el.dataset.brokerCredReady) {
+            el.addEventListener("change", sync);
+            el.dataset.brokerCredReady = "true";
+          }
+        });
+        sync();
+      }
+
+      function setupAllBrokerCredentials() {
+        ["propertyForm", "vehicleOfferForm", "vehicleSearchForm"].forEach((id) =>
+          setupBrokerCredentials(document.getElementById(id))
+        );
+      }
+
       function setupBrokerFormPrivacy() {
         const form = document.getElementById("brokerForm");
         const privacy = form?.querySelector('[name="finalClientPrivacy"]');
@@ -11411,6 +11671,7 @@
         setFormValue(form, "useCase", search.useCase);
         setFormValue(form, "comments", search.comments);
         setupSearchBrokerClientRule();
+        setupAllBrokerCredentials();
         form.querySelector('button[type="submit"]').textContent = "Guardar cambios";
         showTab("busqueda");
       }
@@ -12147,6 +12408,10 @@
         if (!validateProtectedFreeText(event.currentTarget, data)) return;
         if (!ensureAccountForForm(event.currentTarget, data)) return;
         removeAccountFields(data);
+        if (data.registeredBy === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent);
+        delete data.brokerLicense;
+        delete data.brokerCompany;
+        delete data.brokerIndependent;
         const propertyPayload = {
           ...data,
           name: fullName(data),
@@ -12192,6 +12457,7 @@
         setupAvailabilitySelects();
         setupPropertyTypeGrids();
         unlockPropertyIdentityFields();
+        setupAllBrokerCredentials();
         syncPropertyTerrainFields();
         setupProtectedFreeTextValidation();
         save();
@@ -12250,6 +12516,7 @@
         setupLocationSelects("search", "Panamá", "Costa del Este");
         setupLocationSelects("broker", "Panamá", "Costa del Este");
         setupSearchBrokerClientRule();
+        setupAllBrokerCredentials();
         setupBrokerFormPrivacy();
         setupParkingSelects();
         setupUrgencySelects();
@@ -12285,12 +12552,16 @@
         const selectedPrice = data.salePrice === "Otro" ? data.salePriceOther : data.salePrice;
         const selectedColor = data.color === "Otro" ? data.colorOther : data.color;
         const selectedVehicleType = data.vehicleType === "otro" ? (data.vehicleTypeOther || "").trim() : data.vehicleType;
+        if (data.registeredBy === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent);
         delete data.brandOther;
         delete data.modelOther;
         delete data.yearOther;
         delete data.salePriceOther;
         delete data.colorOther;
         delete data.vehicleTypeOther;
+        delete data.brokerLicense;
+        delete data.brokerCompany;
+        delete data.brokerIndependent;
         const payload = {
           ...data,
           operation: "vehiculo",
@@ -12323,6 +12594,7 @@
         setupLocationSelects("vehicleOffer", "Panamá", "San Francisco");
         setupVehicleOptionLists();
         setupVehicleStatusSelects();
+        setupAllBrokerCredentials();
         setupProtectedFreeTextValidation();
         save();
         showToast("vehicleOfferToast");
@@ -12346,12 +12618,16 @@
         const selectedMaxBudget = data.maxBudget === "Otro" ? data.maxBudgetOther : data.maxBudget;
         const selectedDesiredColor = data.desiredColor === "Otro" ? data.desiredColorOther : data.desiredColor;
         const selectedVehicleType = data.vehicleType === "otro" ? (data.vehicleTypeOther || "").trim() : data.vehicleType;
+        if (data.role === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent);
         delete data.desiredBrandOther;
         delete data.desiredModelOther;
         delete data.minYearOther;
         delete data.maxBudgetOther;
         delete data.desiredColorOther;
         delete data.vehicleTypeOther;
+        delete data.brokerLicense;
+        delete data.brokerCompany;
+        delete data.brokerIndependent;
         const payload = {
           ...data,
           desiredOperation: "vehiculo",
@@ -12415,6 +12691,7 @@
         setupBrokerAcceptanceRule();
         setupPropertyPricingRule();
         setupSearchBrokerClientRule();
+        setupAllBrokerCredentials();
         setupBrokerFormPrivacy();
         setupAccountCreation("propertyForm");
         setupAccountCreation("searchForm");
@@ -12425,6 +12702,7 @@
         setupAvailabilitySelects();
         setupUrgencySelects();
         setupVehicleStatusSelects();
+        setupAllBrokerCredentials();
         setupPropertyTerrainRule();
         setupPropertyTypeGrids();
         setupThousandsInputs();
@@ -12948,6 +13226,7 @@
         renderValidationAdmin();
         renderDashboardLists();
         renderHistory();
+        renderBrokerB2B();
         refreshResultsModal();
       };
 
@@ -15181,6 +15460,73 @@
         brokerAccounts[key] = { ...brokerAccounts[key], status, decidedAt: new Date().toISOString() };
         save();
         render();
+      }
+
+      const brokerPackages = [
+        { name: "Starter", base: 50, bonus: 10 },
+        { name: "Pro", base: 150, bonus: 20, featured: true },
+        { name: "Elite", base: 400, bonus: 30 }
+      ];
+
+      function buyBrokerPackage(base, bonus) {
+        if (!isBrokerApproved(currentUserEmail)) return;
+        const credited = Math.round(Number(base) * (1 + Number(bonus) / 100));
+        addBalance(currentUserEmail, credited);
+        balanceAdds.push({
+          amount: credited,
+          email: currentUserEmail,
+          note: `Paquete broker $${base} (+${bonus}%)`,
+          date: new Date().toISOString()
+        });
+        save();
+        render();
+      }
+
+      function renderBrokerB2B() {
+        const target = document.getElementById("brokerB2BPanel");
+        if (!target) return;
+        const broker = getBrokerAccount(currentUserEmail);
+        if (!broker || broker.status !== "aprobado") {
+          target.innerHTML = "";
+          return;
+        }
+        const balance = getBalance(currentUserEmail);
+        const cards = brokerPackages
+          .map((pkg) => {
+            const credited = Math.round(pkg.base * (1 + pkg.bonus / 100));
+            return `
+              <article class="b2b-pkg ${pkg.featured ? "featured" : ""}">
+                ${pkg.featured ? '<span class="b2b-badge">Recomendado</span>' : ""}
+                <span class="b2b-pkg-name">${pkg.name}</span>
+                <span class="b2b-pkg-price">$${pkg.base}</span>
+                <span class="b2b-pkg-bonus">+${pkg.bonus}% bono → ${money.format(credited)} de crédito</span>
+                <button class="button ${pkg.featured ? "primary" : "dark"}" type="button" onclick="buyBrokerPackage(${pkg.base}, ${pkg.bonus})">Comprar</button>
+              </article>
+            `;
+          })
+          .join("");
+        target.innerHTML = `
+          <section class="b2b-panel">
+            <div class="b2b-head">
+              <div class="b2b-broker">
+                <span class="b2b-broker-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span>
+                <div>
+                  <div class="b2b-broker-title">Cuenta Broker <span class="b2b-approved">Aprobada</span></div>
+                  <div class="b2b-broker-sub">${escapeHtml(broker.license || "Licencia no indicada")} · ${escapeHtml(broker.company || "")}</div>
+                </div>
+              </div>
+              <div class="b2b-balance">
+                <span>Crédito disponible</span>
+                <strong>${money.format(balance)}</strong>
+              </div>
+            </div>
+            <div class="b2b-title">Comprar paquete de desbloqueos</div>
+            <p class="b2b-desc">Recargas crédito con bono por volumen. El crédito no vence y sirve para inmuebles y vehículos.</p>
+            <div class="b2b-packages">${cards}</div>
+            <p class="b2b-foot"><svg viewBox="0 0 24 24" fill="none" stroke="#1f7a4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg> El crédito se descuenta automáticamente según el nivel de cada match. Cada desbloqueo con Garantía KonektaYa.</p>
+            <p class="b2b-monthly"><strong>¿Mucho volumen?</strong> Plan mensual con desbloqueos ilimitados por vertical — pregúntanos.</p>
+          </section>
+        `;
       }
 
       function interestState(matchId) {
