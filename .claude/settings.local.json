@@ -49,7 +49,15 @@
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} size=%{size_download}\\\\n\" http://localhost:3005)",
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:3005)",
       "Bash(git reset *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git config *)",
+      "Bash(python -c \"import openpyxl; print\\(openpyxl.__version__\\)\")",
+      "Bash(py -c \"import openpyxl; print\\(openpyxl.__version__\\)\")",
+      "PowerShell(try { $x = New-Object -ComObject Excel.Application -ErrorAction Stop; $x.Quit\\(\\); [System.Runtime.Interopservices.Marshal]::ReleaseComObject\\($x\\) | Out-Null; \"EXCEL-OK\" } catch { \"NO-EXCEL: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(& \"C:\\\\Users\\\\HSAID\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-HSAID-Desarollo-Claude-KonektaYa\\\\6d0c0f1a-e298-4ae6-b236-a87dbd0835ac\\\\scratchpad\\\\make-excel.ps1\")",
+      "PowerShell(Get-Process EXCEL -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Force -Confirm:$false)",
+      "PowerShell($excel = New-Object -ComObject Excel.Application; $excel.Visible = $false; $excel.DisplayAlerts = $false; $wb = $excel.Workbooks.Open\\(\"C:\\\\Users\\\\HSAID\\\\Desarollo Claude\\\\KonektaYa\\\\KonektaYa-Formula-Match.xlsx\"\\); $s3 = $wb.Worksheets.Item\\(\"Simulador Inmueble\"\\); $s4 = $wb.Worksheets.Item\\(\"Simulador Vehiculo\"\\); \"INMUEBLE -> Score: $\\($s3.Cells.Item\\(20,2\\).Value2\\) | Match: $\\($s3.Cells.Item\\(21,2\\).Value2\\) | Nivel: $\\($s3.Cells.Item\\(22,2\\).Value2\\) | Precio: $\\($s3.Cells.Item\\(23,2\\).Value2\\)\"; \"VEHICULO -> Score: $\\($s4.Cells.Item\\(19,2\\).Value2\\) | Match: $\\($s4.Cells.Item\\(20,2\\).Value2\\) | Nivel: $\\($s4.Cells.Item\\(21,2\\).Value2\\) | Precio: $\\($s4.Cells.Item\\(22,2\\).Value2\\)\"; $wb.Close\\($false\\); $excel.Quit\\(\\); [System.Runtime.Interopservices.Marshal]::ReleaseComObject\\($wb\\) | Out-Null; [System.Runtime.Interopservices.Marshal]::ReleaseComObject\\($excel\\) | Out-Null)"
     ]
   }
 }

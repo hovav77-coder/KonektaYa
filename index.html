@@ -665,6 +665,155 @@
         line-height: 1.4;
       }
 
+      .matchlab-seg {
+        margin-bottom: 14px;
+      }
+
+      .matchlab-vertical {
+        display: none;
+      }
+
+      .matchlab-vertical.active {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        align-items: start;
+      }
+
+      @media (max-width: 900px) {
+        .matchlab-vertical.active {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .matchlab-col {
+        background: #ffffff;
+        border: 1px solid #dce7f4;
+        border-radius: 14px;
+        padding: 14px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .matchlab-col h4 {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .matchlab-group {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: #f8fafc;
+      }
+
+      .matchlab-group summary {
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        color: #0f2a4a;
+      }
+
+      .matchlab-rows {
+        display: grid;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .matchlab-row {
+        display: grid;
+        grid-template-columns: 1fr 76px;
+        gap: 8px;
+        align-items: center;
+        font-size: 12.5px;
+        color: #334155;
+      }
+
+      .matchlab-row input {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 4px 8px;
+        font-size: 13px;
+        text-align: right;
+        width: 100%;
+      }
+
+      .matchlab-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .matchlab-status {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #b45309;
+      }
+
+      .matchlab-status.success {
+        color: #15803d;
+      }
+
+      .matchlab-sim {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 10px;
+        background: #f8fafc;
+        display: grid;
+        gap: 10px;
+      }
+
+      .matchlab-sim h5 {
+        margin: 0;
+        font-size: 13.5px;
+        color: #0f2a4a;
+      }
+
+      .matchlab-sim-fields {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      }
+
+      .matchlab-sim-fields label {
+        display: grid;
+        gap: 4px;
+        font-size: 11.5px;
+        color: #475569;
+        font-weight: 600;
+      }
+
+      .matchlab-sim-fields input,
+      .matchlab-sim-fields select {
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 5px 8px;
+        font-size: 12.5px;
+        width: 100%;
+      }
+
+      .matchlab-verdict {
+        border-radius: 10px;
+        padding: 10px 12px;
+        display: grid;
+        gap: 4px;
+        font-size: 12.5px;
+      }
+
+      .matchlab-verdict.ok {
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #14532d;
+      }
+
+      .matchlab-verdict.bad {
+        background: #fee2e2;
+        border: 1px solid #fca5a5;
+        color: #7f1d1d;
+      }
+
+
       .vehicle-type-grid {
         display: grid;
         gap: 10px;
@@ -8663,6 +8812,7 @@
                   <button type="button" data-admin-panel-button="records">Registros</button>
                   <button type="button" data-admin-panel-button="unlocks">Desbloqueos</button>
                   <button type="button" data-admin-panel-button="validation">Validación</button>
+                  <button type="button" data-admin-panel-button="matchlab">Laboratorio</button>
                 </div>
 
                 <section class="admin-panel-pane active" data-admin-panel-pane="clients">
@@ -8728,6 +8878,25 @@
                     </div>
                   </div>
                   <div class="grid" id="adminValidation"></div>
+                </section>
+
+                <section class="admin-panel-pane" data-admin-panel-pane="matchlab">
+                  <div class="admin-section-title">
+                    <div>
+                      <h3>Laboratorio de Matching</h3>
+                      <p>Todas las variables de la fórmula del match. Lo que ajustes aquí ES lo que usa la plataforma. Usa el simulador para probar antes de guardar.</p>
+                    </div>
+                    <div class="matchlab-actions">
+                      <button type="button" class="button primary" onclick="saveMatchLab()">Guardar y aplicar</button>
+                      <button type="button" class="button ghost" onclick="resetMatchLab()">Restablecer originales</button>
+                    </div>
+                  </div>
+                  <p class="matchlab-status" id="matchLabStatus" hidden></p>
+                  <div class="admin-seg compact matchlab-seg" id="matchLabSeg">
+                    <button class="active" type="button" onclick="setMatchLabVertical('inmuebles')">🏠 Inmuebles</button>
+                    <button type="button" onclick="setMatchLabVertical('vehiculos')">🚗 Vehículos</button>
+                  </div>
+                  <div id="matchLabRoot"></div>
                 </section>
               </div>
             </div>
@@ -9240,9 +9409,10 @@
       }
 
       function interestedQualityScore(search) {
-        if (search.role === "cliente final") return 15;
-        if (search.finalClientPrivacy === "anonymous") return 8;
-        return 12;
+        const cfg = matchConfig.inmuebles;
+        if (search.role === "cliente final") return cfg.puntosClienteFinal;
+        if (search.finalClientPrivacy === "anonymous") return cfg.puntosBrokerAnonimo;
+        return cfg.puntosBroker;
       }
 
       function finalClientName(search) {
@@ -9963,7 +10133,9 @@
         const search = match.search;
         const samePh = isSamePh(property, search);
         const propertyStreet = normalize(property.streetOrNeighborhood || "");
-        const sameStreet = Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
+        // Mismo PH implica misma calle (un edificio no puede estar en dos calles):
+        // si el PH coincide, la calle cuenta como coincidente aunque el texto difiera.
+        const sameStreet = samePh || Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
         const priceValue = propertyPriceForOperation(property, search.desiredOperation);
         const budget = Number(search.maxBudget || 0);
         const priceExact = Boolean(budget) && priceValue <= budget * 1.1;
@@ -10062,7 +10234,9 @@
         const property = match.property;
         const samePh = isSamePh(property, search);
         const propertyStreet = normalize(property.streetOrNeighborhood || "");
-        const sameStreet = Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
+        // Mismo PH implica misma calle (un edificio no puede estar en dos calles):
+        // si el PH coincide, la calle cuenta como coincidente aunque el texto difiera.
+        const sameStreet = samePh || Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
         const priceValue = propertyPriceForOperation(property, search.desiredOperation);
         const budget = Number(search.maxBudget || 0);
         const priceExact = Boolean(budget) && priceValue <= budget * 1.1;
@@ -10390,6 +10564,88 @@
       let editingSearchId = null;
       let editingVehicleOfferId = null;
       let editingVehicleSearchId = null;
+
+      // ============================================================
+      // MATCH_CONFIG: TODAS las variables de la formula del matching.
+      // Editable desde Admin > Laboratorio de Matching (se guarda en
+      // localStorage). Los motores calculateScore y vehicleMatchEngineV1
+      // leen SIEMPRE de aqui: cambiar un numero cambia el match real.
+      // ============================================================
+      const DEFAULT_MATCH_CONFIG = {
+        inmuebles: {
+          umbral: 70, // Score minimo para que exista match
+          presupuestoMinPct: 75, // El presupuesto del cliente debe ser >= este % del precio
+          metrajeMinPct: 80, // Metraje aceptado desde este % del deseado (200 -> 160)
+          metrajeMaxPct: 125, // Metraje aceptado hasta este % del deseado (200 -> 250)
+          base: 30, // Puntos por pasar operacion + tipo + zona
+          puntosClienteFinal: 15, // Calidad del interesado: cliente final
+          puntosBroker: 12, // Calidad del interesado: broker con cliente visible
+          puntosBrokerAnonimo: 8, // Calidad del interesado: broker con cliente anonimo
+          puntosCalle: 10, // Misma calle o barriada
+          puntosPh: 15, // Mismo PH / edificio
+          metrajeCercaPct: 10, // Banda "cerca" de metraje: +/- este %
+          puntosMetrajeCerca: 10, // Metraje dentro de la banda cerca
+          puntosMetrajeLejos: 6, // Metraje fuera de la banda pero dentro del rango
+          puntosPrecioA: 15, // Precio <= presupuesto x1.1
+          puntosPrecioB: 11, // Precio <= presupuesto x1.2
+          puntosPrecioC: 8, // Precio dentro del limite del gate
+          puntosEquipamiento: 5, // Equipamiento satisfecho (indiferente o coincide)
+          puntosEstacionamiento: 3, // Estacionamientos satisfechos
+          puntosDeposito: 2, // Deposito satisfecho
+          pisoPh: 85, // Piso si es el mismo PH
+          pisoPhEquipCliente: 95, // Piso si PH + equipamiento + cliente final
+          pisoBroker: 75, // Piso para broker
+          pisoClienteFinal: 70, // Piso para cliente final que paso los requisitos duros
+          topeSinPh: 84, // Tope si NO es el mismo PH
+          topeEquipDistinto: 94, // Tope si pidio equipamiento especifico y no coincide
+          topeBroker: 95, // Tope general de broker
+          topeBrokerAnonimo: 85, // Tope de broker con cliente anonimo
+          precios: { AAA: 100, AA: 75, A: 50, BBB: 25, BB: 10, B: 5 }
+        },
+        vehiculos: {
+          umbral: 70, // Score minimo para que exista match
+          presupuestoMinPct: 75, // El presupuesto debe ser >= este % del precio
+          puntosTipo: 10, // Tipo de vehiculo coincide
+          puntosMarca: 20, // Marca coincide
+          puntosModeloExacto: 15,
+          puntosModeloSimilar: 8,
+          puntosModeloIndiferente: 8,
+          puntosPrecioA: 20, // Precio <= presupuesto x1.1
+          puntosPrecioB: 13, // Precio <= presupuesto x1.2
+          puntosPrecioC: 8, // Precio dentro del limite del gate
+          puntosAnio: 10, // Anio >= minimo pedido
+          puntosAnioParcial: 5, // Anio hasta N anios por debajo
+          anioTolerancia: 3, // N anios de tolerancia parcial
+          puntosKmA: 15, // Km <= maximo x1.1
+          puntosKmB: 10, // Km <= maximo x1.2
+          puntosTransmision: 5, // Transmision satisfecha (indiferente o coincide)
+          puntosCombustible: 5, // Combustible satisfecho (indiferente o coincide)
+          topeSinMarca: 65, // Marca distinta -> tope (bajo el umbral = sin match)
+          topeModeloSimilar: 79,
+          topeModeloNinguno: 65,
+          topeSinPrecio: 65, // Precio fuera del gate -> tope
+          topeBroker: 95,
+          precios: { AAA: 20, AA: 15, A: 10, BBB: 5, BB: 3, B: 1 }
+        }
+      };
+
+      function mergeMatchConfig(defaults, saved) {
+        // Mezcla lo guardado sobre los defaults: si agregamos variables
+        // nuevas en el futuro, las configs viejas no las pierden.
+        const out = {};
+        Object.keys(defaults).forEach((key) => {
+          const defVal = defaults[key];
+          const savedVal = saved && typeof saved === "object" ? saved[key] : undefined;
+          if (defVal && typeof defVal === "object" && !Array.isArray(defVal)) {
+            out[key] = mergeMatchConfig(defVal, savedVal);
+          } else {
+            out[key] = typeof savedVal === "number" && isFinite(savedVal) ? savedVal : defVal;
+          }
+        });
+        return out;
+      }
+
+      let matchConfig = mergeMatchConfig(DEFAULT_MATCH_CONFIG, load("propertyYaMatchConfig", null));
       const creditPackages = [
         { id: "p1", credits: 1, price: 10 },
         { id: "p10", credits: 10, price: 50 },
@@ -10460,22 +10716,25 @@
       }
 
       function calculateScore(property, search) {
+        const cfg = matchConfig.inmuebles;
         if (!propertySupportsOperation(property, search.desiredOperation)) return 0;
         const matchPrice = propertyPriceForOperation(property, search.desiredOperation);
         if (matchPrice <= 0) return 0;
         if (property.propertyType !== search.propertyType) return 0;
         if (normalize(property.zone) !== normalize(search.desiredZone)) return 0;
         const budget = Number(search.maxBudget || 0);
-        // El presupuesto del cliente debe ser >= 75% del precio (precio hasta +33% sobre el presupuesto).
-        if (!budget || matchPrice > budget * 1.3333) return 0;
+        // El presupuesto del cliente debe ser >= presupuestoMinPct% del precio.
+        if (!budget || matchPrice > budget * (100 / cfg.presupuestoMinPct)) return 0;
         const minSize = Number(search.minSizeM2 || 0);
         const size = Number(property.sizeM2 || 0);
-        // Metraje deseado con rango: se aceptan propiedades entre -20% y +25% de lo pedido (200 -> 160 a 250).
-        if (minSize && (size < minSize * 0.8 || size > minSize * 1.25)) return 0;
+        // Metraje deseado con rango [metrajeMinPct%, metrajeMaxPct%] de lo pedido.
+        if (minSize && (size < minSize * (cfg.metrajeMinPct / 100) || size > minSize * (cfg.metrajeMaxPct / 100))) return 0;
 
         const samePh = isSamePh(property, search);
         const propertyStreet = normalize(property.streetOrNeighborhood || "");
-        const sameStreet = Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
+        // Mismo PH implica misma calle (un edificio no puede estar en dos calles):
+        // si el PH coincide, la calle cuenta como coincidente aunque el texto difiera.
+        const sameStreet = samePh || Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
         const desiredEquipment = String(search.desiredEquipment || "").trim();
         const equipmentSpecified = Boolean(desiredEquipment) && desiredEquipment !== "indiferente";
         const equipmentMatches = equipmentSpecified && property.equipment === search.desiredEquipment;
@@ -10489,28 +10748,32 @@
         const parkingSatisfied = desiredParking <= 0 || parkingMatches;
         const storageSatisfied = !storageWanted || storageMatches;
 
-        let score = 10 + 10 + 10;
+        const sizeNearLow = 1 - cfg.metrajeCercaPct / 100;
+        const sizeNearHigh = 1 + cfg.metrajeCercaPct / 100;
+        const sizeNear = !minSize || (size >= minSize * sizeNearLow && size <= minSize * sizeNearHigh);
+
+        let score = cfg.base;
         score += interestedQualityScore(search);
-        if (sameStreet) score += 10;
-        if (samePh) score += 15;
-        score += !minSize || (size >= minSize * 0.9 && size <= minSize * 1.1) ? 10 : 6;
-        score += matchPrice <= budget * 1.1 ? 15 : matchPrice <= budget * 1.2 ? 11 : 8;
-        if (equipmentSatisfied) score += 5;
-        if (parkingSatisfied) score += 3;
-        if (storageSatisfied) score += 2;
+        if (sameStreet) score += cfg.puntosCalle;
+        if (samePh) score += cfg.puntosPh;
+        score += sizeNear ? cfg.puntosMetrajeCerca : cfg.puntosMetrajeLejos;
+        score += matchPrice <= budget * 1.1 ? cfg.puntosPrecioA : matchPrice <= budget * 1.2 ? cfg.puntosPrecioB : cfg.puntosPrecioC;
+        if (equipmentSatisfied) score += cfg.puntosEquipamiento;
+        if (parkingSatisfied) score += cfg.puntosEstacionamiento;
+        if (storageSatisfied) score += cfg.puntosDeposito;
 
-        if (samePh) score = Math.max(score, 85);
-        if (samePh && equipmentMatches && search.role === "cliente final") score = Math.max(score, 95);
-        if (search.role === "broker") score = Math.max(score, 75);
-        // Si pasó todos los requisitos duros (operación, tipo, zona, presupuesto >=75%, metraje en rango)
-        // ya es un lead calificado: piso de 70 (Coincidencia Básica) para que aparezca.
-        if (search.role === "cliente final") score = Math.max(score, 70);
+        if (samePh) score = Math.max(score, cfg.pisoPh);
+        if (samePh && equipmentMatches && search.role === "cliente final") score = Math.max(score, cfg.pisoPhEquipCliente);
+        if (search.role === "broker") score = Math.max(score, cfg.pisoBroker);
+        // Si pasó todos los requisitos duros (operación, tipo, zona, presupuesto, metraje)
+        // ya es un lead calificado: piso para que aparezca como match.
+        if (search.role === "cliente final") score = Math.max(score, cfg.pisoClienteFinal);
 
-        if (matchPrice > budget * 1.1 || (minSize && (size < minSize * 0.9 || size > minSize * 1.1))) score = Math.min(score, 99);
-        if (!samePh) score = Math.min(score, 84);
-        if (equipmentSpecified && !equipmentMatches) score = Math.min(score, 94);
+        if (matchPrice > budget * 1.1 || !sizeNear) score = Math.min(score, 99);
+        if (!samePh) score = Math.min(score, cfg.topeSinPh);
+        if (equipmentSpecified && !equipmentMatches) score = Math.min(score, cfg.topeEquipDistinto);
         if (search.role === "broker") {
-          score = Math.min(score, search.finalClientPrivacy === "anonymous" ? 85 : 95);
+          score = Math.min(score, search.finalClientPrivacy === "anonymous" ? cfg.topeBrokerAnonimo : cfg.topeBroker);
         }
         return Math.min(score, 100);
       }
@@ -10589,40 +10852,44 @@
       }
 
       function vehiclePricingFromScore(score) {
-        if (score >= 100) return { key: "exclusive", ranking: "AAA", label: "Oportunidad Exclusiva", displayLabel: "AAA · Oportunidad Exclusiva", range: "100%", price: 20, badge: "mach-exclusive", description: "Coincidencia exacta: marca, modelo, año, precio y kilometraje dentro de ±10%." };
-        if (score >= 95) return { key: "hot", ranking: "AA", label: "Oportunidad Prioritaria", displayLabel: "AA · Oportunidad Prioritaria", range: "95% - 99%", price: 15, badge: "mach-hot", description: "Oportunidad muy fuerte con alta intención de compra." };
-        if (score >= 90) return { key: "strong", ranking: "A", label: "Oportunidad Alta", displayLabel: "A · Oportunidad Alta", range: "90% - 94%", price: 10, badge: "mach-strong", description: "Contacto con alta probabilidad de cierre." };
-        if (score >= 85) return { key: "premium", ranking: "BBB", label: "Coincidencia Premium", displayLabel: "BBB · Coincidencia Premium", range: "85% - 89%", price: 5, badge: "mach-premium", description: "Alta compatibilidad entre vehículo, precio y necesidad." };
-        if (score >= 80) return { key: "qualified", ranking: "BB", label: "Coincidencia Calificada", displayLabel: "BB · Coincidencia Calificada", range: "80% - 84%", price: 3, badge: "mach-qualified", description: "Oferta y búsqueda alineadas en lo esencial." };
-        if (score >= 70) return { key: "basic", ranking: "B", label: "Coincidencia Básica", displayLabel: "B · Coincidencia Básica", range: "70% - 79%", price: 1, badge: "mach-standard", description: "Coincidencia inicial que requiere revisión." };
+        const cfg = matchConfig.vehiculos;
+        const p = cfg.precios;
+        if (score >= 100) return { key: "exclusive", ranking: "AAA", label: "Oportunidad Exclusiva", displayLabel: "AAA · Oportunidad Exclusiva", range: "100%", price: p.AAA, badge: "mach-exclusive", description: "Coincidencia exacta: marca, modelo, año, precio y kilometraje dentro de ±10%." };
+        if (score >= 95) return { key: "hot", ranking: "AA", label: "Oportunidad Prioritaria", displayLabel: "AA · Oportunidad Prioritaria", range: "95% - 99%", price: p.AA, badge: "mach-hot", description: "Oportunidad muy fuerte con alta intención de compra." };
+        if (score >= 90) return { key: "strong", ranking: "A", label: "Oportunidad Alta", displayLabel: "A · Oportunidad Alta", range: "90% - 94%", price: p.A, badge: "mach-strong", description: "Contacto con alta probabilidad de cierre." };
+        if (score >= 85) return { key: "premium", ranking: "BBB", label: "Coincidencia Premium", displayLabel: "BBB · Coincidencia Premium", range: "85% - 89%", price: p.BBB, badge: "mach-premium", description: "Alta compatibilidad entre vehículo, precio y necesidad." };
+        if (score >= 80) return { key: "qualified", ranking: "BB", label: "Coincidencia Calificada", displayLabel: "BB · Coincidencia Calificada", range: "80% - 84%", price: p.BB, badge: "mach-qualified", description: "Oferta y búsqueda alineadas en lo esencial." };
+        if (score >= cfg.umbral) return { key: "basic", ranking: "B", label: "Coincidencia Básica", displayLabel: "B · Coincidencia Básica", range: `${cfg.umbral}% - 79%`, price: p.B, badge: "mach-standard", description: "Coincidencia inicial que requiere revisión." };
         return null;
       }
 
       function vehicleMatchEngineV1(offer, search) {
+        const cfg = matchConfig.vehiculos;
         let score = 0;
         const factors = {};
         factors.type = normalize(offer.vehicleType || "") === normalize(search.vehicleType || "");
-        if (factors.type) score += 10;
+        if (factors.type) score += cfg.puntosTipo;
         factors.brand = normalize(offer.brand) === normalize(search.desiredBrand);
-        if (factors.brand) score += 20;
+        if (factors.brand) score += cfg.puntosMarca;
         const modelIndifferent = !search.desiredModel || normalize(search.desiredModel) === "indiferente";
         const modelScore = modelIndifferent ? 0 : modelCompatibilityScore(offer.model, search.desiredModel);
         factors.model = modelIndifferent ? "indiferente" : modelScore === 15 ? "exact" : modelScore > 0 ? "similar" : "none";
-        if (factors.model === "exact") score += 15;
-        else if (factors.model === "similar") score += 8;
-        else if (factors.model === "indiferente") score += 8;
+        if (factors.model === "exact") score += cfg.puntosModeloExacto;
+        else if (factors.model === "similar") score += cfg.puntosModeloSimilar;
+        else if (factors.model === "indiferente") score += cfg.puntosModeloIndiferente;
         const price = vehiclePriceForOperation(offer);
         const budget = Number(search.maxBudget || 0);
+        const budgetLimit = 100 / cfg.presupuestoMinPct;
         if (price > 0 && budget > 0 && price <= budget * 1.1) {
           factors.price = "±10%";
-          score += 20;
+          score += cfg.puntosPrecioA;
         } else if (price > 0 && budget > 0 && price <= budget * 1.2) {
           factors.price = "±20%";
-          score += 13;
-        } else if (price > 0 && budget > 0 && price <= budget * 1.3333) {
-          // Presupuesto del cliente >= 75% del precio: match aceptable con puntaje menor.
-          factors.price = "75%";
-          score += 8;
+          score += cfg.puntosPrecioB;
+        } else if (price > 0 && budget > 0 && price <= budget * budgetLimit) {
+          // Presupuesto del cliente >= presupuestoMinPct% del precio: match aceptable con puntaje menor.
+          factors.price = `${cfg.presupuestoMinPct}%`;
+          score += cfg.puntosPrecioC;
         } else {
           factors.price = false;
         }
@@ -10630,10 +10897,10 @@
         const minYear = Number(search.minYear || 0);
         if (offerYear >= minYear) {
           factors.year = true;
-          score += 10;
-        } else if (offerYear >= minYear - 3) {
+          score += cfg.puntosAnio;
+        } else if (offerYear >= minYear - cfg.anioTolerancia) {
           factors.year = "parcial";
-          score += 5;
+          score += cfg.puntosAnioParcial;
         } else {
           factors.year = false;
         }
@@ -10641,23 +10908,23 @@
         const maxMileage = Number(search.maxMileage || 0) || Infinity;
         if (mileage <= maxMileage * 1.1) {
           factors.mileage = "±10%";
-          score += 15;
+          score += cfg.puntosKmA;
         } else if (mileage <= maxMileage * 1.2) {
           factors.mileage = "±20%";
-          score += 10;
+          score += cfg.puntosKmB;
         } else {
           factors.mileage = false;
         }
         factors.zone = normalize(offer.province) === normalize(search.province) && normalize(offer.zone) === normalize(search.zone);
         factors.transmission = search.transmission === "indiferente" || offer.transmission === search.transmission;
-        if (factors.transmission) score += 5;
+        if (factors.transmission) score += cfg.puntosTransmision;
         factors.fuel = search.fuel === "indiferente" || offer.fuel === search.fuel;
-        if (factors.fuel) score += 5;
-        if (!factors.brand) score = Math.min(score, 65);
-        if (factors.model === "similar") score = Math.min(score, 79);
-        if (factors.model === "none") score = Math.min(score, 65);
-        if (!factors.price) score = Math.min(score, 65);
-        if (search.role === "broker") score = Math.min(score, 95);
+        if (factors.fuel) score += cfg.puntosCombustible;
+        if (!factors.brand) score = Math.min(score, cfg.topeSinMarca);
+        if (factors.model === "similar") score = Math.min(score, cfg.topeModeloSimilar);
+        if (factors.model === "none") score = Math.min(score, cfg.topeModeloNinguno);
+        if (!factors.price) score = Math.min(score, cfg.topeSinPrecio);
+        if (search.role === "broker") score = Math.min(score, cfg.topeBroker);
         return { score: Math.min(100, score), factors };
       }
 
@@ -10677,7 +10944,7 @@
         properties.forEach((property) => {
           searches.forEach((search) => {
             const score = calculateScore(property, search);
-            if (score >= 70) {
+            if (score >= matchConfig.inmuebles.umbral) {
               const id = `${property.id}-${search.id}`;
               const type = matchType(property, search);
               matches.push({
@@ -12872,6 +13139,15 @@
         return s + p + vo + vs;
       }
 
+      function phoneForEmail(email) {
+        // Busca el celular en cualquier registro del mismo email (fichas de broker
+        // viejas se crearon sin telefono; los registros si lo tienen).
+        const key = normalize(email);
+        const all = [...properties, ...searches, ...vehicleOffers, ...vehicleSearches];
+        const found = all.find((x) => normalize(x.email) === key && String(x.phone || "").trim());
+        return found ? String(found.phone).trim() : "";
+      }
+
       function renderValidationAdmin() {
         const target = document.getElementById("adminValidation");
         if (!target) return;
@@ -12898,7 +13174,7 @@
               <h3>${escapeHtml(broker.company || "Broker")}</h3>
               <div class="meta">
                 <span>Email: ${escapeHtml(broker.email)}</span>
-                <span>Celular: ${escapeHtml(broker.phone || "No indicado")}</span>
+                <span>Celular: ${escapeHtml(broker.phone || phoneForEmail(broker.email) || "No indicado")}</span>
                 <span>Licencia: ${escapeHtml(broker.license || "No indicada")}</span>
                 <span>${broker.independent ? "Broker independiente" : "Empresa: " + escapeHtml(broker.company || "—")}</span>
                 <span>Publicaciones/búsquedas: ${brokerActivityCount(broker.email)}</span>
@@ -13100,6 +13376,8 @@
       function machType(match) {
         const score = match.score;
         const isClient = match.search.role === "cliente final";
+        const cfg = matchConfig.inmuebles;
+        const p = cfg.precios;
 
         if (score >= 100) {
           return {
@@ -13108,7 +13386,7 @@
             label: "MACH Exclusivo",
             displayLabel: "AAA · Oportunidad Exclusiva",
             range: "100%",
-            price: 100,
+            price: p.AAA,
             badge: "mach-exclusive",
             description: isClient
               ? "Cliente final con búsqueda exacta de alto valor."
@@ -13123,7 +13401,7 @@
             label: "MACH Directo Verificado / Hot",
             displayLabel: "AA · Oportunidad Prioritaria",
             range: "95% - 99%",
-            price: 75,
+            price: p.AA,
             badge: "mach-hot",
             description: isClient
               ? "Cliente final con PH exacto o compatibilidad muy alta."
@@ -13138,7 +13416,7 @@
             label: "MACH Premium",
             displayLabel: "A · Resultado Premium",
             range: "90% - 94%",
-            price: 50,
+            price: p.A,
             badge: "mach-premium",
             description: "Alta compatibilidad entre propiedad, presupuesto y ubicación."
           };
@@ -13151,7 +13429,7 @@
             label: "MACH Fuerte",
             displayLabel: "BBB · Resultado Fuerte",
             range: "85% - 89%",
-            price: 25,
+            price: p.BBB,
             badge: "mach-strong",
             description: "Resultado fuerte con buena coincidencia de ubicación y necesidad."
           };
@@ -13164,26 +13442,329 @@
             label: "MACH Calificado",
             displayLabel: "BB · Resultado Calificado",
             range: "80% - 84%",
-            price: 10,
+            price: p.BB,
             badge: "mach-qualified",
             description: "Zona, presupuesto y tipo de propiedad compatibles."
           };
         }
 
-        if (score >= 70) {
+        if (score >= cfg.umbral) {
           return {
             key: "standard",
             ranking: "B",
             label: "MACH Estándar",
             displayLabel: "B · Resultado Básico",
-            range: "70% - 79%",
-            price: 5,
+            range: `${cfg.umbral}% - 79%`,
+            price: p.B,
             badge: "mach-standard",
             description: "Resultado básico que requiere mayor validación."
           };
         }
         return null;
       }
+
+      // ============================================================
+      // LABORATORIO DE MATCHING (admin): editor de MATCH_CONFIG con
+      // simulador en vivo. Trabaja sobre un BORRADOR; nada afecta la
+      // plataforma hasta presionar "Guardar y aplicar".
+      // ============================================================
+      let matchLabDraft = null;
+
+      const MATCH_LAB_SCHEMA = {
+        inmuebles: [
+          { title: "Requisitos duros (si fallan, no hay match)", fields: [
+            ["umbral", "Score mínimo para match (%)"],
+            ["presupuestoMinPct", "Presupuesto mínimo del cliente (% del precio)"],
+            ["metrajeMinPct", "Metraje aceptado desde (% del deseado)"],
+            ["metrajeMaxPct", "Metraje aceptado hasta (% del deseado)"]
+          ]},
+          { title: "Puntos", fields: [
+            ["base", "Base por operación + tipo + zona"],
+            ["puntosClienteFinal", "Interesado: cliente final"],
+            ["puntosBroker", "Interesado: broker"],
+            ["puntosBrokerAnonimo", "Interesado: broker anónimo"],
+            ["puntosCalle", "Misma calle o barriada"],
+            ["puntosPh", "Mismo PH / edificio"],
+            ["metrajeCercaPct", "Banda de metraje \"cerca\" (± %)"],
+            ["puntosMetrajeCerca", "Metraje dentro de la banda"],
+            ["puntosMetrajeLejos", "Metraje fuera de banda (en rango)"],
+            ["puntosPrecioA", "Precio ≤ presupuesto ×1.1"],
+            ["puntosPrecioB", "Precio ≤ presupuesto ×1.2"],
+            ["puntosPrecioC", "Precio dentro del límite"],
+            ["puntosEquipamiento", "Equipamiento satisfecho"],
+            ["puntosEstacionamiento", "Estacionamientos satisfechos"],
+            ["puntosDeposito", "Depósito satisfecho"]
+          ]},
+          { title: "Pisos y topes", fields: [
+            ["pisoClienteFinal", "Piso cliente final (pasó requisitos)"],
+            ["pisoBroker", "Piso broker"],
+            ["pisoPh", "Piso mismo PH"],
+            ["pisoPhEquipCliente", "Piso PH + equipamiento + cliente"],
+            ["topeSinPh", "Tope si NO es el mismo PH"],
+            ["topeEquipDistinto", "Tope equipamiento no coincide"],
+            ["topeBroker", "Tope broker"],
+            ["topeBrokerAnonimo", "Tope broker anónimo"]
+          ]},
+          { title: "Precio del desbloqueo por nivel ($)", prices: true }
+        ],
+        vehiculos: [
+          { title: "Requisitos duros / topes que anulan el match", fields: [
+            ["umbral", "Score mínimo para match (%)"],
+            ["presupuestoMinPct", "Presupuesto mínimo del cliente (% del precio)"],
+            ["topeSinMarca", "Tope si la marca no coincide"],
+            ["topeModeloNinguno", "Tope si el modelo no se parece"],
+            ["topeSinPrecio", "Tope si el precio queda fuera"]
+          ]},
+          { title: "Puntos", fields: [
+            ["puntosTipo", "Tipo de vehículo coincide"],
+            ["puntosMarca", "Marca coincide"],
+            ["puntosModeloExacto", "Modelo exacto"],
+            ["puntosModeloSimilar", "Modelo similar"],
+            ["puntosModeloIndiferente", "Modelo indiferente"],
+            ["puntosPrecioA", "Precio ≤ presupuesto ×1.1"],
+            ["puntosPrecioB", "Precio ≤ presupuesto ×1.2"],
+            ["puntosPrecioC", "Precio dentro del límite"],
+            ["puntosAnio", "Año cumple el mínimo"],
+            ["puntosAnioParcial", "Año en tolerancia parcial"],
+            ["anioTolerancia", "Tolerancia de año (años)"],
+            ["puntosKmA", "Km ≤ máximo ×1.1"],
+            ["puntosKmB", "Km ≤ máximo ×1.2"],
+            ["puntosTransmision", "Transmisión satisfecha"],
+            ["puntosCombustible", "Combustible satisfecho"]
+          ]},
+          { title: "Otros topes", fields: [
+            ["topeModeloSimilar", "Tope modelo similar"],
+            ["topeBroker", "Tope broker"]
+          ]},
+          { title: "Precio del desbloqueo por nivel ($)", prices: true }
+        ]
+      };
+
+      function matchLabClone(obj) {
+        return JSON.parse(JSON.stringify(obj));
+      }
+
+      function withDraftConfig(fn) {
+        const real = matchConfig;
+        matchConfig = matchLabDraft;
+        try { return fn(); } finally { matchConfig = real; }
+      }
+
+      function matchLabInputRow(vertical, key, label) {
+        const value = matchLabDraft[vertical][key];
+        return `<label class="matchlab-row"><span>${label}</span><input type="number" step="1" value="${value}" data-matchlab="${vertical}.${key}" /></label>`;
+      }
+
+      function matchLabPriceRows(vertical) {
+        const tiers = [["AAA", "AAA (100%)"], ["AA", "AA (95-99%)"], ["A", "A (90-94%)"], ["BBB", "BBB (85-89%)"], ["BB", "BB (80-84%)"], ["B", "B (umbral-79%)"]];
+        return tiers.map(([tier, label]) =>
+          `<label class="matchlab-row"><span>${label}</span><input type="number" step="1" min="0" value="${matchLabDraft[vertical].precios[tier]}" data-matchlab="${vertical}.precios.${tier}" /></label>`
+        ).join("");
+      }
+
+      function buildMatchLabColumn(vertical, heading) {
+        const groups = MATCH_LAB_SCHEMA[vertical].map((group) => {
+          const rows = group.prices ? matchLabPriceRows(vertical) : group.fields.map(([key, label]) => matchLabInputRow(vertical, key, label)).join("");
+          return `<details class="matchlab-group" ${group.title.startsWith("Requisitos") ? "open" : ""}><summary>${group.title}</summary><div class="matchlab-rows">${rows}</div></details>`;
+        }).join("");
+        return `<div class="matchlab-col"><h4>${heading}</h4>${groups}</div>`;
+      }
+
+      function matchLabSimInmuebleHtml() {
+        return `
+          <div class="matchlab-sim" id="matchLabSimInmueble">
+            <h5>Simulador inmueble</h5>
+            <div class="matchlab-sim-fields">
+              <label>Precio de la propiedad ($)<input type="number" data-simprop="precio" value="2500" /></label>
+              <label>Presupuesto del cliente ($)<input type="number" data-simprop="presupuesto" value="2000" /></label>
+              <label>Metraje de la propiedad (m²)<input type="number" data-simprop="metraje" value="214" /></label>
+              <label>Metraje deseado (m²)<input type="number" data-simprop="deseado" value="200" /></label>
+              <label>Quién busca<select data-simprop="rol"><option value="cliente">Cliente final</option><option value="broker">Broker</option><option value="brokerAnon">Broker anónimo</option></select></label>
+              <label>Misma calle<select data-simprop="calle"><option value="no">No</option><option value="si">Sí</option></select></label>
+              <label>Mismo PH<select data-simprop="ph"><option value="no">No</option><option value="si">Sí</option></select></label>
+              <label>Equipamiento<select data-simprop="equip"><option value="indiferente">Indiferente</option><option value="coincide">Coincide</option><option value="distinto">No coincide</option></select></label>
+            </div>
+            <div class="matchlab-sim-result" data-simresult="inmueble"></div>
+          </div>`;
+      }
+
+      function matchLabSimVehiculoHtml() {
+        return `
+          <div class="matchlab-sim" id="matchLabSimVehiculo">
+            <h5>Simulador vehículo</h5>
+            <div class="matchlab-sim-fields">
+              <label>Precio del vehículo ($)<input type="number" data-simveh="precio" value="18000" /></label>
+              <label>Presupuesto del cliente ($)<input type="number" data-simveh="presupuesto" value="14000" /></label>
+              <label>Marca<select data-simveh="marca"><option value="si">Coincide</option><option value="no">No coincide</option></select></label>
+              <label>Modelo<select data-simveh="modelo"><option value="exacto">Exacto</option><option value="similar">Similar</option><option value="indiferente">Indiferente</option><option value="ninguno">No se parece</option></select></label>
+              <label>Año oferta<input type="number" data-simveh="anio" value="2020" /></label>
+              <label>Año mínimo pedido<input type="number" data-simveh="anioMin" value="2018" /></label>
+              <label>Km oferta<input type="number" data-simveh="km" value="40000" /></label>
+              <label>Km máximo pedido<input type="number" data-simveh="kmMax" value="60000" /></label>
+              <label>Transmisión<select data-simveh="trans"><option value="indiferente">Indiferente</option><option value="coincide">Coincide</option><option value="distinta">No coincide</option></select></label>
+              <label>Combustible<select data-simveh="fuel"><option value="indiferente">Indiferente</option><option value="coincide">Coincide</option><option value="distinto">No coincide</option></select></label>
+            </div>
+            <div class="matchlab-sim-result" data-simresult="vehiculo"></div>
+          </div>`;
+      }
+
+      function runMatchLabSimInmueble() {
+        const root = document.getElementById("matchLabSimInmueble");
+        if (!root) return;
+        const get = (name) => root.querySelector(`[data-simprop="${name}"]`).value;
+        const rol = get("rol");
+        const property = {
+          propertyType: "apartamento",
+          zone: "zona demo",
+          operation: "alquiler",
+          rentalPrice: Number(get("precio")) || 0,
+          sizeM2: Number(get("metraje")) || 0,
+          streetOrNeighborhood: get("calle") === "si" ? "calle demo" : "otra calle",
+          phName: get("ph") === "si" ? "ph demo" : "",
+          equipment: get("equip") === "distinto" ? "sin_muebles" : "amueblado",
+          parkingSpaces: 2,
+          storage: "si"
+        };
+        const search = {
+          desiredOperation: "alquiler",
+          propertyType: "apartamento",
+          desiredZone: "zona demo",
+          maxBudget: Number(get("presupuesto")) || 0,
+          minSizeM2: Number(get("deseado")) || 0,
+          role: rol === "cliente" ? "cliente final" : "broker",
+          finalClientPrivacy: rol === "brokerAnon" ? "anonymous" : "",
+          desiredStreetOrNeighborhood: get("calle") === "si" ? "calle demo" : "",
+          desiredPh: get("ph") === "si" ? "ph demo" : "",
+          desiredEquipment: get("equip") === "indiferente" ? "indiferente" : "amueblado",
+          desiredParkingSpaces: "",
+          desiredStorage: "indiferente"
+        };
+        const out = root.querySelector('[data-simresult="inmueble"]');
+        withDraftConfig(() => {
+          const score = calculateScore(property, search);
+          const mach = score > 0 ? machType({ score, search }) : null;
+          const cfg = matchLabDraft.inmuebles;
+          const pctPresupuesto = property.rentalPrice > 0 ? Math.round((search.maxBudget / property.rentalPrice) * 100) : 0;
+          const pctMetraje = search.minSizeM2 > 0 ? Math.round((property.sizeM2 / search.minSizeM2) * 100) : 0;
+          out.innerHTML = mach
+            ? `<div class="matchlab-verdict ok"><strong>MATCH · Score ${score}</strong><span>${mach.displayLabel} · Desbloqueo: $${mach.price}</span><span>Presupuesto = ${pctPresupuesto}% del precio (mínimo ${cfg.presupuestoMinPct}%) · Metraje = ${pctMetraje}% del deseado (rango ${cfg.metrajeMinPct}%-${cfg.metrajeMaxPct}%)</span></div>`
+            : `<div class="matchlab-verdict bad"><strong>SIN MATCH · Score ${score}</strong><span>Presupuesto = ${pctPresupuesto}% del precio (mínimo ${cfg.presupuestoMinPct}%) · Metraje = ${pctMetraje}% del deseado (rango ${cfg.metrajeMinPct}%-${cfg.metrajeMaxPct}%)${score > 0 && score < cfg.umbral ? ` · Score bajo el umbral de ${cfg.umbral}` : ""}</span></div>`;
+        });
+      }
+
+      function runMatchLabSimVehiculo() {
+        const root = document.getElementById("matchLabSimVehiculo");
+        if (!root) return;
+        const get = (name) => root.querySelector(`[data-simveh="${name}"]`).value;
+        const modelo = get("modelo");
+        const offer = {
+          vehicleType: "suv",
+          brand: get("marca") === "si" ? "marca demo" : "otra marca",
+          model: modelo === "exacto" ? "corolla" : modelo === "similar" ? "corolla cross" : "civic",
+          salePrice: Number(get("precio")) || 0,
+          operation: "venta",
+          year: Number(get("anio")) || 0,
+          mileage: Number(get("km")) || 0,
+          province: "panama",
+          zone: "zona demo",
+          transmission: get("trans") === "distinta" ? "manual" : "automatico",
+          fuel: get("fuel") === "distinto" ? "diesel" : "gasolina"
+        };
+        const search = {
+          vehicleType: "suv",
+          desiredBrand: "marca demo",
+          desiredModel: modelo === "indiferente" ? "indiferente" : "corolla",
+          maxBudget: Number(get("presupuesto")) || 0,
+          minYear: Number(get("anioMin")) || 0,
+          maxMileage: Number(get("kmMax")) || 0,
+          province: "panama",
+          zone: "zona demo",
+          transmission: get("trans") === "indiferente" ? "indiferente" : "automatico",
+          fuel: get("fuel") === "indiferente" ? "indiferente" : "gasolina",
+          role: "cliente final"
+        };
+        const out = root.querySelector('[data-simresult="vehiculo"]');
+        withDraftConfig(() => {
+          const result = vehicleMatchEngineV1(offer, search);
+          const cfg = matchLabDraft.vehiculos;
+          const mach = result.score >= cfg.umbral ? vehiclePricingFromScore(result.score) : null;
+          const pctPresupuesto = offer.salePrice > 0 ? Math.round((search.maxBudget / offer.salePrice) * 100) : 0;
+          out.innerHTML = mach
+            ? `<div class="matchlab-verdict ok"><strong>MATCH · Score ${result.score}</strong><span>${mach.displayLabel} · Desbloqueo: $${mach.price}</span><span>Presupuesto = ${pctPresupuesto}% del precio (mínimo ${cfg.presupuestoMinPct}%)</span></div>`
+            : `<div class="matchlab-verdict bad"><strong>SIN MATCH · Score ${result.score}</strong><span>Presupuesto = ${pctPresupuesto}% del precio (mínimo ${cfg.presupuestoMinPct}%) · Umbral: ${cfg.umbral}</span></div>`;
+        });
+      }
+
+      function runMatchLabSims() {
+        runMatchLabSimInmueble();
+        runMatchLabSimVehiculo();
+      }
+
+      let matchLabVertical = "inmuebles";
+
+      function setMatchLabVertical(vertical) {
+        matchLabVertical = vertical;
+        document.querySelectorAll("#matchLabSeg button").forEach((btn, index) => {
+          btn.classList.toggle("active", (index === 0 ? "inmuebles" : "vehiculos") === vertical);
+        });
+        document.querySelectorAll("[data-matchlab-vertical]").forEach((section) => {
+          section.classList.toggle("active", section.dataset.matchlabVertical === vertical);
+        });
+      }
+
+      function setupMatchLab() {
+        const rootEl = document.getElementById("matchLabRoot");
+        if (!rootEl) return;
+        if (!matchLabDraft) matchLabDraft = matchLabClone(matchConfig);
+        rootEl.innerHTML =
+          `<div class="matchlab-vertical${matchLabVertical === "inmuebles" ? " active" : ""}" data-matchlab-vertical="inmuebles">` +
+            buildMatchLabColumn("inmuebles", "🏠 Variables de inmuebles") +
+            `<div class="matchlab-col matchlab-simcol"><h4>🧪 Prueba en vivo (usa los valores del borrador)</h4>${matchLabSimInmuebleHtml()}</div>` +
+          `</div>` +
+          `<div class="matchlab-vertical${matchLabVertical === "vehiculos" ? " active" : ""}" data-matchlab-vertical="vehiculos">` +
+            buildMatchLabColumn("vehiculos", "🚗 Variables de vehículos") +
+            `<div class="matchlab-col matchlab-simcol"><h4>🧪 Prueba en vivo (usa los valores del borrador)</h4>${matchLabSimVehiculoHtml()}</div>` +
+          `</div>`;
+        rootEl.querySelectorAll("[data-matchlab]").forEach((input) => {
+          input.addEventListener("input", () => {
+            const path = input.dataset.matchlab.split(".");
+            let target = matchLabDraft;
+            for (let i = 0; i < path.length - 1; i += 1) target = target[path[i]];
+            const num = Number(input.value);
+            if (isFinite(num)) target[path[path.length - 1]] = num;
+            setMatchLabStatus("Cambios en borrador: presiona \"Guardar y aplicar\" para que la plataforma los use.", false);
+            runMatchLabSims();
+          });
+        });
+        rootEl.querySelectorAll("[data-simprop], [data-simveh]").forEach((input) => {
+          input.addEventListener("input", runMatchLabSims);
+          input.addEventListener("change", runMatchLabSims);
+        });
+        runMatchLabSims();
+      }
+
+      function setMatchLabStatus(message, success) {
+        const el = document.getElementById("matchLabStatus");
+        if (!el) return;
+        el.hidden = false;
+        el.textContent = message;
+        el.classList.toggle("success", Boolean(success));
+      }
+
+      function saveMatchLab() {
+        matchConfig = matchLabClone(matchLabDraft);
+        save();
+        render();
+        setMatchLabStatus("Guardado y aplicado: la plataforma ya usa estos valores.", true);
+      }
+
+      function resetMatchLab() {
+        matchLabDraft = matchLabClone(DEFAULT_MATCH_CONFIG);
+        setupMatchLab();
+        setMatchLabStatus("Valores originales cargados en el borrador. Presiona \"Guardar y aplicar\" para usarlos.", false);
+      }
+
+      setupMatchLab();
 
       save = function () {
         localStorage.setItem("propertyYaProperties", JSON.stringify(properties));
@@ -13205,6 +13786,7 @@
         localStorage.setItem("propertyYaUserDashboardVerticalFilter", JSON.stringify(userDashboardVerticalFilter));
         localStorage.setItem("propertyYaCurrentUserEmail", JSON.stringify(currentUserEmail));
         localStorage.setItem("propertyYaUserAccounts", JSON.stringify(userAccounts));
+        localStorage.setItem("propertyYaMatchConfig", JSON.stringify(matchConfig));
       };
 
       recalculateMatches = function () {
@@ -13216,7 +13798,7 @@
             if (!isSearchActive(search)) return;
             if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
             const score = calculateScore(property, search);
-            if (score >= 70) {
+            if (score >= matchConfig.inmuebles.umbral) {
               const id = `${property.id}-${search.id}`;
               const match = {
                 id,
@@ -13237,7 +13819,7 @@
             if (!isSearchActive(search)) return;
             if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
             const result = vehicleMatchEngineV1(offer, search);
-            if (result.score >= 70) {
+            if (result.score >= matchConfig.vehiculos.umbral) {
               const id = `vehicle-${offer.id}-${search.id}`;
               const match = {
                 id,
