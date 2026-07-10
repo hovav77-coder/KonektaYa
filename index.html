@@ -658,6 +658,13 @@
         display: none;
       }
 
+      .field-hint {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 400;
+        line-height: 1.4;
+      }
+
       .vehicle-type-grid {
         display: grid;
         gap: 10px;
@@ -7895,7 +7902,7 @@
                 </label>
                 <label class="field full">Calle o barriada deseada<input name="desiredStreetOrNeighborhood" placeholder="Opcional: calle, avenida o barriada" /></label>
                 <label class="field full">Nombre del PH deseado<input name="desiredPh" placeholder="Opcional: PH, edificio o proyecto" /></label>
-                <label class="field">Metraje mínimo<input name="minSizeM2" type="text" inputmode="numeric" data-thousands required /></label>
+                <label class="field">Metraje deseado (m²)<input name="minSizeM2" type="text" inputmode="numeric" data-thousands required /><span class="field-hint">El match acepta un rango aprox. de ±20% sobre lo que pides.</span></label>
                 <label class="field">Presupuesto máximo<input name="maxBudget" type="text" inputmode="numeric" data-thousands required /></label>
                 <label class="field">
                   Equipamiento deseado
@@ -8028,7 +8035,7 @@
                 </label>
                 <label class="field full">Calle o barriada deseada<input name="desiredStreetOrNeighborhood" placeholder="Opcional: calle, avenida o barriada" /></label>
                 <label class="field full">Nombre del PH deseado<input name="desiredPh" placeholder="Opcional: PH, edificio o proyecto" /></label>
-                <label class="field">Metraje mínimo<input name="minSizeM2" type="text" inputmode="numeric" data-thousands required /></label>
+                <label class="field">Metraje deseado (m²)<input name="minSizeM2" type="text" inputmode="numeric" data-thousands required /><span class="field-hint">El match acepta un rango aprox. de ±20% sobre lo que pides.</span></label>
                 <label class="field">Presupuesto máximo<input name="maxBudget" type="text" inputmode="numeric" data-thousands required /></label>
                 <label class="field">
                   Equipamiento deseado
@@ -9329,7 +9336,7 @@
         const propertySize = Number(match.property.sizeM2 || 0);
         const minSize = Number(match.search.minSizeM2 || 0);
         if (!propertySize || !minSize) return ["neutral", "Metraje", "Por revisar"];
-        const detail = `${propertySize} m2 / mínimo ${minSize} m2`;
+        const detail = `${propertySize} m2 / deseado ~${minSize} m2`;
         if (propertySize >= minSize) return ["ok", "Metraje", detail];
         return ["warn", "Metraje", `Por debajo · ${detail}`];
       }
@@ -9386,7 +9393,7 @@
           ["Busca", `${label(match.search.desiredOperation)} ${label(match.search.propertyType)}`],
           ["Zona / PH", `${match.search.desiredZone}, ${match.search.province}${match.search.desiredPh ? ` · ${match.search.desiredPh}` : ""}`],
           ["Presupuesto", money.format(match.search.maxBudget)],
-          ["Metraje", `${match.search.minSizeM2} m2 mínimo`],
+          ["Metraje", `~${match.search.minSizeM2} m2`],
           ["Equipamiento", equipmentLabel(match.search.desiredEquipment || "indiferente")],
           ["Urgencia", urgencyLabel(match.search.urgency)],
           ["Uso", label(match.search.useCase)]
@@ -9433,7 +9440,7 @@
                 match.search.desiredPh || "No especificado"
               ],
               ["ok", "Presupuesto", `Máx. ${money.format(match.search.maxBudget)}`],
-              ["ok", "Metraje", `${match.search.minSizeM2} m2 mínimo`],
+              ["ok", "Metraje", `~${match.search.minSizeM2} m2`],
               ["neutral", "Equipamiento", equipmentLabel(match.search.desiredEquipment || "indiferente")],
               ["neutral", "Urgencia", urgencyLabel(match.search.urgency)],
               ["neutral", "Uso", label(match.search.useCase)],
@@ -9549,7 +9556,7 @@
             "Modelo",
             offer.model || "—",
             search.desiredModel || "Indiferente",
-            f.model === "exact" ? "ok" : "warn"
+            f.model === "exact" ? "ok" : f.model === "indiferente" ? "neutral" : "warn"
           )
         );
         rows.push(
@@ -9710,7 +9717,7 @@
           ["Busca", `${label(match.search.desiredOperation)} ${label(match.search.propertyType)}`],
           ["Zona / PH", `${match.search.desiredZone}, ${match.search.province}${match.search.desiredPh ? ` · ${match.search.desiredPh}` : ""}`],
           ["Presupuesto", money.format(match.search.maxBudget)],
-          ["Metraje", `${match.search.minSizeM2} m2 mínimo`],
+          ["Metraje", `~${match.search.minSizeM2} m2`],
           ["Equipamiento", equipmentLabel(match.search.desiredEquipment || "indiferente")],
           ["Urgencia", urgencyLabel(match.search.urgency)],
           ["Uso", label(match.search.useCase)],
@@ -10111,7 +10118,7 @@
               </div>
               <div class="result-main">
                 <p class="result-title">${classificationLabel(classification)} busca ${label(search.desiredOperation)} de ${label(search.propertyType)}</p>
-                <p class="result-meta">Presupuesto ≤ ${money.format(search.maxBudget)} · mínimo ${search.minSizeM2} m2 · ${urgencyLabel(search.urgency)} · Uso: ${label(search.useCase)} · ${publicationLabel(search.publishedAt)}</p>
+                <p class="result-meta">Presupuesto ≤ ${money.format(search.maxBudget)} · ~${search.minSizeM2} m2 deseados · ${urgencyLabel(search.urgency)} · Uso: ${label(search.useCase)} · ${publicationLabel(search.publishedAt)}</p>
                 <div class="factor-chips">${chips}</div>
               </div>
               <div class="result-side">
@@ -10459,10 +10466,12 @@
         if (property.propertyType !== search.propertyType) return 0;
         if (normalize(property.zone) !== normalize(search.desiredZone)) return 0;
         const budget = Number(search.maxBudget || 0);
-        if (!budget || matchPrice > budget * 1.2) return 0;
+        // El presupuesto del cliente debe ser >= 75% del precio (precio hasta +33% sobre el presupuesto).
+        if (!budget || matchPrice > budget * 1.3333) return 0;
         const minSize = Number(search.minSizeM2 || 0);
         const size = Number(property.sizeM2 || 0);
-        if (minSize && size < minSize * 0.8) return 0;
+        // Metraje deseado con rango: se aceptan propiedades entre -20% y +25% de lo pedido (200 -> 160 a 250).
+        if (minSize && (size < minSize * 0.8 || size > minSize * 1.25)) return 0;
 
         const samePh = isSamePh(property, search);
         const propertyStreet = normalize(property.streetOrNeighborhood || "");
@@ -10474,22 +10483,30 @@
         const parkingMatches = desiredParking > 0 && Number(property.parkingSpaces || 0) >= desiredParking;
         const storageWanted = search.desiredStorage === "si";
         const storageMatches = storageWanted && property.storage === "si";
+        // "Indiferente" = al cliente no le importa ese criterio -> se considera satisfecho (suma sus puntos),
+        // igual que transmisión/combustible indiferente en vehículos.
+        const equipmentSatisfied = !equipmentSpecified || equipmentMatches;
+        const parkingSatisfied = desiredParking <= 0 || parkingMatches;
+        const storageSatisfied = !storageWanted || storageMatches;
 
         let score = 10 + 10 + 10;
         score += interestedQualityScore(search);
         if (sameStreet) score += 10;
         if (samePh) score += 15;
-        score += !minSize || size >= minSize * 0.9 ? 10 : 6;
-        score += matchPrice <= budget * 1.1 ? 15 : 10;
-        if (equipmentMatches) score += 5;
-        if (parkingMatches) score += 3;
-        if (storageMatches) score += 2;
+        score += !minSize || (size >= minSize * 0.9 && size <= minSize * 1.1) ? 10 : 6;
+        score += matchPrice <= budget * 1.1 ? 15 : matchPrice <= budget * 1.2 ? 11 : 8;
+        if (equipmentSatisfied) score += 5;
+        if (parkingSatisfied) score += 3;
+        if (storageSatisfied) score += 2;
 
         if (samePh) score = Math.max(score, 85);
         if (samePh && equipmentMatches && search.role === "cliente final") score = Math.max(score, 95);
         if (search.role === "broker") score = Math.max(score, 75);
+        // Si pasó todos los requisitos duros (operación, tipo, zona, presupuesto >=75%, metraje en rango)
+        // ya es un lead calificado: piso de 70 (Coincidencia Básica) para que aparezca.
+        if (search.role === "cliente final") score = Math.max(score, 70);
 
-        if (matchPrice > budget * 1.1 || (minSize && size < minSize * 0.9)) score = Math.min(score, 99);
+        if (matchPrice > budget * 1.1 || (minSize && (size < minSize * 0.9 || size > minSize * 1.1))) score = Math.min(score, 99);
         if (!samePh) score = Math.min(score, 84);
         if (equipmentSpecified && !equipmentMatches) score = Math.min(score, 94);
         if (search.role === "broker") {
@@ -10588,10 +10605,12 @@
         if (factors.type) score += 10;
         factors.brand = normalize(offer.brand) === normalize(search.desiredBrand);
         if (factors.brand) score += 20;
-        const modelScore = modelCompatibilityScore(offer.model, search.desiredModel);
-        factors.model = modelScore === 15 ? "exact" : modelScore > 0 ? "similar" : "none";
+        const modelIndifferent = !search.desiredModel || normalize(search.desiredModel) === "indiferente";
+        const modelScore = modelIndifferent ? 0 : modelCompatibilityScore(offer.model, search.desiredModel);
+        factors.model = modelIndifferent ? "indiferente" : modelScore === 15 ? "exact" : modelScore > 0 ? "similar" : "none";
         if (factors.model === "exact") score += 15;
         else if (factors.model === "similar") score += 8;
+        else if (factors.model === "indiferente") score += 8;
         const price = vehiclePriceForOperation(offer);
         const budget = Number(search.maxBudget || 0);
         if (price > 0 && budget > 0 && price <= budget * 1.1) {
@@ -10600,6 +10619,10 @@
         } else if (price > 0 && budget > 0 && price <= budget * 1.2) {
           factors.price = "±20%";
           score += 13;
+        } else if (price > 0 && budget > 0 && price <= budget * 1.3333) {
+          // Presupuesto del cliente >= 75% del precio: match aceptable con puntaje menor.
+          factors.price = "75%";
+          score += 8;
         } else {
           factors.price = false;
         }
@@ -10709,7 +10732,7 @@
                     )} · Uso: ${label(match.search.useCase)}</span>
                     <span>Presupuesto máximo: ${money.format(
                       match.search.maxBudget
-                    )} · Metraje mínimo: ${match.search.minSizeM2} m2</span>
+                    )} · Metraje deseado: ~${match.search.minSizeM2} m2</span>
                   </div>
                   ${
                     released
@@ -11139,7 +11162,15 @@
             }
             if (modelSelect) {
               const models = (isMotoForm() ? motoBrandModels : vehicleBrandModels)[select.value] || [];
-              fillVehicleSelect(modelSelect, models, select.value === "Otro" ? "Selecciona modelo" : "Selecciona modelo", modelSelect.value);
+              const prevModel = modelSelect.value;
+              fillVehicleSelect(modelSelect, models, "Selecciona modelo", prevModel);
+              if (group === "vehicleSearch") {
+                const indiff = document.createElement("option");
+                indiff.value = "indiferente";
+                indiff.textContent = "Indiferente";
+                modelSelect.insertBefore(indiff, modelSelect.firstChild);
+                if (!prevModel || prevModel === "") modelSelect.value = "indiferente";
+              }
             }
             if (modelOtherWrap && modelOtherInput) {
               const modelIsOther = modelSelect?.value === "Otro" || select.value === "Otro";
@@ -12415,7 +12446,7 @@
         if (!validateProtectedFreeText(event.currentTarget, data)) return;
         if (!ensureAccountForForm(event.currentTarget, data)) return;
         removeAccountFields(data);
-        if (data.registeredBy === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent);
+        if (data.registeredBy === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent, data.phone);
         delete data.brokerLicense;
         delete data.brokerCompany;
         delete data.brokerIndependent;
@@ -12470,7 +12501,7 @@
         save();
         showToast("propertyToast");
         render();
-        showTab("matches");
+        showTab("inicio");
       });
 
       function saveSearchFromForm(event, toastId) {
@@ -12484,7 +12515,7 @@
         if (!ensureAccountForForm(event.currentTarget, data)) return;
         removeAccountFields(data);
         const isBrokerSearch = data.role === "broker";
-        if (isBrokerSearch) registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent);
+        if (isBrokerSearch) registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent, data.phone);
         const searchPayload = {
           ...data,
           name: fullName(data),
@@ -12532,7 +12563,7 @@
         save();
         showToast(toastId);
         render();
-        showTab("matches");
+        showTab("inicio");
       }
 
       document.getElementById("searchForm").addEventListener("submit", (event) => {
@@ -12559,7 +12590,7 @@
         const selectedPrice = data.salePrice === "Otro" ? data.salePriceOther : data.salePrice;
         const selectedColor = data.color === "Otro" ? data.colorOther : data.color;
         const selectedVehicleType = data.vehicleType === "otro" ? (data.vehicleTypeOther || "").trim() : data.vehicleType;
-        if (data.registeredBy === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent);
+        if (data.registeredBy === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent, data.phone);
         delete data.brandOther;
         delete data.modelOther;
         delete data.yearOther;
@@ -12606,7 +12637,7 @@
         save();
         showToast("vehicleOfferToast");
         render();
-        showTab("matches");
+        showTab("inicio");
       }
 
       function saveVehicleSearchFromForm(event) {
@@ -12625,7 +12656,7 @@
         const selectedMaxBudget = data.maxBudget === "Otro" ? data.maxBudgetOther : data.maxBudget;
         const selectedDesiredColor = data.desiredColor === "Otro" ? data.desiredColorOther : data.desiredColor;
         const selectedVehicleType = data.vehicleType === "otro" ? (data.vehicleTypeOther || "").trim() : data.vehicleType;
-        if (data.role === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent);
+        if (data.role === "broker") registerBrokerCredentials(data.email, data.brokerLicense, data.brokerCompany, data.brokerIndependent, data.phone);
         delete data.desiredBrandOther;
         delete data.desiredModelOther;
         delete data.minYearOther;
@@ -12664,7 +12695,7 @@
         save();
         showToast("vehicleSearchToast");
         render();
-        showTab("matches");
+        showTab("inicio");
       }
 
       document.getElementById("vehicleOfferForm").addEventListener("submit", saveVehicleOfferFromForm);
@@ -12768,7 +12799,7 @@
                     <span>Calle o barriada deseada: ${match.search.desiredStreetOrNeighborhood || "No especificada"}</span>
                     <span>PH deseado: ${match.search.desiredPh || "No especificado"}</span>
                     <span>Presupuesto: hasta ${money.format(match.search.maxBudget)}</span>
-                    <span>Metraje mínimo: ${match.search.minSizeM2} m2</span>
+                    <span>Metraje deseado: ~${match.search.minSizeM2} m2</span>
                     <span>Uso: ${label(match.search.useCase)}</span>
                   </div>
                   ${
@@ -12867,6 +12898,7 @@
               <h3>${escapeHtml(broker.company || "Broker")}</h3>
               <div class="meta">
                 <span>Email: ${escapeHtml(broker.email)}</span>
+                <span>Celular: ${escapeHtml(broker.phone || "No indicado")}</span>
                 <span>Licencia: ${escapeHtml(broker.license || "No indicada")}</span>
                 <span>${broker.independent ? "Broker independiente" : "Empresa: " + escapeHtml(broker.company || "—")}</span>
                 <span>Publicaciones/búsquedas: ${brokerActivityCount(broker.email)}</span>
@@ -13301,7 +13333,7 @@
                     <span>Calle o barriada deseada: ${match.search.desiredStreetOrNeighborhood || "No especificada"}</span>
                     <span>PH deseado: ${match.search.desiredPh || "No especificado"}</span>
                     <span>Presupuesto: ${budgetRange}</span>
-                    <span>Metraje mínimo: ${match.search.minSizeM2} m2</span>
+                    <span>Metraje deseado: ~${match.search.minSizeM2} m2</span>
                     <span>Uso: ${label(match.search.useCase)}</span>
                     <span>Nivel de oportunidad: ${displayLabel}</span>
                     <span>${
@@ -14593,7 +14625,7 @@
                             <div class="criteria-chips">
                               <span class="criteria-chip">${label(search.desiredOperation)} ${label(search.propertyType)}</span>
                               <span class="criteria-chip">≤ ${money.format(search.maxBudget)}</span>
-                              <span class="criteria-chip">≥ ${search.minSizeM2} m2</span>
+                              <span class="criteria-chip">~${search.minSizeM2} m2</span>
                               <span class="criteria-chip">${search.desiredStreetOrNeighborhood || "Calle no especificada"}</span>
                               <span class="criteria-chip">${equipmentLabel(search.desiredEquipment || "indiferente")}</span>
                               ${
@@ -14767,7 +14799,7 @@
             fields: [
               ["Solicitante", `${fullName(search)} · ${label(search.role)}`],
               ["Zona", `${search.desiredZone}, ${search.province}`],
-              ["Metraje mínimo", `${Number(search.minSizeM2 || 0).toLocaleString("es-PA")} m2`],
+              ["Metraje deseado", `~${Number(search.minSizeM2 || 0).toLocaleString("es-PA")} m2`],
               ["Urgencia", urgencyLabel(search.urgency)]
             ],
             amountLabel: "Presupuesto máx.",
@@ -15345,6 +15377,10 @@
       }
 
       function openPayModal(amount) {
+        if (isBrokerPending(currentUserEmail)) {
+          alert("Tu cuenta de broker está en revisión. Podrás agregar crédito y desbloquear contactos cuando un administrador apruebe tu cuenta.");
+          return;
+        }
         setupPayModal();
         payAmount = Number(amount) || 25;
         payMethod = "paypal";
@@ -15446,13 +15482,14 @@
         return Boolean(account) && account.status !== "aprobado";
       }
 
-      function registerBrokerCredentials(email, license, company, independent) {
+      function registerBrokerCredentials(email, license, company, independent, phone) {
         if (!email) return;
         const key = brokerKey(email);
         const existing = brokerAccounts[key] || {};
         const indep = independent === "on" || independent === true;
         brokerAccounts[key] = {
           email,
+          phone: phone || existing.phone || "",
           license: license || existing.license || "",
           company: indep ? "Broker independiente" : company || existing.company || "",
           independent: indep,
@@ -15573,6 +15610,10 @@
       function requestOwnerContact(id) {
         const match = matches.find((item) => item.id === id);
         if (!match) return;
+        if (isBrokerPending(currentUserEmail)) {
+          alert("Tu cuenta de broker está en revisión. Podrás solicitar contactos cuando un administrador apruebe tu cuenta.");
+          return;
+        }
         const existing = contactRequests[id] || {};
         contactRequests[id] = {
           requestedAt: existing.requestedAt || new Date().toISOString(),
@@ -15589,6 +15630,10 @@
       function requestVehicleOwnerContact(id) {
         const match = vehicleMatches.find((item) => item.id === id);
         if (!match) return;
+        if (isBrokerPending(currentUserEmail)) {
+          alert("Tu cuenta de broker está en revisión. Podrás solicitar contactos cuando un administrador apruebe tu cuenta.");
+          return;
+        }
         const existing = contactRequests[id] || {};
         contactRequests[id] = {
           requestedAt: existing.requestedAt || new Date().toISOString(),
