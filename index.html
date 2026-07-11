@@ -6886,12 +6886,12 @@
 
       .freshness-badge {
         background: #fff4e9;
-        border: 1px solid #ffd6ae;
+        border: 1px solid #f6b877;
         border-radius: 999px;
-        color: var(--orange-dark);
+        color: #c2410c;
         display: inline-flex;
         font-size: 13px;
-        font-weight: 950;
+        font-weight: 700;
         line-height: 1;
         padding: 7px 10px;
         white-space: nowrap;
@@ -15918,15 +15918,27 @@
                       const searchMatches = matches.filter((match) => match.search.id === search.id);
                       const searchActive = isSearchActive(search);
                       return `
-                        <div class="offer-card-row ${searchActive ? "" : "row-inactive"}">
-                          <span class="offer-row-number">${index + 1}</span>
-                          <div class="offer-card-main">
-                            <p class="offer-card-title">${label(search.propertyType)} en ${search.desiredZone} · ${search.desiredPh ? phDisplayName(search.desiredPh) : "PH no especificado"} <span class="offer-type-pill">${search.role === "broker" ? "Broker" : "Cliente final"}</span>${searchActive ? "" : ' <span class="offer-type-pill inactive">Dada de baja</span>'}</p>
+                        <div class="offer-card2 ${searchActive ? "" : "oc2-unavailable"}">
+                          <div class="rc2-head">
+                            <span class="oc2-num">${index + 1}</span>
+                            <div class="rc2-head-main">
+                              <p class="rc2-title">${label(search.propertyType)} en ${search.desiredZone} · ${search.desiredPh ? phDisplayName(search.desiredPh) : "PH no especificado"}</p>
+                              <p class="rc2-subtitle">${search.role === "broker" ? "Broker" : "Cliente final"} · ${label(search.desiredOperation)} · ${publicationLabel(search.publishedAt)}</p>
+                            </div>
+                            ${
+                              searchActive
+                                ? `<span class="oc2-avail on"><span class="oc2-dot"></span>Buscando</span>`
+                                : `<span class="oc2-avail off">Dada de baja</span>`
+                            }
+                          </div>
+                          <div class="oc2-body">
+                            <div class="oc2-priceline">
+                              <span class="oc2-price">≤ ${money.format(search.maxBudget)}</span>
+                              <span class="oc2-loc"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> ${search.desiredStreetOrNeighborhood || search.desiredZone}</span>
+                            </div>
                             <div class="criteria-chips">
                               <span class="criteria-chip">${label(search.desiredOperation)} ${label(search.propertyType)}</span>
-                              <span class="criteria-chip">≤ ${money.format(search.maxBudget)}</span>
-                              <span class="criteria-chip">~${search.minSizeM2} m2</span>
-                              <span class="criteria-chip">${search.desiredStreetOrNeighborhood || "Calle no especificada"}</span>
+                              <span class="criteria-chip">~${search.minSizeM2} m²</span>
                               <span class="criteria-chip">${equipmentLabel(search.desiredEquipment || "indiferente")}</span>
                               ${
                                 Number(search.desiredParkingSpaces || 0)
@@ -15934,17 +15946,19 @@
                                   : ""
                               }
                               ${search.desiredStorage === "si" ? `<span class="criteria-chip">Depósito necesario</span>` : ""}
-                              <span class="criteria-chip muted">${label(search.useCase)} · ${urgencyLabel(search.urgency)} · ${publicationLabel(search.publishedAt)}</span>
+                              <span class="criteria-chip muted">${label(search.useCase)} · ${urgencyLabel(search.urgency)}</span>
                             </div>
                           </div>
-                          <div class="offer-card-actions">
+                          <div class="oc2-foot">
                             ${searchActiveSwitch(search.id, searchActive, "setSearchActive")}
-                            <button class="button small ghost" type="button" onclick="editSearch(${search.id})">Modificar</button>
-                            ${
-                              searchMatches.length
-                                ? `<button class="button small primary" type="button" onclick="openResultsModal('propertySearch', ${search.id})">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
-                                : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
-                            }
+                            <div class="oc2-foot-actions">
+                              <button class="button small ghost" type="button" onclick="editSearch(${search.id})">Modificar</button>
+                              ${
+                                searchMatches.length
+                                  ? `<button class="button small primary" type="button" onclick="openResultsModal('propertySearch', ${search.id})">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
+                                  : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
+                              }
+                            </div>
                           </div>
                         </div>
                       `;
@@ -15983,27 +15997,42 @@
                     const searchMatches = vehicleMatches.filter((match) => match.search.id === search.id);
                     const searchActive = isSearchActive(search);
                     return `
-                      <div class="offer-card-row ${searchActive ? "" : "row-inactive"}">
-                        <span class="offer-row-number">${index + 1}</span>
-                        <div class="offer-card-main">
-                          <p class="offer-card-title">${vehicleSearchTitle(search)} <span class="offer-type-pill">${vehicleApplicantLabel(search)}</span>${searchActive ? "" : ' <span class="offer-type-pill inactive">Dada de baja</span>'}</p>
+                      <div class="offer-card2 ${searchActive ? "" : "oc2-unavailable"}">
+                        <div class="rc2-head">
+                          <span class="oc2-num">${index + 1}</span>
+                          <div class="rc2-head-main">
+                            <p class="rc2-title">${vehicleSearchTitle(search)}</p>
+                            <p class="rc2-subtitle">${vehicleApplicantLabel(search)} · ${publicationLabel(search.publishedAt)}</p>
+                          </div>
+                          ${
+                            searchActive
+                              ? `<span class="oc2-avail on"><span class="oc2-dot"></span>Buscando</span>`
+                              : `<span class="oc2-avail off">Dada de baja</span>`
+                          }
+                        </div>
+                        <div class="oc2-body">
+                          <div class="oc2-priceline">
+                            <span class="oc2-price">≤ ${money.format(search.maxBudget)}</span>
+                            <span class="oc2-loc"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> ${search.zone}, ${search.province}</span>
+                          </div>
                           <div class="criteria-chips">
-                            <span class="criteria-chip">≤ ${money.format(search.maxBudget)}</span>
                             <span class="criteria-chip">${search.minYear ? `${search.minYear} o más nuevo` : "Año indiferente"}</span>
                             <span class="criteria-chip">≤ ${Number(search.maxMileage || 0).toLocaleString("es-PA")} km</span>
-                            <span class="criteria-chip">${search.zone}, ${search.province}</span>
-                            <span class="criteria-chip">${vehicleLabel(search.transmission)} · ${vehicleLabel(search.fuel)}</span>
-                            <span class="criteria-chip muted">${vehicleLabel(search.useCase)} · ${vehicleLabel(search.urgency)} · ${publicationLabel(search.publishedAt)}</span>
+                            <span class="criteria-chip">${vehicleLabel(search.transmission)}</span>
+                            <span class="criteria-chip">${vehicleLabel(search.fuel)}</span>
+                            <span class="criteria-chip muted">${vehicleLabel(search.useCase)} · ${vehicleLabel(search.urgency)}</span>
                           </div>
                         </div>
-                        <div class="offer-card-actions">
+                        <div class="oc2-foot">
                           ${searchActiveSwitch(search.id, searchActive, "setVehicleSearchActive")}
-                          <button class="button small ghost" type="button" onclick="editVehicleSearch(${search.id})">Modificar</button>
-                          ${
-                            searchMatches.length
-                              ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleSearch', ${search.id})">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
-                              : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
-                          }
+                          <div class="oc2-foot-actions">
+                            <button class="button small ghost" type="button" onclick="editVehicleSearch(${search.id})">Modificar</button>
+                            ${
+                              searchMatches.length
+                                ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleSearch', ${search.id})">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
+                                : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
+                            }
+                          </div>
                         </div>
                       </div>
                     `;
