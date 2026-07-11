@@ -7596,8 +7596,35 @@
         display: block;
       }
 
+      .login-or {
+        align-items: center;
+        color: #94a3b8;
+        display: flex;
+        font-size: 12px;
+        font-weight: 800;
+        gap: 10px;
+        margin: 14px 0;
+        text-transform: uppercase;
+      }
+
+      .login-or::before,
+      .login-or::after {
+        background: #e2e8f0;
+        content: "";
+        flex: 1;
+        height: 1px;
+      }
+
+      .passkey-btn {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        width: 100%;
+      }
+
       .login-forgot {
-        margin: -6px 0 0;
+        margin: 10px 0 0;
         text-align: right;
       }
 
@@ -9167,6 +9194,12 @@
                 <label class="field full" id="loginPasswordField">Contraseña<input name="password" id="loginPassword" type="password" required minlength="6" autocomplete="current-password" /></label>
               </div>
               <button class="button primary" type="submit" id="loginSubmitBtn">Entrar</button>
+              <div class="login-passkey" id="loginPasskeyRow" hidden>
+                <div class="login-or"><span>o</span></div>
+                <button class="button ghost passkey-btn" type="button" id="loginPasskeyBtn" onclick="signInWithPasskeyFlow()">
+                  <span aria-hidden="true">🔒</span> Entrar con Face ID / huella
+                </button>
+              </div>
               <p class="login-forgot" id="loginForgotRow"><a href="#" id="loginForgotLink" onclick="event.preventDefault(); sendPasswordReset();">¿Olvidaste tu contraseña?</a></p>
               <p class="login-toggle" hidden><span id="authTogglePrefix">¿No tienes cuenta? </span><a href="#" id="authToggleLink">Regístrate</a></p>
             </form>
@@ -9199,6 +9232,7 @@
                 </div>
                 <div class="wallet-actions">
                   <button class="button primary" type="button" onclick="openPayModal(50)">+ Agregar crédito</button>
+                  <button class="button wallet-ghost" type="button" id="registerPasskeyBtn" hidden onclick="registerPasskeyFlow()">🔒 Activar Face ID</button>
                   <button class="button wallet-ghost" type="button" onclick="logoutUser()">Cerrar sesión</button>
                 </div>
                 <div class="wallet-session">
@@ -11090,7 +11124,13 @@
         adminEmails: ["hovav@saidacpa.com", "asistencia.gerencia@saidacpa.com"]
       };
       const supabaseEnabled = Boolean(SUPABASE.url && SUPABASE.key && window.supabase && window.supabase.createClient);
-      const supabaseClient = supabaseEnabled ? window.supabase.createClient(SUPABASE.url, SUPABASE.key) : null;
+      // experimental.passkey habilita registerPasskey()/signInWithPasskey() (Face ID / huella).
+      const supabaseClient = supabaseEnabled ? window.supabase.createClient(SUPABASE.url, SUPABASE.key, { auth: { experimental: { passkey: true } } }) : null;
+      // Passkeys solo si el navegador soporta WebAuthn y la API está en el SDK.
+      function passkeysSupported() {
+        return supabaseEnabled && typeof window.PublicKeyCredential !== "undefined"
+          && supabaseClient && typeof supabaseClient.auth.signInWithPasskey === "function";
+      }
       let authMode = "login"; // "login" | "register"
       let serverBalance = 0; // saldo del usuario actual leído del servidor (Fase 2C)
       // PayPal (Fase 2): Client ID público (va en el navegador). El Secret vive
@@ -13927,6 +13967,39 @@
             loginLink.dataset.tab = "login";
             delete loginLink.dataset.dashboardTarget;
           }
+        }
+        // Passkeys (Face ID): "Entrar con Face ID" solo sin sesión; "Activar Face ID" solo con sesión.
+        const supported = passkeysSupported();
+        const passkeyRow = document.getElementById("loginPasskeyRow");
+        if (passkeyRow) passkeyRow.hidden = !(supported && !loggedIn);
+        const regBtn = document.getElementById("registerPasskeyBtn");
+        if (regBtn) regBtn.hidden = !(supported && loggedIn);
+      }
+
+      // Entrar solo con biometría (passwordless): el dispositivo muestra las
+      // cuentas guardadas y el usuario elige con Face ID / huella.
+      async function signInWithPasskeyFlow() {
+        if (!passkeysSupported()) { showLoginStatus("Tu navegador no soporta acceso biométrico."); return; }
+        showLoginStatus("Abriendo Face ID / huella…");
+        try {
+          const { error } = await supabaseClient.auth.signInWithPasskey();
+          if (error) { showLoginStatus("No se pudo entrar con Face ID: " + error.message); return; }
+          showLoginStatus(""); // la sesión y el redirect los maneja onAuthStateChange
+        } catch (e) {
+          showLoginStatus("Acceso biométrico cancelado.");
+        }
+      }
+
+      // Registrar un passkey para la cuenta actual (requiere sesión iniciada).
+      async function registerPasskeyFlow() {
+        if (!passkeysSupported()) { alert("Tu navegador no soporta acceso biométrico."); return; }
+        if (!currentUserEmail) { alert("Inicia sesión primero para activar Face ID."); return; }
+        try {
+          const { error } = await supabaseClient.auth.registerPasskey();
+          if (error) { alert("No se pudo activar: " + error.message); return; }
+          alert("¡Listo! Ya puedes entrar con Face ID / huella la próxima vez.");
+        } catch (e) {
+          alert("Registro de Face ID cancelado.");
         }
       }
 
