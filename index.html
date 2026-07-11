@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <title>KonektaYa — Publica o busca propiedades y vehículos en Panamá</title>
     <meta name="description" content="KonektaYa conecta tu oferta o necesidad de propiedades y vehículos con personas realmente interesadas en Panamá. Publicar y buscar es gratis, sin comisión por cierre." />
     <link rel="canonical" href="https://konektaya.com/" />
@@ -8152,7 +8153,7 @@
         <a class="tab-link active" href="#inicio" data-tab="inicio">Inicio</a>
         <a class="tab-link" href="#matches" data-tab="matches">Cómo funciona</a>
         <a class="tab-link" href="#login" data-tab="login">LOGIN</a>
-        <a class="tab-link" href="#admin" data-tab="admin" data-dashboard-target="admin">ADMIN</a>
+        <a class="tab-link" id="adminNavLink" href="#admin" data-tab="admin" data-dashboard-target="admin">ADMIN</a>
       </nav>
     </header>
 
@@ -9090,10 +9091,12 @@
             <form class="form" id="loginForm">
               <div class="login-status" id="loginStatus"></div>
               <div class="field-grid">
+                <label class="field full" data-register-only hidden>Nombre completo<input name="name" type="text" /></label>
                 <label class="field full">Email<input name="email" type="email" required /></label>
-                <label class="field full">Contraseña<input name="password" type="password" required /></label>
+                <label class="field full">Contraseña<input name="password" type="password" required minlength="6" /></label>
               </div>
-              <button class="button primary" type="submit">Entrar</button>
+              <button class="button primary" type="submit" id="loginSubmitBtn">Entrar</button>
+              <p class="login-toggle" hidden><span id="authTogglePrefix">¿No tienes cuenta? </span><a href="#" id="authToggleLink">Regístrate</a></p>
             </form>
           </article>
         </section>
@@ -9465,7 +9468,9 @@
                 <p>Paga con tu <strong>tarjeta de crédito o débito</strong> (Visa / Mastercard) o con tu cuenta PayPal. No necesitas tener cuenta PayPal.</p>
               </div>
               <button class="button pay-paypal-btn" type="button" id="payPaypalBtn" onclick="submitPaypalPayment()">Pagar $25 con PayPal</button>
-              <p class="pay-note">Pago seguro procesado por PayPal. (Demo: acredita saldo simulado; al conectar la cuenta PayPal real, este botón abre el pago y el saldo se acredita al confirmarse.)</p>
+              <div id="paypalButtons" hidden></div>
+              <p class="pay-note" id="paypalStatus"></p>
+              <p class="pay-note" id="payPaypalDemoNote">Pago seguro procesado por PayPal. (Demo: acredita saldo simulado; al conectar la cuenta PayPal real, este botón abre el pago y el saldo se acredita al confirmarse.)</p>
             </div>
             <div class="pay-pane hidden" data-pay-pane="card">
               <input class="pay-input" id="payCardNumber" inputmode="numeric" placeholder="Número de tarjeta" />
@@ -10288,6 +10293,10 @@
         const statusText = status === "cerrado" ? "Cerrado" : status === "contactado" ? "Contactado" : "Contacto desbloqueado";
         const noteId = noteFieldId(match.id, source);
         const savedNote = String(unlockInfo.followNote || "").trim();
+        // Con backend, el contacto viene del servidor (unlockInfo); si no, del registro en memoria.
+        const cName = unlockInfo.contactName || fullName(match.search);
+        const cPhone = unlockInfo.contactPhone || match.search.phone || "";
+        const cEmail = unlockInfo.contactEmail || match.search.email || "";
         const requestSummary = [
           ["Busca", `${label(match.search.desiredOperation)} ${label(match.search.propertyType)}`],
           ["Zona / PH", `${match.search.desiredZone}, ${match.search.province}${match.search.desiredPh ? ` · ${match.search.desiredPh}` : ""}`],
@@ -10303,14 +10312,14 @@
             <div class="rc2-head">
               <span class="contact-avatar-row">${initialsFor(match.search)}</span>
               <div class="rc2-head-main">
-                <p class="rc2-title">${fullName(match.search)}</p>
+                <p class="rc2-title">${cName}</p>
                 <p class="rc2-subtitle">${match.mach.ranking || ""} · ${match.score}% · ${matchOriginLabel(match, source)}</p>
               </div>
               <span class="oc2-avail ${status === "cerrado" ? "off" : "on"}">${status === "cerrado" ? "" : `<span class="oc2-dot"></span>`}${statusText}</span>
             </div>
             <div class="rc2-body">
-              <p class="contact-line">Tel: ${match.search.phone} · Email: ${match.search.email}${finalClientLine(match.search) ? ` · Cliente final: ${finalClientName(match.search)}` : ""}</p>
-              ${whatsappButton(match.search.phone, fullName(match.search))}
+              <p class="contact-line">Tel: ${cPhone} · Email: ${cEmail}${finalClientLine(match.search) ? ` · Cliente final: ${finalClientName(match.search)}` : ""}</p>
+              ${whatsappButton(cPhone, cName)}
               <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price || match.mach.price)}</p>
             </div>
             <div class="rc2-foot">
@@ -10993,6 +11002,36 @@
       let creditPurchases = load("propertyYaCreditPurchases", []);
       let currentUserEmail = load("propertyYaCurrentUserEmail", "");
       let userAccounts = load("propertyYaUserAccounts", {});
+
+      // ============================================================
+      // FASE 2A - Supabase Auth (email + contraseña).
+      // Feature-flag: si falta la key o el SDK no cargó, la app sigue
+      // funcionando en modo demo (localStorage) exactamente como antes.
+      // ============================================================
+      const SUPABASE = {
+        url: "https://agjzczxxawojicpxbiuu.supabase.co",
+        key: "sb_publishable_GuCV4qK816F3rqlFGrqeDQ_dODhasiu",
+        adminEmails: ["hovav@saidacpa.com", "asistencia.gerencia@saidacpa.com"]
+      };
+      const supabaseEnabled = Boolean(SUPABASE.url && SUPABASE.key && window.supabase && window.supabase.createClient);
+      const supabaseClient = supabaseEnabled ? window.supabase.createClient(SUPABASE.url, SUPABASE.key) : null;
+      let authMode = "login"; // "login" | "register"
+      let serverBalance = 0; // saldo del usuario actual leído del servidor (Fase 2C)
+      // PayPal (Fase 2): Client ID público (va en el navegador). El Secret vive
+      // solo en Supabase (Edge Function). fn = nombre de la función de crédito.
+      const PAYPAL = {
+        clientId: "AaGuDeCDtxUZqGPrsTCkyY3sRNKAjq7TvIPk5kVIzx2kpbS2HyCU1EqY2cgkYubUgNMxU2IIubVhBq58",
+        env: "sandbox",
+        fn: "paypal-credit"
+      };
+      let myProfile = null; // perfil (contacto + estado broker) del usuario actual (Fase 2D)
+
+      function isAdminEmail(email) {
+        if (!supabaseEnabled) return true; // modo demo: admin abierto para pruebas locales
+        const norm = normalize(email || "");
+        return Boolean(norm) && SUPABASE.adminEmails.some((e) => normalize(e) === norm);
+      }
+
       let matches = [];
       let vehicleMatches = [];
       let editingPropertyId = null;
@@ -12222,6 +12261,11 @@
         if (!views.length) return;
 
         window.showDashboardView = (target) => {
+          if (target === "admin" && !isAdminEmail(currentUserEmail)) {
+            alert("El panel de administración es solo para cuentas autorizadas. Inicia sesión como administrador.");
+            target = "user";
+            if (!currentUserEmail) showTab("login");
+          }
           views.forEach((view) => {
             view.classList.toggle("active", view.dataset.dashboardView === target);
           });
@@ -12666,6 +12710,18 @@
         const password = form?.querySelector('[name="accountPassword"]');
         const confirm = form?.querySelector('[name="accountPasswordConfirm"]');
         const error = form?.querySelector("[data-account-error]");
+        if (supabaseEnabled) {
+          // Con backend real ya se publica logueado: no hay creación de cuenta inline.
+          if (box) box.classList.remove("show");
+          if (password) password.required = false;
+          if (confirm) confirm.required = false;
+          if (emailField && currentUserEmail) {
+            emailField.value = currentUserEmail;
+            emailField.readOnly = true;
+          }
+          if (error) { error.textContent = ""; error.classList.remove("show"); }
+          return;
+        }
         if (!box || !emailField || !message || !password || !confirm) return;
 
         const email = emailField.value.trim();
@@ -13145,6 +13201,16 @@
       }
 
       function ensureAccountForForm(form, data) {
+        if (supabaseEnabled) {
+          if (!currentUserEmail) {
+            const err = form.querySelector("[data-account-error]") || form.querySelector("[data-form-error]");
+            if (err) { err.textContent = "Inicia sesión o crea tu cuenta para publicar."; err.classList.add("show"); }
+            showTab("login");
+            return false;
+          }
+          data.email = currentUserEmail; // publica siempre con la cuenta logueada
+          return true;
+        }
         const email = String(data.email || "").trim();
         if (!email) return false;
         const key = normalize(email);
@@ -13269,18 +13335,22 @@
         delete propertyPayload.parkingSpacesOther;
         delete propertyPayload.availabilityNeedOther;
         delete propertyPayload.hectares;
+        let savedProperty;
         if (editingPropertyId) {
+          const editId = editingPropertyId;
           properties = properties.map((property) =>
-            property.id === editingPropertyId ? { ...property, ...propertyPayload } : property
+            property.id === editId ? { ...property, ...propertyPayload } : property
           );
+          savedProperty = properties.find((property) => property.id === editId);
           editingPropertyId = null;
           event.currentTarget.querySelector('button[type="submit"]').textContent = "Registrar propiedad";
         } else {
-          properties.push({
-            id: Date.now(),
+          savedProperty = {
+            id: newRecordId(),
             publishedAt: new Date().toISOString(),
             ...propertyPayload
-          });
+          };
+          properties.push(savedProperty);
         }
         event.currentTarget.reset();
         syncAccountBox(event.currentTarget);
@@ -13295,6 +13365,8 @@
         syncPropertyTerrainFields();
         setupProtectedFreeTextValidation();
         save();
+        if (savedProperty && data.registeredBy === "broker") savedProperty._broker = { license: data.brokerLicense, company: data.brokerCompany, independent: data.brokerIndependent };
+        if (supabaseEnabled) supaUpsertPublication("properties", savedProperty);
         showToast("propertyToast");
         render();
         showTab("inicio");
@@ -13331,19 +13403,23 @@
         delete searchPayload.desiredParkingSpacesOther;
         delete searchPayload.urgencyOther;
         searchPayload.interestedClassification = classifyInterested(searchPayload);
+        let savedSearch;
         if (editingSearchId) {
+          const editId = editingSearchId;
           searches = searches.map((search) =>
-            search.id === editingSearchId ? { ...search, ...searchPayload } : search
+            search.id === editId ? { ...search, ...searchPayload } : search
           );
+          savedSearch = searches.find((search) => search.id === editId);
           editingSearchId = null;
           event.currentTarget.querySelector('button[type="submit"]').textContent =
             event.currentTarget.id === "brokerForm" ? "Registrar búsqueda como broker" : "Registrar búsqueda";
         } else {
-          searches.push({
-            id: Date.now(),
+          savedSearch = {
+            id: newRecordId(),
             publishedAt: new Date().toISOString(),
             ...searchPayload
-          });
+          };
+          searches.push(savedSearch);
         }
         event.currentTarget.reset();
         syncAccountBox(event.currentTarget);
@@ -13357,6 +13433,8 @@
         setupPropertyTypeGrids();
         setupProtectedFreeTextValidation();
         save();
+        if (savedSearch && data.role === "broker") savedSearch._broker = { license: data.brokerLicense, company: data.brokerCompany, independent: data.brokerIndependent };
+        if (supabaseEnabled) supaUpsertPublication("searches", savedSearch);
         showToast(toastId);
         render();
         showTab("inicio");
@@ -13414,14 +13492,18 @@
               : data.status
         };
         delete payload.vehicleStatusOther;
+        let savedVehicleOffer;
         if (editingVehicleOfferId) {
+          const editId = editingVehicleOfferId;
           vehicleOffers = vehicleOffers.map((offer) =>
-            offer.id === editingVehicleOfferId ? { ...offer, ...payload } : offer
+            offer.id === editId ? { ...offer, ...payload } : offer
           );
+          savedVehicleOffer = vehicleOffers.find((offer) => offer.id === editId);
           editingVehicleOfferId = null;
           event.currentTarget.querySelector('button[type="submit"]').textContent = "Publicar vehículo";
         } else {
-          vehicleOffers.push({ id: Date.now(), publishedAt: new Date().toISOString(), ...payload });
+          savedVehicleOffer = { id: newRecordId(), publishedAt: new Date().toISOString(), ...payload };
+          vehicleOffers.push(savedVehicleOffer);
         }
         event.currentTarget.reset();
         syncAccountBox(event.currentTarget);
@@ -13431,6 +13513,8 @@
         setupAllBrokerCredentials();
         setupProtectedFreeTextValidation();
         save();
+        if (savedVehicleOffer && data.registeredBy === "broker") savedVehicleOffer._broker = { license: data.brokerLicense, company: data.brokerCompany, independent: data.brokerIndependent };
+        if (supabaseEnabled) supaUpsertPublication("vehicleOffers", savedVehicleOffer);
         showToast("vehicleOfferToast");
         render();
         showTab("inicio");
@@ -13474,14 +13558,18 @@
           maxBudget: parseThousands(selectedMaxBudget),
           desiredColor: selectedDesiredColor || ""
         };
+        let savedVehicleSearch;
         if (editingVehicleSearchId) {
+          const editId = editingVehicleSearchId;
           vehicleSearches = vehicleSearches.map((search) =>
-            search.id === editingVehicleSearchId ? { ...search, ...payload } : search
+            search.id === editId ? { ...search, ...payload } : search
           );
+          savedVehicleSearch = vehicleSearches.find((search) => search.id === editId);
           editingVehicleSearchId = null;
           event.currentTarget.querySelector('button[type="submit"]').textContent = "Registrar búsqueda de vehículo";
         } else {
-          vehicleSearches.push({ id: Date.now(), publishedAt: new Date().toISOString(), ...payload });
+          savedVehicleSearch = { id: newRecordId(), publishedAt: new Date().toISOString(), ...payload };
+          vehicleSearches.push(savedVehicleSearch);
         }
         event.currentTarget.reset();
         syncAccountBox(event.currentTarget);
@@ -13489,6 +13577,8 @@
         setupVehicleOptionLists();
         setupProtectedFreeTextValidation();
         save();
+        if (savedVehicleSearch && data.role === "broker") savedVehicleSearch._broker = { license: data.brokerLicense, company: data.brokerCompany, independent: data.brokerIndependent };
+        if (supabaseEnabled) supaUpsertPublication("vehicleSearches", savedVehicleSearch);
         showToast("vehicleSearchToast");
         render();
         showTab("inicio");
@@ -13497,9 +13587,34 @@
       document.getElementById("vehicleOfferForm").addEventListener("submit", saveVehicleOfferFromForm);
       document.getElementById("vehicleSearchForm").addEventListener("submit", saveVehicleSearchFromForm);
 
-      document.getElementById("loginForm").addEventListener("submit", (event) => {
+      document.getElementById("loginForm").addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = formToObject(event.currentTarget);
+
+        if (supabaseEnabled) {
+          const email = String(data.email || "").trim();
+          const password = String(data.password || "");
+          if (authMode === "register") {
+            const { data: res, error } = await supabaseClient.auth.signUp({
+              email,
+              password,
+              options: { data: { name: String(data.name || "").trim() } }
+            });
+            if (error) { showLoginStatus(error.message || "No se pudo crear la cuenta."); return; }
+            if (!res.session) {
+              showLoginStatus("Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.");
+              authMode = "login";
+              applyAuthMode();
+            }
+            // Si "Confirm email" está desactivado, onAuthStateChange entra directo.
+            return;
+          }
+          const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) { showLoginStatus("Email o contraseña incorrectos."); return; }
+          // La sesión y el redirect los maneja onAuthStateChange.
+          return;
+        }
+
         const account = accountByEmail(data.email);
         if (!account || account.password !== data.password) {
           showLoginStatus("Email o contraseña incorrectos. Usa la cuenta creada al registrarte.");
@@ -13515,6 +13630,306 @@
         if (window.showDashboardView) window.showDashboardView("user");
         showTab("admin");
       });
+
+      function applyAuthMode() {
+        const isReg = authMode === "register";
+        document.querySelectorAll("#loginForm [data-register-only]").forEach((el) => { el.hidden = !isReg; });
+        const btn = document.getElementById("loginSubmitBtn");
+        if (btn) btn.textContent = isReg ? "Crear cuenta" : "Entrar";
+        const link = document.getElementById("authToggleLink");
+        if (link) link.textContent = isReg ? "Inicia sesión" : "Regístrate";
+        const prefix = document.getElementById("authTogglePrefix");
+        if (prefix) prefix.textContent = isReg ? "¿Ya tienes cuenta? " : "¿No tienes cuenta? ";
+        showLoginStatus("");
+      }
+
+      function refreshAuthUI() {
+        const adminLink = document.getElementById("adminNavLink");
+        if (adminLink) adminLink.hidden = !isAdminEmail(currentUserEmail);
+      }
+
+      function applySupabaseSession(session, redirect) {
+        currentUserEmail = session && session.user ? (session.user.email || "") : "";
+        save();
+        // Diferido: el listener puede dispararse durante el arranque, antes de que
+        // exista la versión final de render(). setTimeout garantiza que corra después.
+        setTimeout(async () => {
+          if (currentUserEmail) {
+            try { await supaLoadMyProfile(); } catch (e) { console.warn("supaLoadMyProfile", e); }
+            try { await supaLoadConfig(); } catch (e) { console.warn("supaLoadConfig", e); }
+            try { await supaLoadAll(); } catch (e) { console.warn("supaLoadAll", e); }
+            try { await refreshBalance(); } catch (e) { console.warn("refreshBalance", e); }
+            try { await supaLoadUnlocks(); } catch (e) { console.warn("supaLoadUnlocks", e); }
+            try { await supaLoadRequests(); } catch (e) { console.warn("supaLoadRequests", e); }
+          }
+          render();
+          refreshAuthUI();
+          if (redirect && currentUserEmail) {
+            if (window.showDashboardView) window.showDashboardView("user");
+            showTab("admin");
+            showLoginStatus("");
+          }
+        }, 0);
+      }
+
+      // ============================================================
+      // FASE 2B · Capa de datos: sincroniza publicaciones con Supabase.
+      // Los datos de contacto (nombre/teléfono) van a profiles (privado);
+      // las publicaciones guardan solo campos públicos (para el matching).
+      // ============================================================
+      const SUPA_ENTITIES = {
+        properties: { table: "properties", get: () => properties, set: (v) => { properties = v; } },
+        searches: { table: "searches", get: () => searches, set: (v) => { searches = v; } },
+        vehicleOffers: { table: "vehicle_offers", get: () => vehicleOffers, set: (v) => { vehicleOffers = v; } },
+        vehicleSearches: { table: "vehicle_searches", get: () => vehicleSearches, set: (v) => { vehicleSearches = v; } }
+      };
+      const CONTACT_FIELDS = ["name", "firstName", "lastName", "phone", "email"];
+
+      function newRecordId() {
+        return supabaseEnabled && window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now();
+      }
+
+      function splitContact(record) {
+        const data = {}, contact = {};
+        Object.keys(record || {}).forEach((k) => {
+          if (k.startsWith("_")) return; // campos internos (_sbId, _mine...) no se guardan
+          if (CONTACT_FIELDS.includes(k)) contact[k] = record[k];
+          else data[k] = record[k];
+        });
+        return { data, contact };
+      }
+
+      async function supaCurrentUid() {
+        if (!supabaseClient) return null;
+        const { data } = await supabaseClient.auth.getSession();
+        return data.session ? data.session.user.id : null;
+      }
+
+      async function supaUpsertProfile(record) {
+        const uid = await supaCurrentUid();
+        if (!uid) return;
+        const role = record ? record.role || record.registeredBy || null : undefined;
+        const prof = {
+          id: uid,
+          email: currentUserEmail,
+          name: (record && (record.name || fullName(record))) || undefined,
+          phone: record ? record.phone || null : undefined,
+          role
+        };
+        if (role === "broker" && record && record._broker) {
+          const indep = record._broker.independent === "on" || record._broker.independent === true;
+          prof.broker_independent = indep;
+          prof.broker_license = record._broker.license || null;
+          prof.broker_company = indep ? "Broker independiente" : record._broker.company || null;
+        }
+        Object.keys(prof).forEach((k) => prof[k] === undefined && delete prof[k]);
+        const { error } = await supabaseClient.from("profiles").upsert(prof);
+        if (error) console.warn("supaUpsertProfile", error.message);
+        await supaLoadMyProfile();
+      }
+
+      async function supaUpsertPublication(entityKey, record) {
+        if (!supabaseEnabled || !currentUserEmail || !record) return;
+        const cfg = SUPA_ENTITIES[entityKey];
+        if (!cfg) return;
+        // Perfil PRIMERO: así el trigger que marca owner_blocked ve el estado broker actualizado.
+        await supaUpsertProfile(record);
+        const { data } = splitContact(record);
+        const active = record.active !== false && record.available !== false;
+        const { data: res, error } = await supabaseClient
+          .from(cfg.table)
+          .upsert({ id: record.id, data, active })
+          .select("id")
+          .single();
+        if (error) { console.warn("supaUpsertPublication", cfg.table, error.message); return; }
+        record._sbId = res.id;
+      }
+
+      async function supaSetActive(entityKey, record) {
+        if (!supabaseEnabled || !record || !record.id) return;
+        const cfg = SUPA_ENTITIES[entityKey];
+        const active = record.active !== false && record.available !== false;
+        const { error } = await supabaseClient.from(cfg.table).update({ active, data: splitContact(record).data }).eq("id", record.id);
+        if (error) console.warn("supaSetActive", cfg.table, error.message);
+      }
+
+      async function supaDeletePublication(entityKey, id) {
+        if (!supabaseEnabled || !id) return;
+        const cfg = SUPA_ENTITIES[entityKey];
+        const { error } = await supabaseClient.from(cfg.table).delete().eq("id", id);
+        if (error) console.warn("supaDeletePublication", cfg.table, error.message);
+      }
+
+      async function supaLoadConfig() {
+        if (!supabaseEnabled) return;
+        const { data, error } = await supabaseClient.from("match_config").select("config").eq("id", 1).maybeSingle();
+        if (!error && data && data.config && data.config.inmuebles) {
+          matchConfig = mergeMatchConfig(DEFAULT_MATCH_CONFIG, data.config);
+        }
+      }
+
+      async function supaSaveConfig() {
+        if (!supabaseEnabled) return { error: null };
+        return await supabaseClient.from("match_config").upsert({ id: 1, config: matchConfig, updated_at: new Date().toISOString() });
+      }
+
+      async function refreshBalance() {
+        if (!supabaseEnabled || !currentUserEmail) { serverBalance = 0; return; }
+        const { data, error } = await supabaseClient.rpc("my_balance");
+        if (!error && typeof data === "number") serverBalance = data;
+      }
+
+      async function supaLoadMyProfile() {
+        if (!supabaseEnabled || !currentUserEmail) { myProfile = null; return; }
+        const uid = await supaCurrentUid();
+        const { data, error } = await supabaseClient.from("profiles").select("*").eq("id", uid).maybeSingle();
+        if (!error) myProfile = data || null;
+      }
+
+      // Carga los desbloqueos ya pagados del usuario (para marcar estado + revelar contacto)
+      async function supaLoadUnlocks() {
+        if (!supabaseEnabled || !currentUserEmail) return;
+        const { data: rows, error } = await supabaseClient.rpc("get_unlocked_contacts");
+        if (error || !rows) return;
+        rows.forEach((r) => {
+          const source = r.vertical === "vehiculo" ? "vehicleOffer" : "property";
+          const key = `${r.offer_id}-${r.search_id}:${source}`;
+          machUnlocks[key] = {
+            unlockedAt: r.created_at,
+            source,
+            price: Number(r.price || 0),
+            fromServer: true,
+            contactName: r.name || "",
+            contactPhone: r.phone || "",
+            contactEmail: r.email || ""
+          };
+        });
+      }
+
+      // Desbloqueo seguro: llama a la Edge Function (recalcula precio, cobra en
+      // servidor, devuelve el contacto). El nombre de la función es configurable.
+      const UNLOCK_FN = "rapid-action";
+      async function supaUnlock(match, source, vertical, id) {
+        const key = source === "vehicleOffer" ? vehicleMatchUnlockKey(match, source) : matchUnlockKey(match, source);
+        const offerId = vertical === "vehiculo" ? match.offer.id : match.property.id;
+        const searchId = match.search.id;
+        const res = await supabaseClient.functions.invoke(UNLOCK_FN, { body: { vertical, offerId, searchId } });
+        if (res.error || !res.data || !res.data.ok) {
+          const warning = document.getElementById(`warn-${id}-${source}`);
+          if (warning) {
+            warning.textContent = (res.data && res.data.error) || "No se pudo desbloquear. Revisa tu saldo.";
+            warning.classList.add("show");
+          }
+          console.warn("supaUnlock", res.error || res.data);
+          return;
+        }
+        const c = res.data.contact || {};
+        machUnlocks[key] = {
+          unlockedAt: new Date().toISOString(),
+          source,
+          vertical: vertical === "vehiculo" ? "vehicle" : undefined,
+          price: Number(res.data.charge || 0),
+          fromServer: true,
+          contactName: c.name || "",
+          contactPhone: c.phone || "",
+          contactEmail: c.email || ""
+        };
+        await refreshBalance();
+        save();
+        render();
+      }
+
+      function reqKey(vertical, offerId, searchId) {
+        return (vertical === "vehiculo" || vertical === "vehicle") ? `vehicle-${offerId}-${searchId}` : `${offerId}-${searchId}`;
+      }
+
+      async function supaLoadRequests() {
+        if (!supabaseEnabled || !currentUserEmail) return;
+        const { data: ir } = await supabaseClient.from("interest_requests").select("vertical,offer_id,search_id,status,created_at,updated_at");
+        (ir || []).forEach((r) => {
+          interestRequests[reqKey(r.vertical, r.offer_id, r.search_id)] = {
+            vertical: r.vertical === "vehiculo" ? "vehicle" : "property",
+            status: r.status, askedAt: r.created_at, respondedAt: r.updated_at
+          };
+        });
+        const { data: cr } = await supabaseClient.from("contact_requests").select("vertical,offer_id,search_id,reminders,created_at,last_at");
+        (cr || []).forEach((r) => {
+          contactRequests[reqKey(r.vertical, r.offer_id, r.search_id)] = {
+            requestedAt: r.created_at, lastReminderAt: r.last_at, reminderCount: Number(r.reminders || 0)
+          };
+        });
+      }
+
+      async function supaSaveInterest(match, vertical, status) {
+        if (!supabaseEnabled) return;
+        const offerId = vertical === "vehiculo" ? match.offer.id : match.property.id;
+        const owner = vertical === "vehiculo" ? match.offer.ownerId : match.property.ownerId;
+        const clientId = match.search.ownerId;
+        if (!clientId) return;
+        await supabaseClient.from("interest_requests").upsert(
+          { vertical, offer_id: offerId, search_id: match.search.id, owner_id: owner || (await supaCurrentUid()), client_id: clientId, status, updated_at: new Date().toISOString() },
+          { onConflict: "owner_id,offer_id,search_id" }
+        );
+      }
+
+      async function supaRespondInterest(match, vertical, status) {
+        if (!supabaseEnabled) return;
+        const offerId = vertical === "vehiculo" ? match.offer.id : match.property.id;
+        await supabaseClient.from("interest_requests")
+          .update({ status, updated_at: new Date().toISOString() })
+          .eq("offer_id", offerId).eq("search_id", match.search.id);
+      }
+
+      async function supaSaveContact(match, vertical, reminders) {
+        if (!supabaseEnabled) return;
+        const offerId = vertical === "vehiculo" ? match.offer.id : match.property.id;
+        const owner = vertical === "vehiculo" ? match.offer.ownerId : match.property.ownerId;
+        await supabaseClient.from("contact_requests").upsert(
+          { vertical, offer_id: offerId, search_id: match.search.id, owner_id: owner, client_id: await supaCurrentUid(), reminders: Number(reminders || 0), last_at: new Date().toISOString() },
+          { onConflict: "client_id,offer_id,search_id" }
+        );
+      }
+
+      async function supaLoadAll() {
+        if (!supabaseEnabled || !currentUserEmail) return;
+        const uid = await supaCurrentUid();
+        for (const key of Object.keys(SUPA_ENTITIES)) {
+          const cfg = SUPA_ENTITIES[key];
+          const { data: rows, error } = await supabaseClient.from(cfg.table).select("id,owner_id,data,active,owner_blocked");
+          if (error) { console.warn("supaLoadAll", cfg.table, error.message); continue; }
+          const arr = (rows || []).map((r) => {
+            const mine = r.owner_id === uid;
+            return {
+              ...r.data,
+              id: r.id,
+              _sbId: r.id,
+              _mine: mine,
+              ownerId: r.owner_id,
+              owner_blocked: r.owner_blocked === true,
+              email: mine ? currentUserEmail : r.data && r.data.email,
+              active: r.active !== false
+            };
+          });
+          cfg.set(arr);
+        }
+      }
+
+      if (supabaseEnabled) {
+        currentUserEmail = ""; // la sesión real la define Supabase, no localStorage
+        const toggleRow = document.querySelector(".login-toggle");
+        if (toggleRow) toggleRow.hidden = false;
+        const toggleLink = document.getElementById("authToggleLink");
+        if (toggleLink) {
+          toggleLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            authMode = authMode === "login" ? "register" : "login";
+            applyAuthMode();
+          });
+        }
+        applyAuthMode();
+        supabaseClient.auth.getSession().then(({ data }) => applySupabaseSession(data.session, false));
+        supabaseClient.auth.onAuthStateChange((event, session) => applySupabaseSession(session, event === "SIGNED_IN"));
+      }
 
       try {
         setupLocationSelects("property", "Panamá", "Costa del Este");
@@ -13677,9 +14092,45 @@
         return found ? String(found.phone).trim() : "";
       }
 
+      async function renderValidationAdminSupa(target) {
+        if (!isAdminEmail(currentUserEmail)) { target.innerHTML = ""; return; }
+        const { data: brokers, error } = await supabaseClient.rpc("admin_list_brokers");
+        if (error) { target.innerHTML = `<article class="card empty"><p>No se pudo cargar la validación: ${escapeHtml(error.message)}</p></article>`; return; }
+        const order = { pendiente: 0, rechazado: 1, aprobado: 2 };
+        const list = (brokers || []).slice().sort((a, b) => (order[a.broker_status] ?? 3) - (order[b.broker_status] ?? 3));
+        if (!list.length) { target.innerHTML = `<article class="card empty"><h3>Sin brokers</h3><p>Aún no hay brokers registrados.</p></article>`; return; }
+        target.innerHTML = list.map((b) => {
+          const st = b.broker_status || "pendiente";
+          const pill = st === "aprobado"
+            ? '<span class="pill success">Broker aprobado</span>'
+            : st === "rechazado"
+              ? '<span class="pill warn">Broker rechazado</span>'
+              : '<span class="pill" style="background:#eef4fb;color:#1f3b63;">Broker pendiente</span>';
+          const actions = st === "aprobado"
+            ? `<button class="button small reject" type="button" onclick="setBrokerStatus('${jsString(b.id)}', 'rechazado')">Revocar</button>`
+            : st === "rechazado"
+              ? `<button class="button small primary" type="button" onclick="setBrokerStatus('${jsString(b.id)}', 'aprobado')">Aprobar</button>`
+              : `<button class="button small primary" type="button" onclick="setBrokerStatus('${jsString(b.id)}', 'aprobado')">Aprobar broker</button><button class="button small reject" type="button" onclick="setBrokerStatus('${jsString(b.id)}', 'rechazado')">Rechazar</button>`;
+          return `
+            <article class="card">
+              ${pill}
+              <h3>${escapeHtml(b.broker_company || b.name || "Broker")}</h3>
+              <div class="meta">
+                <span>Email: ${escapeHtml(b.email || "")}</span>
+                <span>Celular: ${escapeHtml(b.phone || "No indicado")}</span>
+                <span>Licencia: ${escapeHtml(b.broker_license || "No indicada")}</span>
+                <span>${b.broker_independent ? "Broker independiente" : "Empresa: " + escapeHtml(b.broker_company || "—")}</span>
+                <span>Publicaciones/búsquedas: ${b.publicaciones || 0}</span>
+              </div>
+              <div class="data-row-actions">${actions}</div>
+            </article>`;
+        }).join("");
+      }
+
       function renderValidationAdmin() {
         const target = document.getElementById("adminValidation");
         if (!target) return;
+        if (supabaseEnabled) { renderValidationAdminSupa(target); return; }
         const brokerList = Object.values(brokerAccounts).sort((a, b) => {
           const order = { pendiente: 0, rechazado: 1, aprobado: 2 };
           return (order[a.status] ?? 3) - (order[b.status] ?? 3);
@@ -13876,6 +14327,7 @@
       }
 
       function getBalance(email) {
+        if (supabaseEnabled) return serverBalance; // saldo real del servidor (usuario actual)
         return Number(balances[balanceStoreKey(email)] || 0);
       }
 
@@ -14423,7 +14875,18 @@
         matchConfig = matchLabClone(matchLabDraft);
         save();
         render();
-        setMatchLabStatus("Guardado y aplicado: la plataforma ya usa estos valores.", true);
+        if (supabaseEnabled) {
+          supaSaveConfig().then(({ error }) => {
+            setMatchLabStatus(
+              error
+                ? "Guardado local, pero no se pudo guardar en el servidor: " + error.message
+                : "Guardado y aplicado en TODA la plataforma (config global).",
+              !error
+            );
+          });
+        } else {
+          setMatchLabStatus("Guardado y aplicado: la plataforma ya usa estos valores.", true);
+        }
       }
 
       function resetMatchLab() {
@@ -14462,10 +14925,12 @@
         vehicleMatches = [];
         properties.forEach((property) => {
           if (property.registeredBy === "broker" && isBrokerBlockedFromMatching(property.email)) return;
+          if (property.owner_blocked) return; // broker no aprobado (estado del servidor)
           if (isPublicationExpired(property)) return; // publicacion vencida: no hace match hasta renovar
           searches.forEach((search) => {
             if (!isSearchActive(search)) return;
             if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
+            if (search.owner_blocked) return; // broker no aprobado (estado del servidor)
             const score = calculateScore(property, search);
             if (score >= matchConfig.inmuebles.umbral) {
               const id = `${property.id}-${search.id}`;
@@ -14484,10 +14949,12 @@
         });
         vehicleOffers.forEach((offer) => {
           if (offer.registeredBy === "broker" && isBrokerBlockedFromMatching(offer.email)) return;
+          if (offer.owner_blocked) return; // broker no aprobado (estado del servidor)
           if (isPublicationExpired(offer)) return; // publicacion vencida: no hace match hasta renovar
           vehicleSearches.forEach((search) => {
             if (!isSearchActive(search)) return;
             if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
+            if (search.owner_blocked) return; // broker no aprobado (estado del servidor)
             const result = vehicleMatchEngineV1(offer, search);
             if (result.score >= matchConfig.vehiculos.umbral) {
               const id = `vehicle-${offer.id}-${search.id}`;
@@ -14519,6 +14986,7 @@
         renderHistory();
         renderBrokerB2B();
         refreshResultsModal();
+        if (typeof refreshAuthUI === "function") refreshAuthUI();
       };
 
       function publicMachLabel(internalLabel) {
@@ -15605,19 +16073,22 @@
               ["Combustible", vehicleLabel(match.offer.fuel)],
               ["Comentarios", match.offer.vehicleComments || "Sin comentarios"]
             ];
+        const cName = unlockInfo.contactName || fullName(contact);
+        const cPhone = unlockInfo.contactPhone || contact.phone || "";
+        const cEmail = unlockInfo.contactEmail || contact.email || "";
         return `
           <div class="result-card2 unlocked">
             <div class="rc2-head">
               <span class="contact-avatar-row">${initialsFor(contact)}</span>
               <div class="rc2-head-main">
-                <p class="rc2-title">${fullName(contact)}</p>
+                <p class="rc2-title">${cName}</p>
                 <p class="rc2-subtitle">${match.mach.ranking || ""} · ${match.score}% · ${source === "vehicleOffer" ? vehicleApplicantLabel(match.search) : vehicleSourceLabel(match.offer)}</p>
               </div>
               <span class="oc2-avail on"><span class="oc2-dot"></span>Desbloqueado</span>
             </div>
             <div class="rc2-body">
-              <p class="contact-line">Tel: ${contact.phone} · Email: ${contact.email}</p>
-              ${whatsappButton(contact.phone, fullName(contact))}
+              <p class="contact-line">Tel: ${cPhone} · Email: ${cEmail}</p>
+              ${whatsappButton(cPhone, cName)}
               <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price || match.mach.price)}</p>
             </div>
             <details class="result-analysis">
@@ -16277,6 +16748,14 @@
       }
 
       function addDemoBalance(amount) {
+        if (supabaseEnabled) {
+          supabaseClient.rpc("add_credit", { amount: Number(amount) }).then(async ({ error }) => {
+            if (error) { console.warn("add_credit", error.message); return; }
+            await refreshBalance();
+            render();
+          });
+          return;
+        }
         addBalance(currentUserEmail, amount);
         balanceAdds.push({ amount, email: currentUserEmail, date: new Date().toISOString() });
         save();
@@ -16435,6 +16914,16 @@
       }
 
       function logoutUser() {
+        if (supabaseEnabled && supabaseClient) {
+          supabaseClient.auth.signOut().finally(() => {
+            currentUserEmail = "";
+            save();
+            render();
+            refreshAuthUI();
+            showTab("login");
+          });
+          return;
+        }
         currentUserEmail = "";
         save();
         render();
@@ -16474,12 +16963,14 @@
       function setSearchActive(id, value) {
         searches = searches.map((s) => (s.id === id ? { ...s, active: value } : s));
         save();
+        if (supabaseEnabled) supaSetActive("searches", searches.find((s) => s.id === id));
         render();
       }
 
       function setVehicleSearchActive(id, value) {
         vehicleSearches = vehicleSearches.map((s) => (s.id === id ? { ...s, active: value } : s));
         save();
+        if (supabaseEnabled) supaSetActive("vehicleSearches", vehicleSearches.find((s) => s.id === id));
         render();
       }
 
@@ -16493,24 +16984,28 @@
       function togglePropertyAvailable(id) {
         properties = properties.map((p) => (p.id === id ? { ...p, available: p.available === false } : p));
         save();
+        if (supabaseEnabled) supaSetActive("properties", properties.find((p) => p.id === id));
         render();
       }
 
       function toggleVehicleAvailable(id) {
         vehicleOffers = vehicleOffers.map((o) => (o.id === id ? { ...o, available: o.available === false } : o));
         save();
+        if (supabaseEnabled) supaSetActive("vehicleOffers", vehicleOffers.find((o) => o.id === id));
         render();
       }
 
       function setPropertyAvailable(id, value) {
         properties = properties.map((p) => (p.id === id ? { ...p, available: value } : p));
         save();
+        if (supabaseEnabled) supaSetActive("properties", properties.find((p) => p.id === id));
         render();
       }
 
       function setVehicleAvailable(id, value) {
         vehicleOffers = vehicleOffers.map((o) => (o.id === id ? { ...o, available: value } : o));
         save();
+        if (supabaseEnabled) supaSetActive("vehicleOffers", vehicleOffers.find((o) => o.id === id));
         render();
       }
 
@@ -16705,6 +17200,58 @@
         overlay.dataset.payReady = "true";
       }
 
+      let paypalSdkPromise = null;
+      function loadPaypalSdk() {
+        if (window.paypal) return Promise.resolve(window.paypal);
+        if (paypalSdkPromise) return paypalSdkPromise;
+        paypalSdkPromise = new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(PAYPAL.clientId)}&currency=USD&intent=capture`;
+          s.onload = () => resolve(window.paypal);
+          s.onerror = () => reject(new Error("No se pudo cargar PayPal"));
+          document.head.appendChild(s);
+        });
+        return paypalSdkPromise;
+      }
+
+      function paypalConfigured() {
+        return supabaseEnabled && Boolean(PAYPAL.clientId) && Boolean(currentUserEmail);
+      }
+
+      async function renderPaypalButtons() {
+        const container = document.getElementById("paypalButtons");
+        const demoBtn = document.getElementById("payPaypalBtn");
+        const demoNote = document.getElementById("payPaypalDemoNote");
+        const status = document.getElementById("paypalStatus");
+        if (!container) return;
+        if (!paypalConfigured()) { container.hidden = true; if (demoBtn) demoBtn.hidden = false; if (demoNote) demoNote.hidden = false; return; }
+        if (demoBtn) demoBtn.hidden = true;
+        if (demoNote) demoNote.hidden = true;
+        container.hidden = false;
+        if (status) status.textContent = "";
+        let paypal;
+        try { paypal = await loadPaypalSdk(); } catch (e) { if (status) status.textContent = "No se pudo cargar PayPal."; return; }
+        container.innerHTML = "";
+        paypal.Buttons({
+          style: { layout: "vertical", label: "paypal" },
+          createOrder: async () => {
+            const { data, error } = await supabaseClient.functions.invoke(PAYPAL.fn, { body: { action: "create", amount: payAmount } });
+            if (error || !data || !data.id) throw new Error("No se pudo crear la orden");
+            return data.id;
+          },
+          onApprove: async (data) => {
+            if (status) status.textContent = "Procesando pago…";
+            const res = await supabaseClient.functions.invoke(PAYPAL.fn, { body: { action: "capture", orderID: data.orderID } });
+            if (res.error || !res.data || !res.data.ok) { if (status) status.textContent = "El pago no se pudo confirmar."; return; }
+            await refreshBalance();
+            render();
+            if (status) status.textContent = `¡Listo! Se acreditaron ${money.format(res.data.credited)}.`;
+            setTimeout(() => closePayModal(), 1400);
+          },
+          onError: () => { if (status) status.textContent = "Error con PayPal. Intenta de nuevo."; }
+        }).render("#paypalButtons");
+      }
+
       function openPayModal(amount) {
         if (isBrokerPending(currentUserEmail)) {
           alert("Tu cuenta de broker está en revisión. Podrás agregar crédito y desbloquear contactos cuando un administrador apruebe tu cuenta.");
@@ -16725,6 +17272,7 @@
         overlay.querySelectorAll(".pay-pane").forEach((p) => p.classList.toggle("hidden", p.dataset.payPane !== "paypal"));
         updatePayButtons();
         overlay.classList.remove("hidden");
+        renderPaypalButtons();
       }
 
       function closePayModal() {
@@ -16794,19 +17342,38 @@
         return brokerAccounts[brokerKey(email)] || null;
       }
 
+      // Estado broker del usuario ACTUAL desde su perfil del servidor (Fase 2D).
+      function myBrokerStatus() {
+        return myProfile && myProfile.role === "broker" ? (myProfile.broker_status || "pendiente") : null;
+      }
+
       function isBrokerApproved(email) {
+        if (supabaseEnabled) {
+          if (email && normalize(email) !== normalize(currentUserEmail)) return true; // solo evaluamos al usuario actual
+          const st = myBrokerStatus();
+          return st ? st === "aprobado" : true; // no-broker: no bloquea
+        }
         const account = getBrokerAccount(email);
         return account ? account.status === "aprobado" : false;
       }
 
       function isBrokerPending(email) {
+        if (supabaseEnabled) {
+          if (email && normalize(email) !== normalize(currentUserEmail)) return false;
+          return myBrokerStatus() === "pendiente" || myBrokerStatus() === "rechazado";
+        }
         const account = getBrokerAccount(email);
         return account ? account.status === "pendiente" : false;
       }
 
-      // Solo se pausa del matching a un broker que SÍ se registró (tiene ficha) y aún no está aprobado.
-      // Los brokers heredados (sin ficha) no se bloquean, para no romper datos existentes.
+      // Con Supabase, el bloqueo del match de OTROS se hace por owner_blocked (servidor);
+      // aquí solo evaluamos al usuario actual. Sin Supabase, se usa la ficha local.
       function isBrokerBlockedFromMatching(email) {
+        if (supabaseEnabled) {
+          if (email && normalize(email) !== normalize(currentUserEmail)) return false;
+          const st = myBrokerStatus();
+          return Boolean(st) && st !== "aprobado";
+        }
         const account = getBrokerAccount(email);
         return Boolean(account) && account.status !== "aprobado";
       }
@@ -16827,8 +17394,16 @@
         };
       }
 
-      function setBrokerStatus(email, status) {
-        const key = brokerKey(email);
+      function setBrokerStatus(idOrEmail, status) {
+        if (supabaseEnabled) {
+          // idOrEmail = uuid del broker (viene de admin_list_brokers)
+          supabaseClient.rpc("admin_set_broker_status", { target: idOrEmail, new_status: status }).then(({ error }) => {
+            if (error) { alert("No se pudo actualizar: " + error.message); return; }
+            renderValidationAdmin();
+          });
+          return;
+        }
+        const key = brokerKey(idOrEmail);
         if (!brokerAccounts[key]) return;
         brokerAccounts[key] = { ...brokerAccounts[key], status, decidedAt: new Date().toISOString() };
         save();
@@ -16921,18 +17496,20 @@
           respondedAt: ""
         };
         save();
+        if (supabaseEnabled) supaSaveInterest(match, vertical === "vehicle" ? "vehiculo" : "inmueble", "pending");
         render();
       }
 
       function respondClientInterest(id, answer) {
         const request = interestRequests[id];
         if (!request) return;
-        interestRequests[id] = {
-          ...request,
-          status: answer === "yes" ? "confirmed" : "declined",
-          respondedAt: new Date().toISOString()
-        };
+        const status = answer === "yes" ? "confirmed" : "declined";
+        interestRequests[id] = { ...request, status, respondedAt: new Date().toISOString() };
         save();
+        if (supabaseEnabled) {
+          const m = matches.find((x) => x.id === id) || vehicleMatches.find((x) => x.id === id);
+          if (m) supaRespondInterest(m, request.vertical === "vehicle" ? "vehiculo" : "inmueble", status);
+        }
         render();
       }
 
@@ -16953,6 +17530,7 @@
           searchId: match.search.id
         };
         save();
+        if (supabaseEnabled) supaSaveContact(match, "inmueble", contactRequests[id].reminderCount);
         render();
       }
 
@@ -16973,6 +17551,7 @@
           searchId: match.search.id
         };
         save();
+        if (supabaseEnabled) supaSaveContact(match, "vehiculo", contactRequests[id].reminderCount);
         render();
       }
 
@@ -16985,6 +17564,7 @@
         const key = matchUnlockKey(match, source);
         if (machUnlocks[key]) return;
         if (!canUnlockMatch(match)) return;
+        if (supabaseEnabled) { supaUnlock(match, source, "inmueble", id); return; }
         const fullPrice = match.mach.price;
         const charge = cappedCharge(match.property, fullPrice); // aplica tope por publicacion (0 = gratis)
         if (getBalance(currentUserEmail) < charge) {
@@ -17018,6 +17598,7 @@
         if (!match || source !== "vehicleOffer") return;
         const key = vehicleMatchUnlockKey(match, source);
         if (machUnlocks[key]) return;
+        if (supabaseEnabled) { supaUnlock(match, source, "vehiculo", id); return; }
         const fullPrice = match.mach.price;
         const charge = cappedCharge(match.offer, fullPrice); // aplica tope por publicacion (0 = gratis)
         if (getBalance(currentUserEmail) < charge) {

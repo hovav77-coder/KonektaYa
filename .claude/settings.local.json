@@ -139,7 +139,10 @@
       "WebFetch(domain:sympanama.com)",
       "WebFetch(domain:motojungla.com)",
       "WebFetch(domain:motocaribe.net)",
-      "WebFetch(domain:xmotorspanama.com)"
+      "WebFetch(domain:xmotorspanama.com)",
+      "Bash(node -e 'const fs=require\\(\"fs\"\\);const p=\"supabase/functions/unlock/index.ts\";let s=fs.readFileSync\\(p,\"utf8\"\\);s=s.replace\\(/const DIACRITICS = .*/,\"const DIACRITICS = /[\\\\\\\\u0300-\\\\\\\\u036f]/g;\"\\);fs.writeFileSync\\(p,s\\);console.log\\(\"ok\"\\);')",
+      "Bash(node -e 'const fs=require\\(\"fs\"\\);const l=fs.readFileSync\\(\"supabase/functions/unlock/index.ts\",\"utf8\"\\).split\\(\"\\\\n\"\\)[47];console.log\\(JSON.stringify\\(l\\)\\);')",
+      "Bash(node -e 'const fs=require\\(\"fs\"\\);const p=\"supabase/functions/unlock/index.ts\";let a=fs.readFileSync\\(p,\"utf8\"\\).split\\(\"\\\\n\"\\);for\\(let i=0;i<a.length;i++\\){if\\(a[i].indexOf\\(\"const DIACRITICS\"\\)>=0\\){a[i]=\"const DIACRITICS = /[\\\\\\\\u0300-\\\\\\\\u036f]/g;\";}}fs.writeFileSync\\(p,a.join\\(\"\\\\n\"\\)\\);const chk=fs.readFileSync\\(p,\"utf8\"\\);console.log\\(\"contains_escape:\", chk.indexOf\\(\"\\\\\\\\u0300\"\\)>=0\\);')"
     ]
   }
 }
