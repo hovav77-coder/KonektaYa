@@ -665,6 +665,85 @@
         line-height: 1.4;
       }
 
+      .pub-status {
+        display: grid;
+        gap: 6px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px dashed #e2e8f0;
+      }
+
+      .pub-cap-bar {
+        height: 7px;
+        border-radius: 999px;
+        background: #e8eef6;
+        overflow: hidden;
+      }
+
+      .pub-cap-bar > span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #f59e0b, #f97316);
+        border-radius: 999px;
+        transition: width 0.3s ease;
+      }
+
+      .pub-cap-bar > span.full {
+        background: linear-gradient(90deg, #16a34a, #22c55e);
+      }
+
+      .pub-cap-note {
+        font-size: 12px;
+        color: #475569;
+      }
+
+      .pub-cap-note.ok {
+        color: #15803d;
+        font-weight: 600;
+      }
+
+      .pub-days {
+        font-size: 11.5px;
+        color: #64748b;
+        font-weight: 600;
+      }
+
+      .pub-days.warn {
+        color: #b45309;
+      }
+
+      .unlock-charge-note {
+        font-size: 11.5px;
+        color: #b45309;
+        margin: 2px 0 0;
+        line-height: 1.3;
+      }
+
+      .unlock-charge-note.ok {
+        color: #15803d;
+      }
+
+      .pub-status.expired {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        border-top-color: #fca5a5;
+      }
+
+      .pub-status.expired .pub-status-line {
+        display: grid;
+        gap: 2px;
+      }
+
+      .pub-status.expired .pub-status-line strong {
+        color: #b91c1c;
+        font-size: 13px;
+      }
+
+      .pub-status.expired .pub-status-line span {
+        font-size: 11.5px;
+        color: #64748b;
+      }
+
       .matchlab-seg {
         margin-bottom: 14px;
       }
@@ -10229,7 +10308,9 @@
         const requested = isContactRequested(match);
         const requestInfo = contactRequests[match.id] || {};
         const reminderCount = Number(requestInfo.reminderCount || 0);
-        const price = money.format(match.mach.price);
+        const fullUnlockPrice = match.mach.price;
+        const effectiveCharge = cappedCharge(match.property, fullUnlockPrice); // tope por publicacion
+        const price = effectiveCharge === 0 ? "Gratis" : money.format(effectiveCharge);
         const search = match.search;
         const property = match.property;
         const samePh = isSamePh(property, search);
@@ -10279,8 +10360,15 @@
           : "";
         const interest = interestState(match.id);
         const highlightUnlock = requested || (interest && interest.status === "confirmed");
+        const unlockChargeNote = !canUnlockHere
+          ? ""
+          : effectiveCharge === 0
+            ? `<p class="unlock-charge-note ok">Incluido en tu tope · <strong>gratis</strong></p>`
+            : effectiveCharge < fullUnlockPrice
+              ? `<p class="unlock-charge-note">Solo te cobra <strong>${money.format(effectiveCharge)}</strong> para llegar a tu tope</p>`
+              : "";
         const unlockButton = canUnlockHere
-          ? `<button class="button ${highlightUnlock ? "primary" : "dark"}" type="button" onclick="unlockMach('${match.id}', '${source}')">Desbloquear contacto</button>`
+          ? `<button class="button ${highlightUnlock ? "primary" : "dark"}" type="button" onclick="unlockMach('${match.id}', '${source}')">${effectiveCharge === 0 ? "Desbloquear gratis" : "Desbloquear contacto"}</button>`
           : `<button class="button dark" type="button" disabled>${model.validationRequired ? "Pendiente de validación" : "Lo desbloquea la propiedad"}</button>`;
         return `
           <div class="result-row ${requested ? "hot" : ""}">
@@ -10297,6 +10385,7 @@
               </div>
               <div class="result-side">
                 <p class="result-price-big">${canUnlockHere ? price : "Validar"}</p>
+                ${unlockChargeNote}
                 ${canUnlockHere ? ownerInterestBlock(match, "property") : ""}
                 ${unlockButton}
                 <p class="result-note">Garantía: saldo devuelto si los datos son inválidos</p>
@@ -10600,6 +10689,9 @@
           topeEquipDistinto: 94, // Tope si pidio equipamiento especifico y no coincide
           topeBroker: 95, // Tope general de broker
           topeBrokerAnonimo: 85, // Tope de broker con cliente anonimo
+          topePublicacion: 100, // Tope de cobro TOTAL por publicacion; despues del tope los desbloqueos son gratis
+          cicloDias: 60, // Dias que dura la publicacion; al vencer deja de hacer match hasta renovar (reinicia el tope)
+          diasAvisoVencimiento: 5, // Avisar al publicador N dias antes de que venza
           precios: { AAA: 100, AA: 75, A: 50, BBB: 25, BB: 10, B: 5 }
         },
         vehiculos: {
@@ -10625,6 +10717,9 @@
           topeModeloNinguno: 65,
           topeSinPrecio: 65, // Precio fuera del gate -> tope
           topeBroker: 95,
+          topePublicacion: 25, // Tope de cobro TOTAL por publicacion; despues los desbloqueos son gratis
+          cicloDias: 60, // Dias que dura la publicacion; al vencer deja de hacer match hasta renovar
+          diasAvisoVencimiento: 5, // Avisar al publicador N dias antes de que venza
           precios: { AAA: 20, AA: 15, A: 10, BBB: 5, BB: 3, B: 1 }
         }
       };
@@ -13461,6 +13556,129 @@
       let selectedUserPropertyId = "";
       let selectedUserSearchId = "";
 
+      // ============================================================
+      // TOPE POR PUBLICACION + CICLO DE 60 DIAS
+      // El publicador paga cada desbloqueo por su nivel, pero nunca mas del
+      // topePublicacion por publicacion dentro del ciclo. Al cruzar el tope,
+      // el ultimo cobro es solo el resto; despues los desbloqueos son gratis.
+      // Al vencer el ciclo la publicacion deja de hacer match hasta renovar.
+      // ============================================================
+      const DAY_MS = 24 * 60 * 60 * 1000;
+
+      function publicationVertical(pub) {
+        // vehicleOffers tienen vehicleType/brand; properties tienen propertyType.
+        return pub && (pub.vehicleType || pub.brand) && !pub.propertyType ? "vehiculos" : "inmuebles";
+      }
+
+      function publicationConfig(pub) {
+        return matchConfig[publicationVertical(pub)] || matchConfig.inmuebles;
+      }
+
+      function publicationCycleStart(pub) {
+        return pub ? (pub.renewedAt || pub.publishedAt || "") : "";
+      }
+
+      function publicationCycleEndMs(pub) {
+        const start = publicationCycleStart(pub);
+        const startMs = start ? Date.parse(start) : NaN;
+        if (!isFinite(startMs)) return Infinity; // sin fecha -> no vence
+        const dias = Number(publicationConfig(pub).cicloDias) || 60;
+        return startMs + dias * DAY_MS;
+      }
+
+      function publicationDaysLeft(pub) {
+        const endMs = publicationCycleEndMs(pub);
+        if (endMs === Infinity) return Infinity;
+        return Math.ceil((endMs - Date.now()) / DAY_MS);
+      }
+
+      function isPublicationExpired(pub) {
+        const endMs = publicationCycleEndMs(pub);
+        return endMs !== Infinity && Date.now() > endMs;
+      }
+
+      function publicationCapAmount(pub) {
+        return Number(publicationConfig(pub).topePublicacion) || 0;
+      }
+
+      // ID de tope namespaced por vertical para no colisionar inmueble vs vehiculo.
+      function pubCapId(pub) {
+        return pub ? `${publicationVertical(pub)}:${pub.id}` : "";
+      }
+
+      // Suma lo cobrado por desbloqueos de esta publicacion DENTRO del ciclo actual.
+      function paidForPublication(pub) {
+        const capId = pubCapId(pub);
+        if (!capId) return 0;
+        const startMs = Date.parse(publicationCycleStart(pub));
+        return Object.values(machUnlocks || {}).reduce((sum, info) => {
+          if (!info || typeof info !== "object") return sum;
+          if (info.refunded) return sum;
+          if (String(info.publicationId) !== capId) return sum;
+          if (isFinite(startMs) && info.unlockedAt && Date.parse(info.unlockedAt) < startMs) return sum;
+          return sum + (Number(info.price) || 0);
+        }, 0);
+      }
+
+      // Cuanto se cobraria por este desbloqueo aplicando el tope (0 = gratis, ya cubierto).
+      function cappedCharge(pub, fullPrice) {
+        const cap = publicationCapAmount(pub);
+        if (!cap) return Number(fullPrice) || 0; // sin tope configurado
+        const restante = Math.max(0, cap - paidForPublication(pub));
+        return Math.min(Number(fullPrice) || 0, restante);
+      }
+
+      function capReached(pub) {
+        const cap = publicationCapAmount(pub);
+        return cap > 0 && paidForPublication(pub) >= cap;
+      }
+
+      function renovarPublicacion(vertical, id) {
+        const list = vertical === "vehiculos" ? vehicleOffers : properties;
+        const pub = list.find((item) => String(item.id) === String(id));
+        if (!pub) return;
+        pub.renewedAt = new Date().toISOString(); // reinicia ciclo y tope (el acumulado solo cuenta desde aqui)
+        save();
+        render();
+      }
+
+      // Barra de progreso del tope + estado del ciclo para la tarjeta del publicador.
+      function publicationStatusHtml(pub) {
+        if (!pub) return "";
+        const cap = publicationCapAmount(pub);
+        const paid = paidForPublication(pub);
+        const cfg = publicationConfig(pub);
+        const vertical = publicationVertical(pub);
+        const expired = isPublicationExpired(pub);
+        const daysLeft = publicationDaysLeft(pub);
+        const avisa = Number(cfg.diasAvisoVencimiento) || 5;
+
+        if (expired) {
+          return `
+            <div class="pub-status expired">
+              <div class="pub-status-line"><strong>Publicación vencida</strong><span>Dejó de aparecer en resultados. Renueva para volver a recibir contactos.</span></div>
+              <button class="button small primary" type="button" onclick="renovarPublicacion('${vertical}', ${JSON.stringify(pub.id)})">Renovar ${cfg.cicloDias} días</button>
+            </div>`;
+        }
+
+        const pct = cap > 0 ? Math.min(100, Math.round((paid / cap) * 100)) : 0;
+        const reached = cap > 0 && paid >= cap;
+        const restante = Math.max(0, cap - paid);
+        const capLine = !cap
+          ? ""
+          : reached
+            ? `<div class="pub-cap-note ok">✓ Tope alcanzado: los próximos desbloqueos son <strong>gratis</strong> hasta que venza.</div>`
+            : `<div class="pub-cap-note">Has pagado <strong>${money.format(paid)}</strong> de ${money.format(cap)} · te faltan <strong>${money.format(restante)}</strong> para desbloqueos ilimitados.</div>`;
+        const bar = cap
+          ? `<div class="pub-cap-bar"><span style="width:${pct}%" class="${reached ? "full" : ""}"></span></div>`
+          : "";
+        const venceTxt =
+          daysLeft === Infinity
+            ? ""
+            : `<span class="pub-days ${daysLeft <= avisa ? "warn" : ""}">Vence en ${daysLeft} día${daysLeft === 1 ? "" : "s"}</span>`;
+        return `<div class="pub-status">${bar}${capLine}${venceTxt}</div>`;
+      }
+
       function machType(match) {
         const score = match.score;
         const isClient = match.search.role === "cliente final";
@@ -13593,6 +13811,11 @@
             ["topeBroker", "Tope broker"],
             ["topeBrokerAnonimo", "Tope broker anónimo"]
           ]},
+          { title: "Tope por publicación y ciclo", fields: [
+            ["topePublicacion", "Tope de cobro por publicación ($)"],
+            ["cicloDias", "Días que dura la publicación"],
+            ["diasAvisoVencimiento", "Avisar N días antes de vencer"]
+          ]},
           { title: "Precio del desbloqueo por nivel ($)", prices: true }
         ],
         vehiculos: [
@@ -13623,6 +13846,11 @@
           { title: "Otros topes", fields: [
             ["topeModeloSimilar", "Tope modelo similar"],
             ["topeBroker", "Tope broker"]
+          ]},
+          { title: "Tope por publicación y ciclo", fields: [
+            ["topePublicacion", "Tope de cobro por publicación ($)"],
+            ["cicloDias", "Días que dura la publicación"],
+            ["diasAvisoVencimiento", "Avisar N días antes de vencer"]
           ]},
           { title: "Precio del desbloqueo por nivel ($)", prices: true }
         ]
@@ -13882,6 +14110,7 @@
         vehicleMatches = [];
         properties.forEach((property) => {
           if (property.registeredBy === "broker" && isBrokerBlockedFromMatching(property.email)) return;
+          if (isPublicationExpired(property)) return; // publicacion vencida: no hace match hasta renovar
           searches.forEach((search) => {
             if (!isSearchActive(search)) return;
             if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
@@ -13903,6 +14132,7 @@
         });
         vehicleOffers.forEach((offer) => {
           if (offer.registeredBy === "broker" && isBrokerBlockedFromMatching(offer.email)) return;
+          if (isPublicationExpired(offer)) return; // publicacion vencida: no hace match hasta renovar
           vehicleSearches.forEach((search) => {
             if (!isSearchActive(search)) return;
             if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
@@ -14876,7 +15106,9 @@
         const requested = isContactRequested(match);
         const requestInfo = contactRequests[match.id] || {};
         const reminderCount = Number(requestInfo.reminderCount || 0);
-        const price = money.format(match.mach.price);
+        const fullUnlockPrice = match.mach.price;
+        const effectiveCharge = canUnlockHere ? cappedCharge(match.offer, fullUnlockPrice) : fullUnlockPrice; // tope por publicacion
+        const price = effectiveCharge === 0 ? "Gratis" : money.format(effectiveCharge);
         const contactLabel = source === "vehicleOffer" ? "Contacto del interesado bloqueado" : "Datos del ofertante ocultos";
         if (source === "vehicleSearch") {
           const f = match.factors || {};
@@ -14971,8 +15203,15 @@
               </div>
               <div class="result-side">
                 <p class="result-price-big">${price}</p>
+                ${
+                  effectiveCharge === 0
+                    ? `<p class="unlock-charge-note ok">Incluido en tu tope · <strong>gratis</strong></p>`
+                    : effectiveCharge < fullUnlockPrice
+                      ? `<p class="unlock-charge-note">Solo te cobra <strong>${money.format(effectiveCharge)}</strong> para llegar a tu tope</p>`
+                      : ""
+                }
                 ${ownerInterestBlock(match, "vehicle")}
-                <button class="button ${requested || (interestState(match.id) && interestState(match.id).status === "confirmed") ? "primary" : "dark"}" type="button" onclick="unlockVehicleMatch('${match.id}', '${source}')">Desbloquear contacto</button>
+                <button class="button ${requested || (interestState(match.id) && interestState(match.id).status === "confirmed") ? "primary" : "dark"}" type="button" onclick="unlockVehicleMatch('${match.id}', '${source}')">${effectiveCharge === 0 ? "Desbloquear gratis" : "Desbloquear contacto"}</button>
                 <p class="result-note">Garantía: saldo devuelto si los datos son inválidos</p>
                 <div class="credit-warning" id="warn-${match.id}-${source}">Saldo insuficiente. Agrega saldo demo para desbloquear este contacto.</div>
               </div>
@@ -15162,6 +15401,7 @@
                               <span class="criteria-chip">${urgencyLabel(property.availabilityNeed, "property")}</span>
                               <span class="criteria-chip muted">${property.acceptsBroker ? "Acepta broker" : "No acepta broker"} · ${label(property.registeredBy || "propietario")} · ${publicationLabel(property.publishedAt)}</span>
                             </div>
+                            ${publicationStatusHtml(property)}
                           </div>
                           <div class="offer-card-actions">
                             ${availabilitySwitch(property.id, isOfferAvailable(property), "setPropertyAvailable")}
@@ -15226,6 +15466,7 @@
                             <span class="criteria-chip">${offer.zone}, ${offer.province}</span>
                             <span class="criteria-chip muted">${vehicleSourceLabel(offer)} · ${publicationLabel(offer.publishedAt)}</span>
                           </div>
+                          ${publicationStatusHtml(offer)}
                         </div>
                         <div class="offer-card-actions">
                           ${availabilitySwitch(offer.id, isOfferAvailable(offer), "setVehicleAvailable")}
@@ -16326,16 +16567,21 @@
         const key = matchUnlockKey(match, source);
         if (machUnlocks[key]) return;
         if (!canUnlockMatch(match)) return;
-        if (getBalance(currentUserEmail) < match.mach.price) {
+        const fullPrice = match.mach.price;
+        const charge = cappedCharge(match.property, fullPrice); // aplica tope por publicacion (0 = gratis)
+        if (getBalance(currentUserEmail) < charge) {
           const warning = document.getElementById(`warn-${id}-${source}`);
           if (warning) warning.classList.add("show");
           return;
         }
-        addBalance(currentUserEmail, -match.mach.price);
+        if (charge > 0) addBalance(currentUserEmail, -charge);
         machUnlocks[key] = {
           unlockedAt: new Date().toISOString(),
           source,
-          price: match.mach.price,
+          price: charge,
+          fullPrice,
+          cappedFree: charge === 0,
+          publicationId: pubCapId(match.property),
           machKey: match.mach.key,
           machType: match.mach.label,
           displayType: match.mach.displayLabel || publicMachLabel(match.mach.label),
@@ -16354,17 +16600,22 @@
         if (!match || source !== "vehicleOffer") return;
         const key = vehicleMatchUnlockKey(match, source);
         if (machUnlocks[key]) return;
-        if (getBalance(currentUserEmail) < match.mach.price) {
+        const fullPrice = match.mach.price;
+        const charge = cappedCharge(match.offer, fullPrice); // aplica tope por publicacion (0 = gratis)
+        if (getBalance(currentUserEmail) < charge) {
           const warning = document.getElementById(`warn-${id}-${source}`);
           if (warning) warning.classList.add("show");
           return;
         }
-        addBalance(currentUserEmail, -match.mach.price);
+        if (charge > 0) addBalance(currentUserEmail, -charge);
         machUnlocks[key] = {
           unlockedAt: new Date().toISOString(),
           source,
           vertical: "vehicle",
-          price: match.mach.price,
+          price: charge,
+          fullPrice,
+          cappedFree: charge === 0,
+          publicationId: pubCapId(match.offer),
           machKey: match.mach.key,
           machType: match.mach.label,
           displayType: match.mach.displayLabel,
