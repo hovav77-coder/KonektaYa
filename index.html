@@ -7596,6 +7596,23 @@
         display: block;
       }
 
+      .login-forgot {
+        margin: -6px 0 0;
+        text-align: right;
+      }
+
+      .login-forgot a {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .login-forgot a:hover {
+        color: var(--orange-dark);
+        text-decoration: underline;
+      }
+
       .stat {
         display: grid;
         gap: 10px;
@@ -9145,11 +9162,12 @@
             <form class="form" id="loginForm">
               <div class="login-status" id="loginStatus"></div>
               <div class="field-grid">
-                <label class="field full" data-register-only hidden>Nombre completo<input name="name" type="text" /></label>
-                <label class="field full">Email<input name="email" type="email" required /></label>
-                <label class="field full">Contraseña<input name="password" type="password" required minlength="6" /></label>
+                <label class="field full" data-register-only hidden>Nombre completo<input name="name" type="text" autocomplete="name" /></label>
+                <label class="field full">Email<input name="email" id="loginEmail" type="email" required autocomplete="username" /></label>
+                <label class="field full" id="loginPasswordField">Contraseña<input name="password" id="loginPassword" type="password" required minlength="6" autocomplete="current-password" /></label>
               </div>
               <button class="button primary" type="submit" id="loginSubmitBtn">Entrar</button>
+              <p class="login-forgot" id="loginForgotRow"><a href="#" id="loginForgotLink" onclick="event.preventDefault(); sendPasswordReset();">¿Olvidaste tu contraseña?</a></p>
               <p class="login-toggle" hidden><span id="authTogglePrefix">¿No tienes cuenta? </span><a href="#" id="authToggleLink">Regístrate</a></p>
             </form>
           </article>
@@ -13788,6 +13806,20 @@
         if (supabaseEnabled) {
           const email = String(data.email || "").trim();
           const password = String(data.password || "");
+          // Modo recuperación: guardar la nueva contraseña de la sesión de recovery.
+          if (passwordRecoveryMode) {
+            if (password.length < 6) { showLoginStatus("La contraseña debe tener al menos 6 caracteres."); return; }
+            const { error } = await supabaseClient.auth.updateUser({ password });
+            if (error) { showLoginStatus("No se pudo actualizar: " + error.message); return; }
+            passwordRecoveryMode = false;
+            showLoginStatus("¡Contraseña actualizada! Ya puedes usar tu nueva contraseña.");
+            const emailField = document.getElementById("loginEmail");
+            if (emailField && emailField.closest(".field")) emailField.closest(".field").hidden = false;
+            const btn = document.getElementById("loginSubmitBtn");
+            if (btn) btn.textContent = "Entrar";
+            applyAuthMode();
+            return;
+          }
           if (authMode === "register") {
             const { data: res, error } = await supabaseClient.auth.signUp({
               email,
@@ -13834,7 +13866,44 @@
         if (link) link.textContent = isReg ? "Inicia sesión" : "Regístrate";
         const prefix = document.getElementById("authTogglePrefix");
         if (prefix) prefix.textContent = isReg ? "¿Ya tienes cuenta? " : "¿No tienes cuenta? ";
+        // El navegador guarda mejor si distingue contraseña nueva vs existente.
+        const pass = document.getElementById("loginPassword");
+        if (pass) pass.setAttribute("autocomplete", isReg ? "new-password" : "current-password");
+        // "¿Olvidaste tu contraseña?" solo tiene sentido al iniciar sesión.
+        const forgot = document.getElementById("loginForgotRow");
+        if (forgot) forgot.hidden = isReg;
         showLoginStatus("");
+      }
+
+      // "¿Olvidaste tu contraseña?": envía el correo de restablecimiento (Supabase).
+      async function sendPasswordReset() {
+        const email = String((document.getElementById("loginEmail") || {}).value || "").trim();
+        if (!email) { showLoginStatus("Escribe tu email arriba y vuelve a tocar el enlace."); return; }
+        if (!supabaseEnabled) { showLoginStatus("El restablecimiento por correo estará disponible en la versión conectada."); return; }
+        showLoginStatus("Enviando el enlace de restablecimiento…");
+        const redirectTo = window.location.origin + window.location.pathname + "#login";
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+        if (error) { showLoginStatus("No se pudo enviar el correo: " + error.message); return; }
+        showLoginStatus("Te enviamos un enlace a " + email + ". Ábrelo para crear una nueva contraseña. (Revisa spam.)");
+      }
+
+      // Cuando el usuario vuelve desde el enlace del correo, Supabase emite el
+      // evento PASSWORD_RECOVERY: mostramos el campo para fijar la nueva clave.
+      let passwordRecoveryMode = false;
+      function enterPasswordRecovery() {
+        passwordRecoveryMode = true;
+        showTab("login");
+        const btn = document.getElementById("loginSubmitBtn");
+        const emailField = document.getElementById("loginEmail");
+        const pass = document.getElementById("loginPassword");
+        const forgot = document.getElementById("loginForgotRow");
+        const toggle = document.querySelector("#loginForm .login-toggle");
+        if (emailField && emailField.closest(".field")) emailField.closest(".field").hidden = true;
+        if (forgot) forgot.hidden = true;
+        if (toggle) toggle.hidden = true;
+        if (pass) { pass.value = ""; pass.setAttribute("autocomplete", "new-password"); }
+        if (btn) { btn.textContent = "Guardar nueva contraseña"; }
+        showLoginStatus("Escribe tu nueva contraseña y guárdala.");
       }
 
       function refreshAuthUI() {
@@ -14148,7 +14217,10 @@
         }
         applyAuthMode();
         supabaseClient.auth.getSession().then(({ data }) => applySupabaseSession(data.session, false));
-        supabaseClient.auth.onAuthStateChange((event, session) => applySupabaseSession(session, event === "SIGNED_IN"));
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+          if (event === "PASSWORD_RECOVERY") { setTimeout(enterPasswordRecovery, 0); return; }
+          applySupabaseSession(session, event === "SIGNED_IN");
+        });
       }
 
       try {
