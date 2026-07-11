@@ -177,6 +177,16 @@
         color: var(--orange-dark);
       }
 
+      .nav a.nav-logout {
+        color: #64748b;
+      }
+
+      .nav a.nav-logout:hover {
+        color: #b91c1c;
+        border-color: #fca5a5;
+        background: #fef2f2;
+      }
+
       .hero {
         align-items: center;
         background:
@@ -8195,8 +8205,9 @@
       <nav class="nav" aria-label="Principal">
         <a class="tab-link active" href="#inicio" data-tab="inicio">Inicio</a>
         <a class="tab-link" href="#matches" data-tab="matches">Cómo funciona</a>
-        <a class="tab-link" href="#login" data-tab="login">LOGIN</a>
+        <a class="tab-link" id="loginNavLink" href="#login" data-tab="login">LOGIN</a>
         <a class="tab-link" id="adminNavLink" href="#admin" data-tab="admin" data-dashboard-target="admin">ADMIN</a>
+        <a class="tab-link nav-logout" id="logoutNavLink" href="#" hidden onclick="event.preventDefault(); logoutUser();">Salir</a>
       </nav>
     </header>
 
@@ -13435,8 +13446,8 @@
       function showLoginStatus(message) {
         const status = document.getElementById("loginStatus");
         if (!status) return;
-        status.textContent = message;
-        status.classList.add("show");
+        status.textContent = message || "";
+        status.classList.toggle("show", Boolean(message));
       }
 
       function showToast(id) {
@@ -13446,6 +13457,11 @@
       }
 
       function showTab(tabId) {
+        // Si ya hay sesión, la pestaña de login no tiene sentido: enviar al panel.
+        if (tabId === "login" && currentUserEmail) {
+          if (window.showDashboardView) window.showDashboardView("user");
+          tabId = "admin";
+        }
         const target = document.getElementById(tabId) ? tabId : "inicio";
 
         document.querySelectorAll(".tab-panel").forEach((panel) => {
@@ -13822,8 +13838,25 @@
       }
 
       function refreshAuthUI() {
+        const loggedIn = Boolean(currentUserEmail);
         const adminLink = document.getElementById("adminNavLink");
         if (adminLink) adminLink.hidden = !isAdminEmail(currentUserEmail);
+        const logoutLink = document.getElementById("logoutNavLink");
+        if (logoutLink) logoutLink.hidden = !loggedIn;
+        // El link "LOGIN" se vuelve "Mi panel" cuando hay sesión y lleva al
+        // dashboard del usuario (en vez de re-mostrar el formulario de acceso).
+        const loginLink = document.getElementById("loginNavLink");
+        if (loginLink) {
+          if (loggedIn) {
+            loginLink.textContent = "Mi panel";
+            loginLink.dataset.tab = "admin";
+            loginLink.dataset.dashboardTarget = "user";
+          } else {
+            loginLink.textContent = "LOGIN";
+            loginLink.dataset.tab = "login";
+            delete loginLink.dataset.dashboardTarget;
+          }
+        }
       }
 
       function applySupabaseSession(session, redirect) {
