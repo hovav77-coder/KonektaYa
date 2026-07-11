@@ -248,26 +248,37 @@ Deno.serve(async (req) => {
     let charge = cap ? Math.max(0, Math.min(fullPrice, cap - alreadyPaid)) : fullPrice;
     if (existing) charge = 0;
 
-    // Saldo
-    const { data: wallet } = await admin.from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
-    const balance = Number(wallet?.balance || 0);
-    if (!existing && charge > balance) return json({ error: "Saldo insuficiente", need: charge, balance }, 402);
-
-    if (!existing) {
-      if (charge > 0) {
-        await admin.from("wallets").update({ balance: balance - charge, updated_at: new Date().toISOString() }).eq("user_id", user.id);
-      } else {
-        await admin.from("wallets").upsert({ user_id: user.id, balance }, { onConflict: "user_id" });
+    // Cobro ATÓMICO en Postgres (wallet_debit falla con SALDO_INSUFICIENTE si no alcanza).
+    let newBalance = 0;
+    if (existing) {
+      const { data: wallet } = await admin.from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
+      newBalance = Number(wallet?.balance || 0);
+    } else {
+      const { data: bal, error: debitErr } = await admin.rpc("wallet_debit", { p_user: user.id, p_amount: charge });
+      if (debitErr) {
+        if (String(debitErr.message).includes("SALDO_INSUFICIENTE")) {
+          return json({ error: "Saldo insuficiente", need: charge }, 402);
+        }
+        return json({ error: "No se pudo cobrar", detail: debitErr.message }, 500);
       }
-      await admin.from("unlocks").insert({
+      newBalance = Number(bal || 0);
+      const ins = await admin.from("unlocks").insert({
         unlocker_id: user.id, vertical, offer_id: offerId, search_id: searchId,
         counterpart_id: search.owner_id, price: charge,
       });
+      if (ins.error) {
+        // Carrera: otro request idéntico ganó el insert → devolver lo cobrado y tratar como ya-desbloqueado.
+        if (charge > 0) {
+          const { data: refunded } = await admin.rpc("wallet_credit", { p_user: user.id, p_amount: charge });
+          newBalance = Number(refunded || newBalance + charge);
+        }
+        const { data: prof0 } = await admin.from("profiles").select("name,phone,email").eq("id", search.owner_id).maybeSingle();
+        return json({ ok: true, alreadyUnlocked: true, score, charge: 0, balance: newBalance, contact: prof0 || null });
+      }
     }
 
     const { data: prof } = await admin.from("profiles").select("name,phone,email").eq("id", search.owner_id).maybeSingle();
-    const newBalance = existing ? balance : balance - charge;
-    return json({ ok: true, alreadyUnlocked: Boolean(existing), score, charge, balance: newBalance, contact: prof || null });
+    return json({ ok: true, alreadyUnlocked: Boolean(existing), score, charge: existing ? 0 : charge, balance: newBalance, contact: prof || null });
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500);
   }

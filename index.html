@@ -10367,7 +10367,7 @@
             <div class="rc2-body">
               <p class="contact-line">Tel: ${cPhone} · Email: ${cEmail}${finalClientLine(match.search) ? ` · Cliente final: ${finalClientName(match.search)}` : ""}</p>
               ${whatsappButton(cPhone, cName)}
-              <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price || match.mach.price)}</p>
+              <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price != null ? unlockInfo.price : match.mach.price)}</p>
             </div>
             <div class="rc2-foot">
               <div>${savedNote ? `<p class="rc2-cap ok">Nota guardada</p>` : ""}</div>
@@ -12617,6 +12617,7 @@
       }
 
       function editProperty(id) {
+        id = coerceId(id);
         const property = properties.find((item) => item.id === id);
         const form = document.getElementById("propertyForm");
         if (!property || !form) return;
@@ -12652,6 +12653,10 @@
         syncPropertyTerrainFields();
         setupLocationSelects("property", property.province || "Panamá", property.zone || "Costa del Este");
         setFormValue(form, "streetOrNeighborhood", property.streetOrNeighborhood);
+        // Conservar el geo de Google Places al editar (si no, el submit lo borra con "")
+        ensureHiddenField(form, "streetPlaceId").value = property.streetPlaceId || "";
+        ensureHiddenField(form, "streetLat").value = property.streetLat || "";
+        ensureHiddenField(form, "streetLng").value = property.streetLng || "";
         setFormValue(form, "phName", property.phName);
         setFormValue(form, "sizeM2", formatThousandsValue(property.sizeM2));
         setFormValue(form, "rentalPrice", formatThousandsValue(property.rentalPrice));
@@ -12667,6 +12672,7 @@
       }
 
       function editSearch(id) {
+        id = coerceId(id);
         const search = searches.find((item) => item.id === id);
         const isBrokerSearch = classifyInterested(search) === "broker_declarado" || search.role === "broker";
         const form = document.getElementById("searchForm");
@@ -12709,6 +12715,10 @@
         }
         setupLocationSelects("search", search.province || "Panamá", search.desiredZone || "Costa del Este");
         setFormValue(form, "desiredStreetOrNeighborhood", search.desiredStreetOrNeighborhood);
+        // Conservar el geo de Google Places al editar
+        ensureHiddenField(form, "desiredStreetPlaceId").value = search.desiredStreetPlaceId || "";
+        ensureHiddenField(form, "desiredStreetLat").value = search.desiredStreetLat || "";
+        ensureHiddenField(form, "desiredStreetLng").value = search.desiredStreetLng || "";
         setFormValue(form, "desiredPh", search.desiredPh);
         setFormValue(form, "minSizeM2", formatThousandsValue(search.minSizeM2));
         setFormValue(form, "maxBudget", formatThousandsValue(search.maxBudget));
@@ -12786,6 +12796,7 @@
       }
 
       function setUserClassification(searchId, classification) {
+        searchId = coerceId(searchId);
         searches = searches.map((search) =>
           search.id === searchId ? { ...search, validationOverride: classification } : search
         );
@@ -12798,6 +12809,7 @@
       }
 
       function blockValidationUser(searchId) {
+        searchId = coerceId(searchId);
         const search = searches.find((item) => item.id === searchId);
         if (!search) return;
         blockedUsers[normalize(search.email)] = true;
@@ -13855,6 +13867,14 @@
         return supabaseEnabled && window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now();
       }
 
+      // Los onclick pasan los ids como STRING (necesario para uuids). Este helper
+      // devuelve number si el id era numérico (registros demo) para que el ===
+      // estricto siga funcionando con ambos tipos.
+      function coerceId(value) {
+        const s = String(value == null ? "" : value);
+        return /^\d+$/.test(s) ? Number(s) : s;
+      }
+
       function splitContact(record) {
         const data = {}, contact = {};
         Object.keys(record || {}).forEach((k) => {
@@ -13959,7 +13979,8 @@
         if (error || !rows) return;
         rows.forEach((r) => {
           const source = r.vertical === "vehiculo" ? "vehicleOffer" : "property";
-          const key = `${r.offer_id}-${r.search_id}:${source}`;
+          // reqKey agrega el prefijo "vehicle-" que usan los match.id de vehiculos
+          const key = `${reqKey(r.vertical, r.offer_id, r.search_id)}:${source}`;
           machUnlocks[key] = {
             unlockedAt: r.created_at,
             source,
@@ -14346,7 +14367,7 @@
               </div>
               ${
                 search
-                  ? `<div class="data-row-actions"><button class="button small primary" type="button" onclick="setUserClassification(${search.id}, 'cliente_final_verificado')">Aprobar como cliente final</button><button class="button small dark" type="button" onclick="setUserClassification(${search.id}, 'broker_declarado')">Reclasificar como broker</button><button class="button small reject" type="button" onclick="blockValidationUser(${search.id})">Bloquear usuario</button><button class="button small primary" type="button" onclick="refundUnlockFromAdmin('${report.matchId}', 'property')">Devolver crédito</button></div>`
+                  ? `<div class="data-row-actions"><button class="button small primary" type="button" onclick="setUserClassification('${search.id}', 'cliente_final_verificado')">Aprobar como cliente final</button><button class="button small dark" type="button" onclick="setUserClassification('${search.id}', 'broker_declarado')">Reclasificar como broker</button><button class="button small reject" type="button" onclick="blockValidationUser('${search.id}')">Bloquear usuario</button><button class="button small primary" type="button" onclick="refundUnlockFromAdmin('${report.matchId}', 'property')">Devolver crédito</button></div>`
                   : ""
               }
             </article>
@@ -14364,9 +14385,9 @@
                 <span>Declaró: ${label(search.searchFor || "pendiente")}</span>
               </div>
               <div class="data-row-actions">
-                <button class="button small primary" type="button" onclick="setUserClassification(${search.id}, 'cliente_final_verificado')">Aprobar como cliente final</button>
-                <button class="button small dark" type="button" onclick="setUserClassification(${search.id}, 'broker_declarado')">Reclasificar como broker</button>
-                <button class="button small reject" type="button" onclick="blockValidationUser(${search.id})">Bloquear usuario</button>
+                <button class="button small primary" type="button" onclick="setUserClassification('${search.id}', 'cliente_final_verificado')">Aprobar como cliente final</button>
+                <button class="button small dark" type="button" onclick="setUserClassification('${search.id}', 'broker_declarado')">Reclasificar como broker</button>
+                <button class="button small reject" type="button" onclick="blockValidationUser('${search.id}')">Bloquear usuario</button>
               </div>
             </article>
           `
@@ -14604,6 +14625,8 @@
         if (!pub) return;
         pub.renewedAt = new Date().toISOString(); // reinicia ciclo y tope (el acumulado solo cuenta desde aqui)
         save();
+        // Persistir el nuevo ciclo en el servidor (el tope del unlock lo lee de data.renewedAt)
+        if (supabaseEnabled) supaSetActive(vertical === "vehiculos" ? "vehicleOffers" : "properties", pub);
         render();
       }
 
@@ -16257,7 +16280,7 @@
             <div class="rc2-body">
               <p class="contact-line">Tel: ${cPhone} · Email: ${cEmail}</p>
               ${whatsappButton(cPhone, cName)}
-              <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price || match.mach.price)}</p>
+              <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price != null ? unlockInfo.price : match.mach.price)}</p>
             </div>
             <details class="result-analysis">
               <summary>${source === "vehicleOffer" ? "Qué busca este interesado" : "Qué ofrece este vehículo"}</summary>
@@ -16418,10 +16441,10 @@
                           <div class="oc2-foot">
                             ${availabilitySwitch(property.id, isOfferAvailable(property), "setPropertyAvailable")}
                             <div class="oc2-foot-actions">
-                              <button class="button small ghost" type="button" onclick="editProperty(${property.id})">Modificar</button>
+                              <button class="button small ghost" type="button" onclick="editProperty('${property.id}')">Modificar</button>
                               ${
                                 propertyMatches.length
-                                  ? `<button class="button small primary" type="button" onclick="openResultsModal('propertyOffer', ${property.id})">Ver resultados <span class="btn-badge">${propertyMatches.length}</span>${
+                                  ? `<button class="button small primary" type="button" onclick="openResultsModal('propertyOffer', '${property.id}')">Ver resultados <span class="btn-badge">${propertyMatches.length}</span>${
                                       requestedMatches.length
                                         ? ` <span class="btn-badge hot">${requestedMatches.length} con interés</span>`
                                         : ""
@@ -16497,10 +16520,10 @@
                         <div class="oc2-foot">
                           ${availabilitySwitch(offer.id, isOfferAvailable(offer), "setVehicleAvailable")}
                           <div class="oc2-foot-actions">
-                            <button class="button small ghost" type="button" onclick="editVehicleOffer(${offer.id})">Modificar</button>
+                            <button class="button small ghost" type="button" onclick="editVehicleOffer('${offer.id}')">Modificar</button>
                             ${
                               offerMatches.length
-                                ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleOffer', ${offer.id})">Ver resultados <span class="btn-badge">${offerMatches.length}</span>${
+                                ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleOffer', '${offer.id}')">Ver resultados <span class="btn-badge">${offerMatches.length}</span>${
                                     offerRequests.length
                                       ? ` <span class="btn-badge hot">${offerRequests.length} con interés</span>`
                                       : ""
@@ -16591,10 +16614,10 @@
                           <div class="oc2-foot">
                             ${searchActiveSwitch(search.id, searchActive, "setSearchActive")}
                             <div class="oc2-foot-actions">
-                              <button class="button small ghost" type="button" onclick="editSearch(${search.id})">Modificar</button>
+                              <button class="button small ghost" type="button" onclick="editSearch('${search.id}')">Modificar</button>
                               ${
                                 searchMatches.length
-                                  ? `<button class="button small primary" type="button" onclick="openResultsModal('propertySearch', ${search.id})">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
+                                  ? `<button class="button small primary" type="button" onclick="openResultsModal('propertySearch', '${search.id}')">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
                                   : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
                               }
                             </div>
@@ -16665,10 +16688,10 @@
                         <div class="oc2-foot">
                           ${searchActiveSwitch(search.id, searchActive, "setVehicleSearchActive")}
                           <div class="oc2-foot-actions">
-                            <button class="button small ghost" type="button" onclick="editVehicleSearch(${search.id})">Modificar</button>
+                            <button class="button small ghost" type="button" onclick="editVehicleSearch('${search.id}')">Modificar</button>
                             ${
                               searchMatches.length
-                                ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleSearch', ${search.id})">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
+                                ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleSearch', '${search.id}')">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
                                 : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
                             }
                           </div>
@@ -16918,7 +16941,11 @@
       function addDemoBalance(amount) {
         if (supabaseEnabled) {
           supabaseClient.rpc("add_credit", { amount: Number(amount) }).then(async ({ error }) => {
-            if (error) { console.warn("add_credit", error.message); return; }
+            if (error) {
+              console.warn("add_credit", error.message);
+              alert("El crédito se agrega pagando con PayPal. (La acreditación manual es solo para administradores.)");
+              return;
+            }
             await refreshBalance();
             render();
           });
@@ -17129,6 +17156,7 @@
       }
 
       function setSearchActive(id, value) {
+        id = coerceId(id);
         searches = searches.map((s) => (s.id === id ? { ...s, active: value } : s));
         save();
         if (supabaseEnabled) supaSetActive("searches", searches.find((s) => s.id === id));
@@ -17136,6 +17164,7 @@
       }
 
       function setVehicleSearchActive(id, value) {
+        id = coerceId(id);
         vehicleSearches = vehicleSearches.map((s) => (s.id === id ? { ...s, active: value } : s));
         save();
         if (supabaseEnabled) supaSetActive("vehicleSearches", vehicleSearches.find((s) => s.id === id));
@@ -17144,8 +17173,8 @@
 
       function searchActiveSwitch(id, active, fn) {
         return `<div class="avail-switch" role="group" aria-label="Estado de la búsqueda">
-          <button type="button" class="avail-seg ${active ? "on-active" : ""}" onclick="${fn}(${id}, true)">Buscando</button>
-          <button type="button" class="avail-seg ${active ? "" : "off-active"}" onclick="${fn}(${id}, false)">Dar de baja</button>
+          <button type="button" class="avail-seg ${active ? "on-active" : ""}" onclick="${fn}('${id}', true)">Buscando</button>
+          <button type="button" class="avail-seg ${active ? "" : "off-active"}" onclick="${fn}('${id}', false)">Dar de baja</button>
         </div>`;
       }
 
@@ -17164,6 +17193,7 @@
       }
 
       function setPropertyAvailable(id, value) {
+        id = coerceId(id);
         properties = properties.map((p) => (p.id === id ? { ...p, available: value } : p));
         save();
         if (supabaseEnabled) supaSetActive("properties", properties.find((p) => p.id === id));
@@ -17171,6 +17201,7 @@
       }
 
       function setVehicleAvailable(id, value) {
+        id = coerceId(id);
         vehicleOffers = vehicleOffers.map((o) => (o.id === id ? { ...o, available: value } : o));
         save();
         if (supabaseEnabled) supaSetActive("vehicleOffers", vehicleOffers.find((o) => o.id === id));
@@ -17179,8 +17210,8 @@
 
       function availabilitySwitch(id, available, fn) {
         return `<div class="avail-switch" role="group" aria-label="Disponibilidad">
-          <button type="button" class="avail-seg ${available ? "on-active" : ""}" onclick="${fn}(${id}, true)">Disponible</button>
-          <button type="button" class="avail-seg ${available ? "" : "off-active"}" onclick="${fn}(${id}, false)">No disponible</button>
+          <button type="button" class="avail-seg ${available ? "on-active" : ""}" onclick="${fn}('${id}', true)">Disponible</button>
+          <button type="button" class="avail-seg ${available ? "" : "off-active"}" onclick="${fn}('${id}', false)">No disponible</button>
         </div>`;
       }
 
@@ -17292,7 +17323,7 @@
       }
 
       function openResultsModal(kind, id) {
-        activeResultsModal = { kind, id };
+        activeResultsModal = { kind, id: coerceId(id) };
         refreshResultsModal();
         document.getElementById("resultsModal")?.classList.remove("hidden");
       }
@@ -17840,6 +17871,7 @@
       }
 
       function editVehicleOffer(id) {
+        id = coerceId(id);
         const offer = vehicleOffers.find((item) => item.id === id);
         const form = document.getElementById("vehicleOfferForm");
         if (!offer || !form) return;
@@ -17884,6 +17916,7 @@
       }
 
       function editVehicleSearch(id) {
+        id = coerceId(id);
         const search = vehicleSearches.find((item) => item.id === id);
         const form = document.getElementById("vehicleSearchForm");
         if (!search || !form) return;

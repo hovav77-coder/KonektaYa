@@ -69,6 +69,8 @@ Deno.serve(async (req) => {
       });
       const d = await r.json();
       if (!d.id) return json({ error: "No se pudo crear la orden", detail: d }, 400);
+      // Ligar la orden al usuario que la creó (solo él podrá capturarla).
+      await admin.from("paypal_orders").insert({ order_id: d.id, user_id: user.id, amount: 0, status: "created" });
       return json({ id: d.id });
     }
 
@@ -76,9 +78,11 @@ Deno.serve(async (req) => {
       const orderID = String(body.orderID || "");
       if (!orderID) return json({ error: "Falta orderID" }, 400);
 
-      // Idempotencia: si esta orden ya se acreditó, no volver a acreditar.
-      const { data: prev } = await admin.from("paypal_orders").select("order_id").eq("order_id", orderID).maybeSingle();
-      if (prev) {
+      // La orden debe existir y pertenecer al usuario que la creó.
+      const { data: order } = await admin.from("paypal_orders").select("order_id,user_id,status").eq("order_id", orderID).maybeSingle();
+      if (!order) return json({ error: "Orden desconocida" }, 404);
+      if (order.user_id !== user.id) return json({ error: "Esta orden no pertenece a tu cuenta" }, 403);
+      if (order.status === "credited") {
         const { data: w } = await admin.from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
         return json({ ok: true, alreadyCredited: true, credited: 0, balance: Number(w?.balance || 0) });
       }
@@ -95,20 +99,21 @@ Deno.serve(async (req) => {
       const amount = Number(capture.amount?.value || 0);
       if (!(amount > 0)) return json({ error: "Monto inválido" }, 400);
 
-      // Registrar la orden (idempotencia) y acreditar el saldo
-      const ins = await admin.from("paypal_orders").insert({ order_id: orderID, user_id: user.id, amount });
-      if (ins.error && !String(ins.error.message).includes("duplicate")) {
-        return json({ error: "No se pudo registrar la orden", detail: ins.error.message }, 500);
-      }
-      if (ins.error) {
-        // carrera: ya insertada por otra petición → no doble acreditar
+      // Marcar como acreditada SOLO si seguía en 'created' (gana una sola petición).
+      const { data: claimed } = await admin
+        .from("paypal_orders")
+        .update({ amount, status: "credited" })
+        .eq("order_id", orderID)
+        .eq("status", "created")
+        .select("order_id");
+      if (!claimed || !claimed.length) {
         const { data: w } = await admin.from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
         return json({ ok: true, alreadyCredited: true, credited: 0, balance: Number(w?.balance || 0) });
       }
-      const { data: w } = await admin.from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
-      const newBal = Number(w?.balance || 0) + amount;
-      await admin.from("wallets").upsert({ user_id: user.id, balance: newBal, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
-      return json({ ok: true, credited: amount, balance: newBal });
+      // Crédito ATÓMICO en Postgres.
+      const { data: newBal, error: credErr } = await admin.rpc("wallet_credit", { p_user: user.id, p_amount: amount });
+      if (credErr) return json({ error: "No se pudo acreditar", detail: credErr.message }, 500);
+      return json({ ok: true, credited: amount, balance: Number(newBal || 0) });
     }
 
     return json({ error: "Acción no soportada" }, 400);
