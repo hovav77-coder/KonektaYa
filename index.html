@@ -9457,11 +9457,6 @@
               <button type="button" class="pay-amount" data-pay-amount="otro">Otro</button>
             </div>
             <input class="pay-input hidden" id="payAmountOther" type="text" inputmode="numeric" placeholder="Escribe el monto en USD" />
-            <div class="pay-tabs">
-              <button type="button" class="pay-tab active" data-pay-method="paypal">PayPal</button>
-              <button type="button" class="pay-tab" data-pay-method="card">Tarjeta</button>
-              <button type="button" class="pay-tab" data-pay-method="yappy">Yappy</button>
-            </div>
             <div class="pay-pane" data-pay-pane="paypal">
               <div class="pay-paypal">
                 <span class="pay-paypal-logo">Pay<span>Pal</span></span>
@@ -9471,24 +9466,6 @@
               <div id="paypalButtons" hidden></div>
               <p class="pay-note" id="paypalStatus"></p>
               <p class="pay-note" id="payPaypalDemoNote">Pago seguro procesado por PayPal. (Demo: acredita saldo simulado; al conectar la cuenta PayPal real, este botón abre el pago y el saldo se acredita al confirmarse.)</p>
-            </div>
-            <div class="pay-pane hidden" data-pay-pane="card">
-              <input class="pay-input" id="payCardNumber" inputmode="numeric" placeholder="Número de tarjeta" />
-              <div style="display:flex;gap:10px;">
-                <input class="pay-input" id="payCardExp" placeholder="MM/AA" />
-                <input class="pay-input" id="payCardCvv" inputmode="numeric" placeholder="CVV" />
-              </div>
-              <input class="pay-input" id="payCardName" placeholder="Nombre en la tarjeta" />
-              <button class="button primary" type="button" id="payCardBtn" onclick="submitCardPayment()">Pagar $25</button>
-              <p class="pay-note">Pago seguro procesado por la pasarela. No guardamos tu tarjeta. (Demo: acredita saldo simulado hasta conectar la pasarela real.)</p>
-            </div>
-            <div class="pay-pane hidden" data-pay-pane="yappy">
-              <div class="pay-yappy">
-                <p class="pay-yappy-title">Paga con Yappy al número de KonektaYa</p>
-                <p class="pay-yappy-num">6123-4567</p>
-              </div>
-              <p class="pay-note">Abre tu app Yappy, envía el monto seleccionado a ese número y toca "Ya pagué". Un administrador confirma el pago y acredita tu crédito.</p>
-              <button class="button primary" type="button" id="payYappyBtn" onclick="submitYappyPayment()">Ya pagué $25</button>
             </div>
           </div>
         </div>
