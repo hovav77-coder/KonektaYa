@@ -666,6 +666,49 @@
         line-height: 1.4;
       }
 
+      .place-suggestions {
+        display: none;
+        border: 1px solid #dce7f4;
+        border-radius: 10px;
+        background: #ffffff;
+        box-shadow: 0 8px 20px rgba(15, 42, 74, 0.12);
+        overflow: hidden;
+      }
+
+      .place-suggestions.show {
+        display: grid;
+      }
+
+      .place-suggestion {
+        display: grid;
+        gap: 1px;
+        text-align: left;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid #eef2f7;
+        padding: 9px 12px;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .place-suggestion:last-child {
+        border-bottom: none;
+      }
+
+      .place-suggestion:hover {
+        background: #f4f7fb;
+      }
+
+      .place-suggestion strong {
+        font-size: 13.5px;
+        color: #0f2a4a;
+      }
+
+      .place-suggestion span {
+        font-size: 11.5px;
+        color: #64748b;
+      }
+
       .pub-status {
         display: grid;
         gap: 6px;
@@ -9795,6 +9838,33 @@
         return propertyPh === desiredPh || propertyPh.includes(desiredPh) || desiredPh.includes(propertyPh);
       }
 
+      function haversineMeters(lat1, lng1, lat2, lng2) {
+        const R = 6371000;
+        const rad = Math.PI / 180;
+        const dLat = (lat2 - lat1) * rad;
+        const dLng = (lng2 - lng1) * rad;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        return 2 * R * Math.asin(Math.sqrt(a));
+      }
+
+      // Coincidencia de calle/barriada (Fase 2F): texto igual, mismo place_id de
+      // Google, o coordenadas a menos de distanciaCalleM metros (configurable).
+      function streetsMatch(property, search) {
+        const a = normalize(property.streetOrNeighborhood || "");
+        const b = normalize(search.desiredStreetOrNeighborhood || "");
+        if (a && a === b) return true;
+        if (property.streetPlaceId && search.desiredStreetPlaceId && String(property.streetPlaceId) === String(search.desiredStreetPlaceId)) return true;
+        const lat1 = Number(property.streetLat);
+        const lng1 = Number(property.streetLng);
+        const lat2 = Number(search.desiredStreetLat);
+        const lng2 = Number(search.desiredStreetLng);
+        if ((lat1 || lng1) && (lat2 || lng2) && isFinite(lat1) && isFinite(lng1) && isFinite(lat2) && isFinite(lng2)) {
+          const maxM = Number(matchConfig.inmuebles.distanciaCalleM) || 500;
+          return haversineMeters(lat1, lng1, lat2, lng2) <= maxM;
+        }
+        return false;
+      }
+
       function interestedQualityScore(search) {
         const cfg = matchConfig.inmuebles;
         if (search.role === "cliente final") return cfg.puntosClienteFinal;
@@ -10527,7 +10597,7 @@
         const propertyStreet = normalize(property.streetOrNeighborhood || "");
         // Mismo PH implica misma calle (un edificio no puede estar en dos calles):
         // si el PH coincide, la calle cuenta como coincidente aunque el texto difiera.
-        const sameStreet = samePh || Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
+        const sameStreet = samePh || streetsMatch(property, search);
         const priceValue = propertyPriceForOperation(property, search.desiredOperation);
         const budget = Number(search.maxBudget || 0);
         const priceExact = Boolean(budget) && priceValue <= budget * 1.1;
@@ -10631,7 +10701,7 @@
         const propertyStreet = normalize(property.streetOrNeighborhood || "");
         // Mismo PH implica misma calle (un edificio no puede estar en dos calles):
         // si el PH coincide, la calle cuenta como coincidente aunque el texto difiera.
-        const sameStreet = samePh || Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
+        const sameStreet = samePh || streetsMatch(property, search);
         const priceValue = propertyPriceForOperation(property, search.desiredOperation);
         const budget = Number(search.maxBudget || 0);
         const priceExact = Boolean(budget) && priceValue <= budget * 1.1;
@@ -11001,6 +11071,124 @@
         env: "sandbox",
         fn: "paypal-credit"
       };
+
+      // ============================================================
+      // FASE 2F · Google Places: autocompletado de direcciones (Panamá).
+      // Guarda place_id + coordenadas junto a la calle/barriada para que el
+      // matching compare LUGARES reales, no texto. La API se carga on-demand
+      // (al enfocar el campo) para no gastar cuota.
+      // ============================================================
+      const GMAPS = { key: "AIzaSyAiKX5Mvdt196uLPASm2ZiFcZnTDh2FbVE" };
+      let gmapsPromise = null;
+      function loadGmaps() {
+        if (!GMAPS.key) return Promise.reject(new Error("Sin API key"));
+        if (window.google && window.google.maps && window.google.maps.importLibrary) return Promise.resolve();
+        if (gmapsPromise) return gmapsPromise;
+        gmapsPromise = new Promise((resolve, reject) => {
+          window.__gmapsReady = () => resolve();
+          const s = document.createElement("script");
+          s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GMAPS.key)}&v=weekly&loading=async&language=es&region=PA&callback=__gmapsReady`;
+          s.onerror = () => reject(new Error("No se pudo cargar Google Maps"));
+          document.head.appendChild(s);
+        });
+        return gmapsPromise;
+      }
+
+      const PLACE_FIELD_PREFIX = {
+        streetOrNeighborhood: "street",
+        desiredStreetOrNeighborhood: "desiredStreet"
+      };
+
+      function ensureHiddenField(form, name) {
+        let el = form.querySelector(`input[name="${name}"]`);
+        if (!el) {
+          el = document.createElement("input");
+          el.type = "hidden";
+          el.name = name;
+          form.appendChild(el);
+        }
+        return el;
+      }
+
+      function setupPlacesAutocomplete() {
+        Object.keys(PLACE_FIELD_PREFIX).forEach((fieldName) => {
+          document.querySelectorAll(`input[name="${fieldName}"]`).forEach((input) => {
+            if (input.dataset.placesReady) return;
+            input.dataset.placesReady = "1";
+            input.setAttribute("autocomplete", "off");
+            input.addEventListener("focus", () => attachPlaceAutocomplete(input, PLACE_FIELD_PREFIX[fieldName]), { once: true });
+          });
+        });
+      }
+
+      async function attachPlaceAutocomplete(input, prefix) {
+        let places;
+        try {
+          await loadGmaps();
+          places = await google.maps.importLibrary("places");
+        } catch (e) { console.warn("Google Places no disponible:", e); return; }
+        const form = input.closest("form");
+        if (!form) return;
+        const hidId = ensureHiddenField(form, prefix + "PlaceId");
+        const hidLat = ensureHiddenField(form, prefix + "Lat");
+        const hidLng = ensureHiddenField(form, prefix + "Lng");
+        const wrapper = input.closest(".field") || input.parentElement;
+        let list = wrapper.querySelector(".place-suggestions");
+        if (!list) {
+          list = document.createElement("div");
+          list.className = "place-suggestions";
+          wrapper.appendChild(list);
+        }
+        let token = new places.AutocompleteSessionToken();
+        let timer = null;
+        const clearGeo = () => { hidId.value = ""; hidLat.value = ""; hidLng.value = ""; };
+        const closeList = () => { list.innerHTML = ""; list.classList.remove("show"); };
+        input.addEventListener("input", () => {
+          clearGeo();
+          const q = input.value.trim();
+          clearTimeout(timer);
+          if (q.length < 3) { closeList(); return; }
+          timer = setTimeout(async () => {
+            try {
+              const { suggestions } = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+                input: q,
+                sessionToken: token,
+                includedRegionCodes: ["pa"],
+                language: "es"
+              });
+              if (!suggestions || !suggestions.length) { closeList(); return; }
+              list.innerHTML = "";
+              suggestions.slice(0, 5).forEach((sug) => {
+                const p = sug.placePrediction;
+                const main = p.mainText ? p.mainText.text : (p.text ? p.text.text : "");
+                const secondary = p.secondaryText ? p.secondaryText.text : "";
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "place-suggestion";
+                item.innerHTML = `<strong>${escapeHtml(main)}</strong><span>${escapeHtml(secondary)}</span>`;
+                item.addEventListener("click", async () => {
+                  input.value = main;
+                  closeList();
+                  try {
+                    const place = p.toPlace();
+                    await place.fetchFields({ fields: ["id", "location"] });
+                    hidId.value = place.id || "";
+                    if (place.location) {
+                      hidLat.value = place.location.lat();
+                      hidLng.value = place.location.lng();
+                    }
+                  } catch (e) { console.warn("fetchFields", e); }
+                  token = new places.AutocompleteSessionToken();
+                  if (typeof updateProtectedFieldWarning === "function") updateProtectedFieldWarning(input);
+                });
+                list.appendChild(item);
+              });
+              list.classList.add("show");
+            } catch (e) { console.warn("places autocomplete", e); closeList(); }
+          }, 250);
+        });
+        input.addEventListener("blur", () => setTimeout(closeList, 250));
+      }
       let myProfile = null; // perfil (contacto + estado broker) del usuario actual (Fase 2D)
 
       function isAdminEmail(email) {
@@ -11033,6 +11221,7 @@
           puntosBroker: 12, // Calidad del interesado: broker con cliente visible
           puntosBrokerAnonimo: 8, // Calidad del interesado: broker con cliente anonimo
           puntosCalle: 10, // Misma calle o barriada
+          distanciaCalleM: 500, // Con Google Places: misma calle/barriada si estan a <= N metros
           puntosPh: 15, // Mismo PH / edificio
           metrajeCercaPct: 10, // Banda "cerca" de metraje: +/- este %
           puntosMetrajeCerca: 10, // Metraje dentro de la banda cerca
@@ -11191,7 +11380,7 @@
         const propertyStreet = normalize(property.streetOrNeighborhood || "");
         // Mismo PH implica misma calle (un edificio no puede estar en dos calles):
         // si el PH coincide, la calle cuenta como coincidente aunque el texto difiera.
-        const sameStreet = samePh || Boolean(propertyStreet && propertyStreet === normalize(search.desiredStreetOrNeighborhood || ""));
+        const sameStreet = samePh || streetsMatch(property, search);
         const desiredEquipment = String(search.desiredEquipment || "").trim();
         const equipmentSpecified = Boolean(desiredEquipment) && desiredEquipment !== "indiferente";
         const equipmentMatches = equipmentSpecified && property.equipment === search.desiredEquipment;
@@ -13924,6 +14113,7 @@
         setupAccountCreation("brokerForm");
         setupAccountCreation("vehicleOfferForm");
         setupAccountCreation("vehicleSearchForm");
+        setupPlacesAutocomplete();
         setupParkingSelects();
         setupAvailabilitySelects();
         setupUrgencySelects();
@@ -14571,6 +14761,7 @@
             ["puntosBroker", "Interesado: broker"],
             ["puntosBrokerAnonimo", "Interesado: broker anónimo"],
             ["puntosCalle", "Misma calle o barriada"],
+            ["distanciaCalleM", "Distancia misma calle/barriada (m)"],
             ["puntosPh", "Mismo PH / edificio"],
             ["metrajeCercaPct", "Banda de metraje \"cerca\" (± %)"],
             ["puntosMetrajeCerca", "Metraje dentro de la banda"],

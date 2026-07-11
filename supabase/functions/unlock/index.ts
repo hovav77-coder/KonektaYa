@@ -24,7 +24,7 @@ const DEFAULT_CONFIG = {
   inmuebles: {
     umbral: 70, presupuestoMinPct: 75, metrajeMinPct: 80, metrajeMaxPct: 125,
     base: 30, puntosClienteFinal: 15, puntosBroker: 12, puntosBrokerAnonimo: 8,
-    puntosCalle: 10, puntosPh: 15, metrajeCercaPct: 10, puntosMetrajeCerca: 10, puntosMetrajeLejos: 6,
+    puntosCalle: 10, distanciaCalleM: 500, puntosPh: 15, metrajeCercaPct: 10, puntosMetrajeCerca: 10, puntosMetrajeLejos: 6,
     puntosPrecioA: 15, puntosPrecioB: 11, puntosPrecioC: 8,
     puntosEquipamiento: 5, puntosEstacionamiento: 3, puntosDeposito: 2,
     pisoPh: 85, pisoPhEquipCliente: 95, pisoBroker: 75, pisoClienteFinal: 70,
@@ -67,6 +67,27 @@ function interestedQuality(s: any, c: any) {
   return c.puntosBroker;
 }
 
+function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
+
+// Coincidencia de calle/barriada (2F): texto igual, mismo place_id o distancia.
+function streetsMatchSrv(p: any, s: any, c: any) {
+  const a = norm(p.streetOrNeighborhood || "");
+  const b = norm(s.desiredStreetOrNeighborhood || "");
+  if (a && a === b) return true;
+  if (p.streetPlaceId && s.desiredStreetPlaceId && String(p.streetPlaceId) === String(s.desiredStreetPlaceId)) return true;
+  const lat1 = Number(p.streetLat), lng1 = Number(p.streetLng);
+  const lat2 = Number(s.desiredStreetLat), lng2 = Number(s.desiredStreetLng);
+  if ((lat1 || lng1) && (lat2 || lng2) && isFinite(lat1) && isFinite(lng1) && isFinite(lat2) && isFinite(lng2)) {
+    return haversineMeters(lat1, lng1, lat2, lng2) <= (Number(c.distanciaCalleM) || 500);
+  }
+  return false;
+}
+
 function calcInmuebleScore(property: any, search: any, c: any) {
   if (!propSupportsOp(property, search.desiredOperation)) return 0;
   const matchPrice = propPriceForOp(property, search.desiredOperation);
@@ -80,8 +101,7 @@ function calcInmuebleScore(property: any, search: any, c: any) {
   if (minSize && (size < minSize * (c.metrajeMinPct / 100) || size > minSize * (c.metrajeMaxPct / 100))) return 0;
 
   const samePh = isSamePh(property, search);
-  const propStreet = norm(property.streetOrNeighborhood || "");
-  const sameStreet = samePh || Boolean(propStreet && propStreet === norm(search.desiredStreetOrNeighborhood || ""));
+  const sameStreet = samePh || streetsMatchSrv(property, search, c);
   const desiredEquip = String(search.desiredEquipment || "").trim();
   const equipSpecified = Boolean(desiredEquip) && desiredEquip !== "indiferente";
   const equipMatches = equipSpecified && property.equipment === search.desiredEquipment;
