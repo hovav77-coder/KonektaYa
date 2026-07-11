@@ -13476,7 +13476,9 @@
 
       function showTab(tabId) {
         // Si ya hay sesión, la pestaña de login no tiene sentido: enviar al panel.
-        if (tabId === "login" && currentUserEmail) {
+        // Excepción: en modo recuperación de contraseña SÍ debemos mostrar el
+        // formulario (el usuario tiene sesión temporal pero va a fijar su clave).
+        if (tabId === "login" && currentUserEmail && !passwordRecoveryMode) {
           if (window.showDashboardView) window.showDashboardView("user");
           tabId = "admin";
         }
