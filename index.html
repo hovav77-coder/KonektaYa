@@ -760,6 +760,30 @@
         box-shadow: 0 0 0 1px #f6a94a;
       }
 
+      .result-card2.row-closed {
+        opacity: 0.72;
+      }
+
+      .rc2-foot.rc2-foot-end {
+        justify-content: flex-end;
+      }
+
+      .rc2-head .contact-avatar-row {
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        flex-shrink: 0;
+      }
+
+      .rc2-unlock-meta {
+        margin: 8px 0 0;
+        font-size: 11.5px;
+        color: #64748b;
+      }
+
+      .result-card2 .contact-line {
+        margin: 0 0 8px;
+      }
+
       .rc2-head {
         background: #0f2a4a;
         padding: 12px 16px;
@@ -10275,24 +10299,25 @@
           ["Comentarios", match.search.comments || "Sin comentarios"]
         ];
         return `
-          <div class="result-row unlocked">
-            <div class="result-row-top">
+          <div class="result-card2 unlocked">
+            <div class="rc2-head">
               <span class="contact-avatar-row">${initialsFor(match.search)}</span>
-              <div class="result-main">
-                <div class="result-title-row">
-                  <p class="result-title">${fullName(match.search)}</p>
-                  <span class="unlock-pill">${statusText}</span>
-                </div>
-                <p class="contact-line">Tel: ${match.search.phone} · Email: ${match.search.email}${finalClientLine(match.search) ? ` · Cliente final: ${finalClientName(match.search)}` : ""}</p>
-                ${whatsappButton(match.search.phone, fullName(match.search))}
-                <p class="result-meta">${match.mach.ranking || ""} · ${match.score}% · ${matchOriginLabel(match, source)} · Desbloqueado: ${formatDate(unlockInfo.unlockedAt)} · ${money.format(unlockInfo.price || match.mach.price)}</p>
+              <div class="rc2-head-main">
+                <p class="rc2-title">${fullName(match.search)}</p>
+                <p class="rc2-subtitle">${match.mach.ranking || ""} · ${match.score}% · ${matchOriginLabel(match, source)}</p>
               </div>
-              <div class="result-side">
-                <div class="result-side-buttons">
-                  <button class="button small primary" type="button" onclick="updateUnlockedStatus('${match.id}', '${source}', 'contactado')">Marcar contactado</button>
-                  <button class="button small dark" type="button" onclick="updateUnlockedStatus('${match.id}', '${source}', 'cerrado')">Cerrar proceso</button>
-                </div>
-                ${savedNote ? `<p class="result-note ok">Nota guardada</p>` : ""}
+              <span class="oc2-avail ${status === "cerrado" ? "off" : "on"}">${status === "cerrado" ? "" : `<span class="oc2-dot"></span>`}${statusText}</span>
+            </div>
+            <div class="rc2-body">
+              <p class="contact-line">Tel: ${match.search.phone} · Email: ${match.search.email}${finalClientLine(match.search) ? ` · Cliente final: ${finalClientName(match.search)}` : ""}</p>
+              ${whatsappButton(match.search.phone, fullName(match.search))}
+              <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price || match.mach.price)}</p>
+            </div>
+            <div class="rc2-foot">
+              <div>${savedNote ? `<p class="rc2-cap ok">Nota guardada</p>` : ""}</div>
+              <div class="oc2-foot-actions">
+                <button class="button small primary" type="button" onclick="updateUnlockedStatus('${match.id}', '${source}', 'contactado')">Marcar contactado</button>
+                <button class="button small dark" type="button" onclick="updateUnlockedStatus('${match.id}', '${source}', 'cerrado')">Cerrar proceso</button>
               </div>
             </div>
             <details class="result-analysis">
@@ -10573,28 +10598,29 @@
             ? `<p class="result-note">Gratis · contacto protegido</p>`
             : ""
         ].join("");
+        const footInner = `${sideAction}${sideNotes}`.trim();
         return `
-          <div class="result-row ${!offerAvailable || ownerClosed ? "row-closed" : ""}">
+          <div class="result-card2 ${!offerAvailable || ownerClosed ? "row-closed" : ""}">
             ${statusBanner}
             ${clientInterestBanner(match, "property")}
-            <div class="result-row-top">
-              <div class="result-rank">
-                <span class="result-rank-badge ${rankBadgeClass(match.mach.ranking)}">${match.mach.ranking || ""}</span>
-                <span class="result-rank-score">${match.score}%</span>
+            <div class="rc2-head">
+              <div class="rc2-badge ${rankBadgeClass(match.mach.ranking)}">
+                <span class="rc2-badge-rank">${match.mach.ranking || ""}</span>
+                <span class="rc2-badge-score">${match.score}%</span>
               </div>
-              <div class="result-main">
-                <div class="result-title-row">
-                  <p class="result-title">${propertyHeader(property)}</p>
-                  <span class="result-price">${propertyPriceSummary(property)}</span>
-                </div>
-                <p class="result-meta">${label(property.propertyType)} · ${availabilityLabel(property)} · ${property.zone}, ${property.province} · ${property.sizeM2} m2 · Publica: ${propertyContactRoleLabel(match)}</p>
-                <div class="factor-chips">${chips}</div>
-              </div>
-              <div class="result-side">
-                ${sideAction}
-                ${sideNotes}
+              <div class="rc2-head-main">
+                <p class="rc2-title">${propertyHeader(property)}</p>
+                <p class="rc2-subtitle">${label(property.propertyType)} · ${availabilityLabel(property)} · Publica: ${propertyContactRoleLabel(match)}</p>
               </div>
             </div>
+            <div class="rc2-body">
+              <div class="oc2-priceline">
+                <span class="oc2-price">${propertyPriceSummary(property)}</span>
+                <span class="oc2-loc"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> ${property.zone}, ${property.province} · ${property.sizeM2} m²</span>
+              </div>
+              <div class="factor-chips">${chips}</div>
+            </div>
+            ${footInner ? `<div class="rc2-foot rc2-foot-end"><div class="rc2-actions">${sideAction}${sideNotes}</div></div>` : ""}
             <details class="result-analysis">
               <summary>Ver análisis completo</summary>
               ${aiExplainPanel(match, "search")}
@@ -15451,42 +15477,39 @@
               : factorChip("warn", !f.transmission && !f.fuel ? "Transmisión y combustible distintos" : !f.transmission ? "Transmisión distinta" : "Combustible distinto")
           ].join("");
           const offerAvailable = isOfferAvailable(offer);
+          const vsAction = offerAvailable
+            ? `<button class="button ${requested ? "dark" : "primary"}" type="button" onclick="requestVehicleOwnerContact('${match.id}')">${requested ? "Enviar recordatorio" : "Quiero que me contacten"}</button>${
+                requested
+                  ? `<p class="result-note ok">Solicitud enviada${reminderCount ? ` · ${reminderCount} recordatorio${reminderCount === 1 ? "" : "s"}` : ""}</p>`
+                  : `<p class="result-note">Gratis · contacto protegido</p>`
+              }`
+            : "";
           return `
-            <div class="result-row ${offerAvailable ? "" : "row-closed"}">
+            <div class="result-card2 ${offerAvailable ? "" : "row-closed"}">
               ${
                 offerAvailable
                   ? ""
                   : `<div class="status-banner unavailable"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M5.6 5.6l12.8 12.8"></path></svg></span><div class="status-banner-text"><strong>Ya no disponible</strong><span>El ofertante marcó este vehículo como no disponible.</span></div></div>`
               }
               ${clientInterestBanner(match, "vehicle")}
-              <div class="result-row-top">
-                <div class="result-rank">
-                  <span class="result-rank-badge ${rankBadgeClass(match.mach.ranking)}">${match.mach.ranking || ""}</span>
-                  <span class="result-rank-score">${match.score}%</span>
+              <div class="rc2-head">
+                <div class="rc2-badge ${rankBadgeClass(match.mach.ranking)}">
+                  <span class="rc2-badge-rank">${match.mach.ranking || ""}</span>
+                  <span class="rc2-badge-score">${match.score}%</span>
                 </div>
-                <div class="result-main">
-                  <div class="result-title-row">
-                    <p class="result-title">${offer.brand} ${offer.model} ${offer.year}</p>
-                    <span class="result-price">${vehiclePriceSummary(offer)}</span>
-                  </div>
-                  <p class="result-meta">${vehicleLabel(offer.fuel)} · ${vehicleLabel(offer.transmission)} · ${Number(offer.mileage || 0).toLocaleString("es-PA")} km · ${offer.zone}, ${offer.province} · Publica: ${vehicleSourceLabel(offer)}</p>
-                  <div class="factor-chips">${chips}</div>
-                </div>
-                <div class="result-side">
-                  ${
-                    offerAvailable
-                      ? `<button class="button ${requested ? "dark" : "primary"}" type="button" onclick="requestVehicleOwnerContact('${match.id}')">${
-                          requested ? "Enviar recordatorio" : "Quiero que me contacten"
-                        }</button>
-                  ${
-                    requested
-                      ? `<p class="result-note ok">Solicitud enviada${reminderCount ? ` · ${reminderCount} recordatorio${reminderCount === 1 ? "" : "s"}` : ""}</p>`
-                      : `<p class="result-note">Gratis · contacto protegido</p>`
-                  }`
-                      : ""
-                  }
+                <div class="rc2-head-main">
+                  <p class="rc2-title">${offer.brand} ${offer.model} ${offer.year}</p>
+                  <p class="rc2-subtitle">${vehicleLabel(offer.fuel)} · ${vehicleLabel(offer.transmission)} · Publica: ${vehicleSourceLabel(offer)}</p>
                 </div>
               </div>
+              <div class="rc2-body">
+                <div class="oc2-priceline">
+                  <span class="oc2-price">${vehiclePriceSummary(offer)}</span>
+                  <span class="oc2-loc"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> ${offer.zone}, ${offer.province} · ${Number(offer.mileage || 0).toLocaleString("es-PA")} km</span>
+                </div>
+                <div class="factor-chips">${chips}</div>
+              </div>
+              ${offerAvailable ? `<div class="rc2-foot rc2-foot-end"><div class="rc2-actions">${vsAction}</div></div>` : ""}
               <details class="result-analysis">
                 <summary>Ver análisis completo</summary>
                 ${vehicleExplainPanel(match, source)}
@@ -15583,18 +15606,19 @@
               ["Comentarios", match.offer.vehicleComments || "Sin comentarios"]
             ];
         return `
-          <div class="result-row unlocked">
-            <div class="result-row-top">
+          <div class="result-card2 unlocked">
+            <div class="rc2-head">
               <span class="contact-avatar-row">${initialsFor(contact)}</span>
-              <div class="result-main">
-                <div class="result-title-row">
-                  <p class="result-title">${fullName(contact)}</p>
-                  <span class="unlock-pill">Contacto desbloqueado</span>
-                </div>
-                <p class="contact-line">Tel: ${contact.phone} · Email: ${contact.email}</p>
-                ${whatsappButton(contact.phone, fullName(contact))}
-                <p class="result-meta">${match.mach.ranking || ""} · ${match.score}% · ${source === "vehicleOffer" ? vehicleApplicantLabel(match.search) : vehicleSourceLabel(match.offer)} · Desbloqueado: ${formatDate(unlockInfo.unlockedAt)} · ${money.format(unlockInfo.price || match.mach.price)}</p>
+              <div class="rc2-head-main">
+                <p class="rc2-title">${fullName(contact)}</p>
+                <p class="rc2-subtitle">${match.mach.ranking || ""} · ${match.score}% · ${source === "vehicleOffer" ? vehicleApplicantLabel(match.search) : vehicleSourceLabel(match.offer)}</p>
               </div>
+              <span class="oc2-avail on"><span class="oc2-dot"></span>Desbloqueado</span>
+            </div>
+            <div class="rc2-body">
+              <p class="contact-line">Tel: ${contact.phone} · Email: ${contact.email}</p>
+              ${whatsappButton(contact.phone, fullName(contact))}
+              <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price || match.mach.price)}</p>
             </div>
             <details class="result-analysis">
               <summary>${source === "vehicleOffer" ? "Qué busca este interesado" : "Qué ofrece este vehículo"}</summary>
