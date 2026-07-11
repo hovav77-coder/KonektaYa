@@ -11155,7 +11155,10 @@
         const contactIntentPatterns = [
           /\b(?:mi nombre|mis nombre|mi nom|mis nom|nom\s*y\s*apel|nombre y apellido|nomb(?:re)?\s*y\s*apell?(?:ido)?|me llamo|soy|buscame|busquenme|me buscan|me consiguen|encuentrame|encuentrenme)\b/i,
           /\b(?:llaman\s*me|llamen\s*me|llamarme|mandame|mandenme|manda\s*me|escribeme|escribanme|escriban|escribe\s*me|esciban|escrib|mensaje|mensajear|mensajan|chateame|chatear|hablame|hableme|habla\s*me|pon\s+mi|pongan\s+mi)\b/i,
-          /\b(?:por fuera|directo conmigo|fuera de la plataforma|sin desbloquear|para contacto|para\s+conta\s*me|para\s+contactarme|para\s+contactar)\b/i
+          /\b(?:por fuera|directo conmigo|fuera de la plataforma|sin desbloquear|para contacto|para\s+conta\s*me|para\s+contactarme|para\s+contactar)\b/i,
+          // Ingles: intencion de contacto / dar el nombre
+          /\b(?:my name is|my name'?s|i am|i'?m|this is|call me|text me|txt me|message me|msg me|dm me|pm me|write me|email me|mail me|reach me|reach out|contact me|find me|hit me up|ping me|add me)\b/i,
+          /\b(?:off[\s-]?platform|off the platform|outside (?:the|this) (?:platform|app|site)|without unlocking|direct(?:ly)? contact|contact (?:me )?direct(?:ly)?|my (?:number|phone|cell|email|contact)|here'?s my)\b/i
         ];
         const disguisedWords = [
           "instagram",
@@ -11170,6 +11173,8 @@
           "wasap",
           "watsapp",
           "telegram",
+          "messenger",
+          "signal",
           "correo",
           "email",
           "emial",
@@ -11179,7 +11184,26 @@
           "contacto",
           "contact",
           "contame",
-          "contactame"
+          "contactame",
+          // Ingles: palabras/frases de contacto (comparadas sin espacios)
+          "phone",
+          "phonenumber",
+          "cellphone",
+          "mynumber",
+          "callme",
+          "textme",
+          "txtme",
+          "messageme",
+          "msgme",
+          "dmme",
+          "pmme",
+          "reachme",
+          "emailme",
+          "mailme",
+          "hitmeup",
+          "writeme",
+          "whatsappme",
+          "contactme"
         ];
         const checks = [
           { pattern: /\b\d{7,8}\b/, reason: "número de teléfono" },
@@ -11189,10 +11213,18 @@
           { pattern: /\b(?:gmail|gmai|gma)\s*(?:\.|punto)?\s*(?:com|co\s*m|c\s*o\s*m)\b/i, reason: "email" },
           { pattern: /\b(?:www\.|https?:\/\/|\.com\b|\.net\b|\.pa\b|\.org\b)/i, reason: "link o página web" },
           { pattern: /(?:^|[^a-z])\.?\s*(?:com|co\s*m|c\s*o\s*m|net|pa|org|gm)(?:$|[^a-z])/i, reason: "link o página web" },
+          // Email deletreado en ingles o espanol: "name at gmail dot com"
+          { pattern: /[a-z0-9._%+-]+\s+(?:at|arroba)\s+[a-z0-9.-]+\s+(?:dot|punto)\s+[a-z]{2,}/i, reason: "email" },
           {
             pattern:
               /\b(?:llamame|llámame|llaman|llamar|whatsapp|wsp|wa\.me|cel|celular|telefono|teléfono|tel|contacto|contact|contactame|contáctame|correo|email|emial|emai|gmail|hotmail|instagram|ig|inbox|dm)\b/i,
             reason: "palabra de contacto"
+          },
+          {
+            // Ingles: palabras de contacto con limite de palabra (evita falsos positivos tipo "automobile")
+            pattern:
+              /\b(?:call me|text me|txt me|message me|msg me|dm me|pm me|reach me|reach out|contact me|email me|mail me|write me|hit me up|ping me|my number|my phone|my cell|my email|phone number|cell phone|cellphone|mobile number|whats ?app|telegram|messenger)\b/i,
+            reason: "palabra de contacto (inglés)"
           }
         ];
         for (const pattern of contactIntentPatterns) {
@@ -11216,7 +11248,7 @@
       }
 
       function protectedFieldMessage(fieldLabel, reason) {
-        return `${fieldLabel} no puede incluir datos de contacto (${reason}). Usa solo ubicación, PH o detalles sin teléfono, email, WhatsApp, redes o links.`;
+        return `${fieldLabel} no puede incluir datos de contacto (${reason}). Usa solo ubicación, PH o detalles sin teléfono, email, WhatsApp, redes o links. / This field cannot include contact info: no phone, email, WhatsApp, social media or links.`;
       }
 
       function getFieldWarning(field) {
@@ -11308,33 +11340,57 @@
       }
 
       const vehicleBrandModels = {
+        Acura: ["ILX", "MDX", "RDX", "TLX"],
         Audi: ["A3", "A4", "A5", "Q3", "Q5", "Q7"],
+        Baic: ["BJ40", "X35", "X55", "X7"],
         BMW: ["Serie 3", "Serie 5", "X1", "X3", "X5", "X6"],
         BYD: ["Atto 3", "Dolphin", "Han", "Seal", "Song Plus", "Tang"],
-        Changan: ["CS35", "CS55", "CS75", "Hunter", "UNI-T"],
+        Cadillac: ["Escalade", "XT4", "XT5", "XT6"],
+        Changan: ["CS15", "CS35", "CS55", "CS75", "Hunter", "UNI-T"],
+        Chery: ["Arrizo 5", "Tiggo 2", "Tiggo 4", "Tiggo 7", "Tiggo 8"],
         Chevrolet: ["Colorado", "Cruze", "N300", "Sail", "Spark", "Tracker", "Traverse"],
+        Chrysler: ["300", "Pacifica"],
         Daihatsu: ["Bego", "Mira", "Terios"],
+        Dodge: ["Challenger", "Charger", "Durango", "Journey"],
+        Dongfeng: ["Glory 500", "Rich 6", "S16"],
+        Fiat: ["Argo", "Cronos", "Pulse", "Toro"],
         Ford: ["Escape", "Explorer", "F-150", "Focus", "Ranger", "Territory"],
         Foton: ["Aumark", "Tunland", "View"],
         Freightliner: ["Cascadia", "M2", "Sprinter"],
+        Fuso: ["Canter", "Fighter", "Rosa"],
+        GAC: ["Emkoo", "Empow", "GS3", "GS4", "GS8"],
         Geely: ["Coolray", "Geometry", "Okavango"],
-        "Great Wall": ["Haval H5", "Haval H6", "Poer", "Wingle"],
+        GMC: ["Acadia", "Sierra", "Terrain", "Yukon"],
+        "Great Wall": ["Cannon", "Poer", "Wingle 5", "Wingle 7"],
+        Haval: ["Dargo", "H2", "H6", "Jolion"],
         Hino: ["300", "500", "700"],
         Honda: ["Accord", "Civic", "CR-V", "HR-V", "Odyssey", "Pilot"],
-        Hyundai: ["Accent", "Creta", "Elantra", "Grand i10", "Santa Fe", "Tucson"],
+        Hyundai: ["Accent", "Creta", "Elantra", "Grand i10", "Palisade", "Santa Fe", "Tucson"],
+        Infiniti: ["Q50", "QX50", "QX60", "QX80"],
         International: ["4300", "4400", "ProStar"],
         Isuzu: ["D-Max", "Elf", "MU-X", "NPR", "NQR"],
         JAC: ["JS2", "JS4", "S3", "T6", "T8"],
         Jeep: ["Cherokee", "Compass", "Grand Cherokee", "Renegade", "Wrangler"],
+        Jetour: ["Dashing", "T2", "X70", "X90"],
+        Kenworth: ["T680", "T800", "W900"],
         Kia: ["Carnival", "Cerato", "Picanto", "Rio", "Seltos", "Sorento", "Sportage"],
+        "Land Rover": ["Defender", "Discovery", "Range Rover", "Range Rover Evoque", "Range Rover Sport", "Range Rover Velar"],
         Lexus: ["ES", "GX", "IS", "NX", "RX"],
+        Mack: ["Anthem", "Granite", "Pinnacle"],
+        Mahindra: ["Pik Up", "Scorpio", "XUV700"],
+        Maxus: ["D60", "G10", "T60", "T90"],
         Mazda: ["BT-50", "CX-3", "CX-30", "CX-5", "CX-9", "Mazda 2", "Mazda 3"],
         "Mercedes-Benz": ["Clase C", "Clase E", "GLA", "GLC", "GLE", "Sprinter"],
-        Mitsubishi: ["ASX", "L200", "Montero", "Outlander", "Pajero", "Xpander"],
+        MG: ["HS", "MG3", "MG5", "RX5", "ZS"],
+        Mini: ["Clubman", "Cooper", "Countryman"],
+        Mitsubishi: ["ASX", "L200", "Montero", "Montero Sport", "Outlander", "Xpander"],
         Nissan: ["Frontier", "Kicks", "March", "Murano", "Patrol", "Qashqai", "Sentra", "Versa", "X-Trail"],
         Peugeot: ["2008", "3008", "5008", "Partner"],
+        Porsche: ["911", "Cayenne", "Macan", "Panamera"],
         RAM: ["1500", "2500", "Promaster"],
         Renault: ["Duster", "Kangoo", "Koleos", "Logan", "Sandero"],
+        Scania: ["G410", "P360", "R450"],
+        Ssangyong: ["Korando", "Musso", "Rexton", "Tivoli"],
         Subaru: ["Forester", "Impreza", "Outback", "XV"],
         Suzuki: ["APV", "Ciaz", "Dzire", "Grand Vitara", "Jimny", "Swift", "Vitara"],
         Tesla: ["Model 3", "Model S", "Model X", "Model Y"],
@@ -11345,17 +11401,29 @@
 
       const motoBrandModels = {
         Bajaj: ["Boxer", "CT100", "Dominar 250", "Dominar 400", "Pulsar 125", "Pulsar 160", "Pulsar 200", "Pulsar NS"],
+        Benelli: ["302S", "Leoncino 250", "Leoncino 500", "TNT 150", "TNT 300", "TRK 502"],
+        BMW: ["F 850 GS", "G 310 GS", "G 310 R", "R 1250 GS", "S 1000 RR"],
+        CFMoto: ["300NK", "400NK", "650MT", "700CL-X"],
+        Ducati: ["Monster", "Multistrada", "Panigale V2", "Scrambler"],
+        Genesis: ["GN 125", "GNX 150", "Halcón 200", "Sport 125"],
         "Harley-Davidson": ["Fat Boy", "Iron 883", "Pan America", "Road Glide", "Sportster S", "Street Bob"],
         Hero: ["Dash", "Eco 100", "Eco Deluxe", "Hunk 150", "Hunk 160R", "Xpulse 200"],
         Honda: ["CB125F", "CB190R", "CBF150", "CRF250", "Navi", "Wave 110", "XR150L", "XRE300"],
+        Italika: ["125Z", "DS150", "FT150", "RT200", "Vitalia 125"],
         Kawasaki: ["KLR 650", "KLX 150", "Ninja 400", "Ninja 650", "Versys 300", "Z400", "Z650"],
+        Keeway: ["K-Light 202", "RKF 125", "RKS 125", "Superlight 200", "TX 200"],
         KTM: ["250 Adventure", "390 Adventure", "Duke 200", "Duke 250", "Duke 390", "RC 390"],
         Kymco: ["Agility 125", "Agility 200", "Downtown 300", "Like 150", "People 150"],
         "Royal Enfield": ["Classic 350", "Himalayan", "Hunter 350", "Interceptor 650", "Meteor 350"],
+        Serpento: ["Enduro 250", "SRT 150", "Storm 200", "Strada 150"],
+        SPI: ["City 125", "GS 150", "Sport 200", "Titan 150"],
         Suzuki: ["AX100", "DR650", "Gixxer 150", "Gixxer 250", "GN125", "V-Strom 250"],
+        SYM: ["Cruisym 150", "Fiddle 150", "Jet 14", "Symba 110", "Symphony 150"],
         TVS: ["Apache RTR 160", "Apache RTR 200", "Ntorq 125", "Raider 125", "Sport 100", "Stryker 125"],
+        UM: ["DSR 125", "Renegade Commando", "Renegade Sport"],
         Vespa: ["GTS 300", "Primavera 150", "Sprint 150"],
-        Yamaha: ["Crypton", "FZ 150", "MT-03", "NMAX 155", "R15", "Ténéré 700", "XTZ125", "XTZ250"]
+        Yamaha: ["Crypton", "FZ 150", "MT-03", "NMAX 155", "R15", "Ténéré 700", "XTZ125", "XTZ250"],
+        Zontes: ["155 G1", "310R", "310T", "350"]
       };
 
       const knownVehicleBrands = Object.keys(vehicleBrandModels).sort((a, b) => a.localeCompare(b, "es"));
