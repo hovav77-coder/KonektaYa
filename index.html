@@ -669,8 +669,32 @@
         display: grid;
         gap: 6px;
         margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px dashed #e2e8f0;
+        padding: 11px 13px;
+        border-radius: 10px;
+        background: #fdf2e2;
+        border: 1px solid #f6d9ad;
+      }
+
+      .pub-status.reached {
+        background: #e7f6ec;
+        border-color: #a7dfbb;
+      }
+
+      .pub-status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .pub-status-paid {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #92400e;
+      }
+
+      .pub-status.reached .pub-status-paid {
+        color: #15803d;
       }
 
       .pub-cap-bar {
@@ -721,6 +745,284 @@
 
       .unlock-charge-note.ok {
         color: #15803d;
+      }
+
+      .result-card2 {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+
+      .result-card2.hot {
+        border-color: #f6a94a;
+        box-shadow: 0 0 0 1px #f6a94a;
+      }
+
+      .rc2-head {
+        background: #0f2a4a;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .rc2-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        padding: 5px 12px;
+        flex-shrink: 0;
+      }
+
+      .rc2-badge-rank {
+        font-size: 15px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .rc2-badge-score {
+        font-size: 14px;
+        font-weight: 600;
+        color: #fbbf5c;
+        padding-left: 8px;
+        border-left: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .rc2-head-main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .rc2-title {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+        color: #ffffff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .rc2-subtitle {
+        margin: 2px 0 0;
+        font-size: 12px;
+        color: #a9c2e0;
+      }
+
+      .rc2-body {
+        padding: 14px 16px;
+      }
+
+      .rc2-meta {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .rc2-meta-cell {
+        background: #f4f7fb;
+        border-radius: 8px;
+        padding: 8px 10px;
+      }
+
+      .rc2-meta-cell span {
+        display: block;
+        font-size: 11px;
+        color: #64748b;
+      }
+
+      .rc2-meta-cell strong {
+        display: block;
+        margin-top: 2px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #0f2a4a;
+      }
+
+      .rc2-foot {
+        border-top: 1px solid #eef2f7;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .rc2-price-big {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f2a4a;
+      }
+
+      .rc2-price-big span {
+        font-size: 12px;
+        font-weight: 400;
+        color: #64748b;
+      }
+
+      .rc2-cap {
+        margin: 2px 0 0;
+        font-size: 11.5px;
+        color: #b45309;
+      }
+
+      .rc2-cap.ok {
+        color: #15803d;
+      }
+
+      .rc2-cap.muted {
+        color: #64748b;
+      }
+
+      .rc2-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+        width: 260px;
+        max-width: 100%;
+      }
+
+      .rc2-actions .button {
+        width: 100%;
+        justify-content: center;
+        margin: 0;
+      }
+
+      .rc2-actions .result-note {
+        margin: 0 0 2px;
+        text-align: center;
+        font-size: 11px;
+      }
+
+      .rc2-actions .interest-mini {
+        margin: 0 0 2px;
+      }
+
+      .result-card2 .credit-warning {
+        margin: 0 16px 12px;
+      }
+
+      .result-card2 .result-analysis {
+        margin: 0 16px 14px;
+      }
+
+      .offer-card2 {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        overflow: hidden;
+        margin-bottom: 12px;
+      }
+
+      .offer-card2.oc2-unavailable {
+        opacity: 0.72;
+      }
+
+      .oc2-num {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+
+      .oc2-avail {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 500;
+        padding: 4px 10px;
+        border-radius: 999px;
+        flex-shrink: 0;
+      }
+
+      .oc2-avail.on {
+        background: rgba(43, 175, 110, 0.22);
+        color: #8ef0b4;
+      }
+
+      .oc2-avail.off {
+        background: rgba(255, 255, 255, 0.12);
+        color: #c7d5e6;
+      }
+
+      .oc2-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #4ade80;
+      }
+
+      .oc2-body {
+        padding: 14px 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .oc2-priceline {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .oc2-price {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f2a4a;
+      }
+
+      .oc2-loc {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12.5px;
+        color: #64748b;
+      }
+
+      .oc2-foot {
+        border-top: 1px solid #eef2f7;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .oc2-foot-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 640px) {
+        .rc2-meta {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .rc2-foot {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .rc2-actions {
+          justify-content: stretch;
+        }
       }
 
       .pub-status.expired {
@@ -10370,28 +10672,46 @@
         const unlockButton = canUnlockHere
           ? `<button class="button ${highlightUnlock ? "primary" : "dark"}" type="button" onclick="unlockMach('${match.id}', '${source}')">${effectiveCharge === 0 ? "Desbloquear gratis" : "Desbloquear contacto"}</button>`
           : `<button class="button dark" type="button" disabled>${model.validationRequired ? "Pendiente de validación" : "Lo desbloquea la propiedad"}</button>`;
+        const capNote = !canUnlockHere
+          ? `<p class="rc2-cap muted">${model.validationRequired ? "Requiere validación previa" : "Lo desbloquea la propiedad"}</p>`
+          : effectiveCharge === 0
+            ? `<p class="rc2-cap ok">Incluido en tu tope · <strong>gratis</strong></p>`
+            : effectiveCharge < fullUnlockPrice
+              ? `<p class="rc2-cap">Solo te cobra <strong>${money.format(effectiveCharge)}</strong> para tu tope</p>`
+              : `<p class="rc2-cap muted">Garantía: saldo devuelto si los datos son inválidos</p>`;
         return `
-          <div class="result-row ${requested ? "hot" : ""}">
+          <div class="result-card2 ${requested ? "hot" : ""}">
             ${interestBanner}
-            <div class="result-row-top">
-              <div class="result-rank">
-                <span class="result-rank-badge ${rankBadgeClass(match.mach.ranking)}">${match.mach.ranking || ""}</span>
-                <span class="result-rank-score">${match.score}%</span>
+            <div class="rc2-head">
+              <div class="rc2-badge ${rankBadgeClass(match.mach.ranking)}">
+                <span class="rc2-badge-rank">${match.mach.ranking || ""}</span>
+                <span class="rc2-badge-score">${match.score}%</span>
               </div>
-              <div class="result-main">
-                <p class="result-title">${classificationLabel(classification)} busca ${label(search.desiredOperation)} de ${label(search.propertyType)}</p>
-                <p class="result-meta">Presupuesto ≤ ${money.format(search.maxBudget)} · ~${search.minSizeM2} m2 deseados · ${urgencyLabel(search.urgency)} · Uso: ${label(search.useCase)} · ${publicationLabel(search.publishedAt)}</p>
-                <div class="factor-chips">${chips}</div>
-              </div>
-              <div class="result-side">
-                <p class="result-price-big">${canUnlockHere ? price : "Validar"}</p>
-                ${unlockChargeNote}
-                ${canUnlockHere ? ownerInterestBlock(match, "property") : ""}
-                ${unlockButton}
-                <p class="result-note">Garantía: saldo devuelto si los datos son inválidos</p>
-                <div class="credit-warning" id="warn-${match.id}-${source}">Saldo insuficiente. Agrega saldo demo para desbloquear este contacto.</div>
+              <div class="rc2-head-main">
+                <p class="rc2-title">${classificationLabel(classification)} busca ${label(search.desiredOperation)} de ${label(search.propertyType)}</p>
+                <p class="rc2-subtitle">${match.mach.label || "Coincidencia"} · ${publicationLabel(search.publishedAt)}</p>
               </div>
             </div>
+            <div class="rc2-body">
+              <div class="rc2-meta">
+                <div class="rc2-meta-cell"><span>Presupuesto</span><strong>≤ ${money.format(search.maxBudget)}</strong></div>
+                <div class="rc2-meta-cell"><span>Metraje</span><strong>~${search.minSizeM2} m²</strong></div>
+                <div class="rc2-meta-cell"><span>Urgencia</span><strong>${urgencyLabel(search.urgency)}</strong></div>
+                <div class="rc2-meta-cell"><span>Uso</span><strong>${label(search.useCase)}</strong></div>
+              </div>
+              <div class="factor-chips">${chips}</div>
+            </div>
+            <div class="rc2-foot">
+              <div class="rc2-price">
+                <p class="rc2-price-big">${canUnlockHere ? price : "Validar"}${canUnlockHere ? " <span>desbloqueo</span>" : ""}</p>
+                ${capNote}
+              </div>
+              <div class="rc2-actions">
+                ${canUnlockHere ? ownerInterestBlock(match, "property") : ""}
+                ${unlockButton}
+              </div>
+            </div>
+            <div class="credit-warning" id="warn-${match.id}-${source}">Saldo insuficiente. Agrega saldo demo para desbloquear este contacto.</div>
             <details class="result-analysis">
               <summary>Ver análisis completo</summary>
               ${aiExplainPanel(match, source)}
@@ -13664,19 +13984,25 @@
         const pct = cap > 0 ? Math.min(100, Math.round((paid / cap) * 100)) : 0;
         const reached = cap > 0 && paid >= cap;
         const restante = Math.max(0, cap - paid);
-        const capLine = !cap
-          ? ""
-          : reached
-            ? `<div class="pub-cap-note ok">✓ Tope alcanzado: los próximos desbloqueos son <strong>gratis</strong> hasta que venza.</div>`
-            : `<div class="pub-cap-note">Has pagado <strong>${money.format(paid)}</strong> de ${money.format(cap)} · te faltan <strong>${money.format(restante)}</strong> para desbloqueos ilimitados.</div>`;
-        const bar = cap
-          ? `<div class="pub-cap-bar"><span style="width:${pct}%" class="${reached ? "full" : ""}"></span></div>`
-          : "";
         const venceTxt =
           daysLeft === Infinity
             ? ""
             : `<span class="pub-days ${daysLeft <= avisa ? "warn" : ""}">Vence en ${daysLeft} día${daysLeft === 1 ? "" : "s"}</span>`;
-        return `<div class="pub-status">${bar}${capLine}${venceTxt}</div>`;
+        if (!cap) {
+          return venceTxt ? `<div class="pub-status"><div class="pub-status-row"><span></span>${venceTxt}</div></div>` : "";
+        }
+        const topLeft = reached
+          ? `<span class="pub-status-paid">✓ Tope alcanzado · desbloqueos gratis</span>`
+          : `<span class="pub-status-paid">Has pagado <strong>${money.format(paid)}</strong> de ${money.format(cap)}</span>`;
+        const subNote = reached
+          ? `<div class="pub-cap-note ok">Los próximos contactos son gratis hasta que venza.</div>`
+          : `<div class="pub-cap-note">Te faltan <strong>${money.format(restante)}</strong> para desbloqueos ilimitados este ciclo.</div>`;
+        return `
+          <div class="pub-status ${reached ? "reached" : ""}">
+            <div class="pub-status-row">${topLeft}${venceTxt}</div>
+            <div class="pub-cap-bar"><span style="width:${pct}%" class="${reached ? "full" : ""}"></span></div>
+            ${subNote}
+          </div>`;
       }
 
       function machType(match) {
@@ -15188,34 +15514,45 @@
               </div>
             </div>`
           : "";
+        const capNote =
+          effectiveCharge === 0
+            ? `<p class="rc2-cap ok">Incluido en tu tope · <strong>gratis</strong></p>`
+            : effectiveCharge < fullUnlockPrice
+              ? `<p class="rc2-cap">Solo te cobra <strong>${money.format(effectiveCharge)}</strong> para tu tope</p>`
+              : `<p class="rc2-cap muted">Garantía: saldo devuelto si los datos son inválidos</p>`;
         return `
-          <div class="result-row ${requested ? "hot" : ""}">
+          <div class="result-card2 ${requested ? "hot" : ""}">
             ${interestBanner}
-            <div class="result-row-top">
-              <div class="result-rank">
-                <span class="result-rank-badge ${rankBadgeClass(match.mach.ranking)}">${match.mach.ranking || ""}</span>
-                <span class="result-rank-score">${match.score}%</span>
+            <div class="rc2-head">
+              <div class="rc2-badge ${rankBadgeClass(match.mach.ranking)}">
+                <span class="rc2-badge-rank">${match.mach.ranking || ""}</span>
+                <span class="rc2-badge-score">${match.score}%</span>
               </div>
-              <div class="result-main">
-                <p class="result-title">${vehicleApplicantLabel(search)} busca ${vehicleLabel(search.vehicleType)} ${search.desiredBrand || ""} ${search.desiredModel || ""}</p>
-                <p class="result-meta">Presupuesto ≤ ${money.format(search.maxBudget)} · ${search.minYear ? `${search.minYear} o más nuevo` : "año indiferente"} · ≤ ${Number(search.maxMileage || 0).toLocaleString("es-PA")} km · ${vehicleLabel(search.urgency)} · ${publicationLabel(search.publishedAt)}</p>
-                <div class="factor-chips">${chips}</div>
-              </div>
-              <div class="result-side">
-                <p class="result-price-big">${price}</p>
-                ${
-                  effectiveCharge === 0
-                    ? `<p class="unlock-charge-note ok">Incluido en tu tope · <strong>gratis</strong></p>`
-                    : effectiveCharge < fullUnlockPrice
-                      ? `<p class="unlock-charge-note">Solo te cobra <strong>${money.format(effectiveCharge)}</strong> para llegar a tu tope</p>`
-                      : ""
-                }
-                ${ownerInterestBlock(match, "vehicle")}
-                <button class="button ${requested || (interestState(match.id) && interestState(match.id).status === "confirmed") ? "primary" : "dark"}" type="button" onclick="unlockVehicleMatch('${match.id}', '${source}')">${effectiveCharge === 0 ? "Desbloquear gratis" : "Desbloquear contacto"}</button>
-                <p class="result-note">Garantía: saldo devuelto si los datos son inválidos</p>
-                <div class="credit-warning" id="warn-${match.id}-${source}">Saldo insuficiente. Agrega saldo demo para desbloquear este contacto.</div>
+              <div class="rc2-head-main">
+                <p class="rc2-title">${vehicleApplicantLabel(search)} busca ${vehicleLabel(search.vehicleType)} ${search.desiredBrand || ""} ${search.desiredModel || ""}</p>
+                <p class="rc2-subtitle">${match.mach.label || "Coincidencia"} · ${publicationLabel(search.publishedAt)}</p>
               </div>
             </div>
+            <div class="rc2-body">
+              <div class="rc2-meta">
+                <div class="rc2-meta-cell"><span>Presupuesto</span><strong>≤ ${money.format(search.maxBudget)}</strong></div>
+                <div class="rc2-meta-cell"><span>Año</span><strong>${search.minYear ? `${search.minYear}+` : "Indif."}</strong></div>
+                <div class="rc2-meta-cell"><span>Km máx</span><strong>${Number(search.maxMileage || 0).toLocaleString("es-PA")}</strong></div>
+                <div class="rc2-meta-cell"><span>Urgencia</span><strong>${vehicleLabel(search.urgency)}</strong></div>
+              </div>
+              <div class="factor-chips">${chips}</div>
+            </div>
+            <div class="rc2-foot">
+              <div class="rc2-price">
+                <p class="rc2-price-big">${price} <span>desbloqueo</span></p>
+                ${capNote}
+              </div>
+              <div class="rc2-actions">
+                ${ownerInterestBlock(match, "vehicle")}
+                <button class="button ${requested || (interestState(match.id) && interestState(match.id).status === "confirmed") ? "primary" : "dark"}" type="button" onclick="unlockVehicleMatch('${match.id}', '${source}')">${effectiveCharge === 0 ? "Desbloquear gratis" : "Desbloquear contacto"}</button>
+              </div>
+            </div>
+            <div class="credit-warning" id="warn-${match.id}-${source}">Saldo insuficiente. Agrega saldo demo para desbloquear este contacto.</div>
             <details class="result-analysis">
               <summary>Ver análisis completo</summary>
               ${vehicleExplainPanel(match, source)}
@@ -15376,13 +15713,25 @@
                         property.salePrice ? `Venta ${money.format(property.salePrice)}` : ""
                       ].filter(Boolean).join(" · ") || "Precio no registrado";
                       return `
-                        <div class="offer-card-row">
-                          <span class="offer-row-number">${index + 1}</span>
-                          <div class="offer-card-main">
-                            <p class="offer-card-title">${label(property.propertyType)} en ${property.zone} · ${property.phName ? phDisplayName(property.phName) : "PH no registrado"} <span class="offer-type-pill">${label(property.propertyType)}</span>${isOfferAvailable(property) ? "" : ` <span class="offer-unavailable-pill">No disponible</span>`}</p>
+                        <div class="offer-card2 ${isOfferAvailable(property) ? "" : "oc2-unavailable"}">
+                          <div class="rc2-head">
+                            <span class="oc2-num">${index + 1}</span>
+                            <div class="rc2-head-main">
+                              <p class="rc2-title">${label(property.propertyType)} en ${property.zone} · ${property.phName ? phDisplayName(property.phName) : "PH no registrado"}</p>
+                              <p class="rc2-subtitle">${label(property.propertyType)} · ${label(property.registeredBy || "propietario")} · ${publicationLabel(property.publishedAt)}</p>
+                            </div>
+                            ${
+                              isOfferAvailable(property)
+                                ? `<span class="oc2-avail on"><span class="oc2-dot"></span>Disponible</span>`
+                                : `<span class="oc2-avail off">No disponible</span>`
+                            }
+                          </div>
+                          <div class="oc2-body">
+                            <div class="oc2-priceline">
+                              <span class="oc2-price">${priceLine}</span>
+                              <span class="oc2-loc"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> ${property.streetOrNeighborhood || "Calle no especificada"}</span>
+                            </div>
                             <div class="criteria-chips">
-                              <span class="criteria-chip">${priceLine}</span>
-                              <span class="criteria-chip">${property.streetOrNeighborhood || "Calle no especificada"}</span>
                               ${property.equipment ? `<span class="criteria-chip">${equipmentLabel(property.equipment)}</span>` : ""}
                               ${
                                 property.propertyType === "terreno" && Number(property.sizeM2 || 0) >= 10000
@@ -15399,22 +15748,24 @@
                                   : ""
                               }
                               <span class="criteria-chip">${urgencyLabel(property.availabilityNeed, "property")}</span>
-                              <span class="criteria-chip muted">${property.acceptsBroker ? "Acepta broker" : "No acepta broker"} · ${label(property.registeredBy || "propietario")} · ${publicationLabel(property.publishedAt)}</span>
+                              <span class="criteria-chip muted">${property.acceptsBroker ? "Acepta broker" : "No acepta broker"}</span>
                             </div>
                             ${publicationStatusHtml(property)}
                           </div>
-                          <div class="offer-card-actions">
+                          <div class="oc2-foot">
                             ${availabilitySwitch(property.id, isOfferAvailable(property), "setPropertyAvailable")}
-                            <button class="button small ghost" type="button" onclick="editProperty(${property.id})">Modificar</button>
-                            ${
-                              propertyMatches.length
-                                ? `<button class="button small primary" type="button" onclick="openResultsModal('propertyOffer', ${property.id})">Ver resultados <span class="btn-badge">${propertyMatches.length}</span>${
-                                    requestedMatches.length
-                                      ? ` <span class="btn-badge hot">${requestedMatches.length} con interés</span>`
-                                      : ""
-                                  }</button>`
-                                : `<button class="button small results-empty" type="button" disabled>Sin resultados aún</button>`
-                            }
+                            <div class="oc2-foot-actions">
+                              <button class="button small ghost" type="button" onclick="editProperty(${property.id})">Modificar</button>
+                              ${
+                                propertyMatches.length
+                                  ? `<button class="button small primary" type="button" onclick="openResultsModal('propertyOffer', ${property.id})">Ver resultados <span class="btn-badge">${propertyMatches.length}</span>${
+                                      requestedMatches.length
+                                        ? ` <span class="btn-badge hot">${requestedMatches.length} con interés</span>`
+                                        : ""
+                                    }</button>`
+                                  : `<button class="button small results-empty" type="button" disabled>Sin resultados aún</button>`
+                              }
+                            </div>
                           </div>
                         </div>
                       `;
@@ -15455,31 +15806,45 @@
                       (m) => isContactRequested(m) && !isVehicleMatchUnlocked(m, "vehicleOffer")
                     );
                     return `
-                      <div class="offer-card-row">
-                        <span class="offer-row-number">${index + 1}</span>
-                        <div class="offer-card-main">
-                          <p class="offer-card-title">${vehicleOfferTitle(offer)} ${offer.year} <span class="offer-type-pill">Vehículo</span>${isOfferAvailable(offer) ? "" : ` <span class="offer-unavailable-pill">No disponible</span>`}</p>
+                      <div class="offer-card2 ${isOfferAvailable(offer) ? "" : "oc2-unavailable"}">
+                        <div class="rc2-head">
+                          <span class="oc2-num">${index + 1}</span>
+                          <div class="rc2-head-main">
+                            <p class="rc2-title">${vehicleOfferTitle(offer)} ${offer.year}</p>
+                            <p class="rc2-subtitle">Vehículo · ${vehicleSourceLabel(offer)} · ${publicationLabel(offer.publishedAt)}</p>
+                          </div>
+                          ${
+                            isOfferAvailable(offer)
+                              ? `<span class="oc2-avail on"><span class="oc2-dot"></span>Disponible</span>`
+                              : `<span class="oc2-avail off">No disponible</span>`
+                          }
+                        </div>
+                        <div class="oc2-body">
+                          <div class="oc2-priceline">
+                            <span class="oc2-price">${vehiclePriceSummary(offer)}</span>
+                            <span class="oc2-loc"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> ${offer.zone}, ${offer.province}</span>
+                          </div>
                           <div class="criteria-chips">
-                            <span class="criteria-chip">${vehiclePriceSummary(offer)}</span>
                             <span class="criteria-chip">${Number(offer.mileage || 0).toLocaleString("es-PA")} km</span>
-                            <span class="criteria-chip">${vehicleLabel(offer.transmission)} · ${vehicleLabel(offer.fuel)}</span>
-                            <span class="criteria-chip">${offer.zone}, ${offer.province}</span>
-                            <span class="criteria-chip muted">${vehicleSourceLabel(offer)} · ${publicationLabel(offer.publishedAt)}</span>
+                            <span class="criteria-chip">${vehicleLabel(offer.transmission)}</span>
+                            <span class="criteria-chip">${vehicleLabel(offer.fuel)}</span>
                           </div>
                           ${publicationStatusHtml(offer)}
                         </div>
-                        <div class="offer-card-actions">
+                        <div class="oc2-foot">
                           ${availabilitySwitch(offer.id, isOfferAvailable(offer), "setVehicleAvailable")}
-                          <button class="button small ghost" type="button" onclick="editVehicleOffer(${offer.id})">Modificar</button>
-                          ${
-                            offerMatches.length
-                              ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleOffer', ${offer.id})">Ver resultados <span class="btn-badge">${offerMatches.length}</span>${
-                                  offerRequests.length
-                                    ? ` <span class="btn-badge hot">${offerRequests.length} con interés</span>`
-                                    : ""
-                                }</button>`
-                              : `<button class="button small results-empty" type="button" disabled>Sin resultados aún</button>`
-                          }
+                          <div class="oc2-foot-actions">
+                            <button class="button small ghost" type="button" onclick="editVehicleOffer(${offer.id})">Modificar</button>
+                            ${
+                              offerMatches.length
+                                ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleOffer', ${offer.id})">Ver resultados <span class="btn-badge">${offerMatches.length}</span>${
+                                    offerRequests.length
+                                      ? ` <span class="btn-badge hot">${offerRequests.length} con interés</span>`
+                                      : ""
+                                  }</button>`
+                                : `<button class="button small results-empty" type="button" disabled>Sin resultados aún</button>`
+                            }
+                          </div>
                         </div>
                       </div>
                     `;
