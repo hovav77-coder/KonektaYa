@@ -5729,6 +5729,47 @@
         gap: 22px;
       }
 
+      .dashboard-quick-actions {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
+        margin: 0 0 22px;
+      }
+
+      .dqa-btn {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        color: var(--navy);
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 800;
+        padding: 15px 12px;
+        text-align: center;
+        transition: background 150ms ease, border-color 150ms ease;
+      }
+
+      .dqa-btn:hover {
+        background: #fff8f1;
+        border-color: var(--orange);
+      }
+
+      .dqa-btn.primary {
+        background: var(--navy);
+        border-color: var(--navy);
+        color: #ffffff;
+      }
+
+      .dqa-btn.primary:hover {
+        background: #0c3b6b;
+      }
+
+      @media (min-width: 720px) {
+        .dashboard-quick-actions {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+
       .user-dashboard-filter {
         align-items: center;
         display: flex;
@@ -9436,6 +9477,12 @@
               <div class="wallet-summary-strip" id="ownerStats"></div>
             </div>
             <div id="brokerB2BPanel"></div>
+            <div class="dashboard-quick-actions" aria-label="Publicar o buscar">
+              <button type="button" class="dqa-btn primary" data-tab-button="propietario">+ Publicar inmueble</button>
+              <button type="button" class="dqa-btn" data-tab-button="busqueda">Buscar inmueble</button>
+              <button type="button" class="dqa-btn primary" data-tab-button="vehiculoOferta">+ Publicar vehículo</button>
+              <button type="button" class="dqa-btn" data-tab-button="vehiculoBusqueda">Buscar vehículo</button>
+            </div>
             <div class="section user-dashboard-tabs">
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
                 <div class="vertical-switch" aria-label="Vertical del dashboard">
@@ -13656,6 +13703,7 @@
             return false;
           }
           data.email = currentUserEmail; // publica siempre con la cuenta logueada
+          if (data.phone) rememberContactPhone(data.phone); // recordar para próximos formularios
           return true;
         }
         const email = String(data.email || "").trim();
@@ -13768,7 +13816,8 @@
         if (firstEl && !firstEl.value && parts.length) firstEl.value = parts[0];
         if (lastEl && !lastEl.value && parts.length > 1) lastEl.value = parts.slice(1).join(" ");
         const phoneEl = form.querySelector('[name="phone"]');
-        if (phoneEl && !phoneEl.value && prof.phone) phoneEl.value = prof.phone;
+        const phone = prof.phone || rememberedPhone();
+        if (phoneEl && !phoneEl.value && phone) phoneEl.value = phone;
       }
 
       function prefillFormForTab(tab) {
@@ -13776,6 +13825,21 @@
         if (formId) prefillContactFields(document.getElementById(formId));
       }
       window.prefillFormForTab = prefillFormForTab;
+
+      // Recuerda el teléfono (una vez ingresado, se rellena solo en próximos
+      // formularios). En memoria + localStorage; en el servidor lo guarda
+      // supaUpsertProfile al publicar.
+      function rememberContactPhone(phone) {
+        const p = String(phone || "").trim();
+        if (!p) return;
+        try { localStorage.setItem("konektaya_contact_phone", p); } catch (e) {}
+        try { if (typeof myProfile !== "undefined") { myProfile = myProfile || {}; myProfile.phone = p; } } catch (e) {}
+      }
+      function rememberedPhone() {
+        const prof = (typeof myProfile !== "undefined" && myProfile) ? myProfile : {};
+        if (prof.phone) return prof.phone;
+        try { return localStorage.getItem("konektaya_contact_phone") || ""; } catch (e) { return ""; }
+      }
 
       // Devuelve true si intercepta (visitante sin sesión yendo a un formulario).
       function gateFormTab(tab) {
