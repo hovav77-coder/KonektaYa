@@ -5816,8 +5816,77 @@
 
       .my-data-view[hidden],
       .my-data-form[hidden],
+      .mydata-foot[hidden],
       .pw-meter[hidden] {
         display: none;
+      }
+
+      .mydata-modal {
+        align-items: center;
+        display: flex;
+        inset: 0;
+        justify-content: center;
+        padding: 20px;
+        position: fixed;
+        z-index: 60;
+      }
+
+      .mydata-modal[hidden] { display: none; }
+
+      .mydata-backdrop {
+        background: rgba(10, 25, 47, 0.55);
+        inset: 0;
+        position: absolute;
+      }
+
+      .mydata-dialog {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 24px 60px rgba(10, 25, 47, 0.4);
+        max-width: 100%;
+        overflow: hidden;
+        position: relative;
+        width: 430px;
+        z-index: 1;
+      }
+
+      .mydata-dhead {
+        align-items: center;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        padding: 16px 20px;
+      }
+
+      .mydata-dhead strong {
+        color: var(--navy);
+        font-size: 17px;
+      }
+
+      .mydata-x {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #64748b;
+        cursor: pointer;
+        font-size: 14px;
+        height: 32px;
+        width: 32px;
+      }
+
+      .mydata-dialog .my-data-view,
+      .mydata-dialog .my-data-form {
+        padding: 6px 20px;
+      }
+
+      .mydata-foot {
+        display: flex;
+        gap: 10px;
+        padding: 14px 20px 18px;
+      }
+
+      .mydata-foot .button {
+        flex: 1;
       }
 
       .my-data-view {
@@ -9603,20 +9672,13 @@
       <section class="container tab-panel" id="admin">
         <section class="section">
           <div id="dashboardHeader">
-            <span class="eyebrow">Panel de control</span>
-            <h2 id="dashboardTitle">Dashboard usuario / cliente</h2>
-            <p class="intro" id="dashboardIntro">Revisa tus propiedades, solicitudes, resultados y créditos.</p>
+            <span class="eyebrow">Mi cuenta</span>
+            <h2 id="dashboardTitle">Mi panel</h2>
+            <p class="intro" id="dashboardIntro">Revisa tu saldo, publicaciones, resultados y créditos.</p>
           </div>
 
           <div class="dashboard-view active" data-dashboard-view="user">
             <div class="wallet-panel">
-              <div class="wallet-heading">
-                <div>
-                  <span class="eyebrow">Dashboard usuario / cliente</span>
-                  <h2>Panel de usuario</h2>
-                  <p class="intro">Revisa saldo, registros y resultados desde una vista más compacta.</p>
-                </div>
-              </div>
               <div class="wallet-account-bar">
                 <div class="wallet-balance">
                   <span class="wallet-label">Billetera demo</span>
@@ -9625,6 +9687,7 @@
                 </div>
                 <div class="wallet-actions">
                   <button class="button primary" type="button" onclick="openPayModal(50)">+ Agregar crédito</button>
+                  <button class="button wallet-ghost" type="button" onclick="openMyData()">👤 Mis datos</button>
                   <button class="button wallet-ghost" type="button" id="registerPasskeyBtn" hidden onclick="registerPasskeyFlow()">🔒 Activar Face ID</button>
                   <button class="button wallet-ghost" type="button" onclick="logoutUser()">Cerrar sesión</button>
                 </div>
@@ -9644,33 +9707,40 @@
               <div class="wallet-summary-strip" id="ownerStats"></div>
             </div>
             <div id="brokerB2BPanel"></div>
+            <div class="mydata-modal" id="myDataModal" hidden>
+              <div class="mydata-backdrop" onclick="closeMyData()"></div>
+              <div class="mydata-dialog" role="dialog" aria-modal="true" aria-label="Mis datos">
+                <div class="mydata-dhead">
+                  <strong>Mis datos</strong>
+                  <button type="button" class="mydata-x" onclick="closeMyData()" aria-label="Cerrar">✕</button>
+                </div>
+                <div class="my-data-view" id="myDataView">
+                  <div class="md-row"><span>Nombre</span><b id="mdFirst">—</b></div>
+                  <div class="md-row"><span>Apellido</span><b id="mdLast">—</b></div>
+                  <div class="md-row"><span>Email</span><b id="mdEmail">—</b></div>
+                  <div class="md-row"><span>Celular</span><b id="mdPhone">—</b></div>
+                </div>
+                <div class="mydata-foot" id="myDataViewFoot">
+                  <button type="button" class="button primary" onclick="toggleMyDataEdit()">Editar</button>
+                  <button type="button" class="button ghost" onclick="closeMyData()">Cerrar</button>
+                </div>
+                <div class="my-data-form" id="myDataEdit" hidden>
+                  <label class="field full">Nombre<input id="mdFirstInput" type="text" /></label>
+                  <label class="field full">Apellido<input id="mdLastInput" type="text" /></label>
+                  <label class="field full">Celular<input id="mdPhoneInput" type="text" inputmode="tel" /></label>
+                  <div class="md-actions">
+                    <button type="button" class="button primary" onclick="saveMyData()">Guardar</button>
+                    <button type="button" class="button ghost" onclick="toggleMyDataEdit(true)">Cancelar</button>
+                  </div>
+                  <p class="md-status" id="mdStatus"></p>
+                </div>
+              </div>
+            </div>
             <div class="dashboard-quick-actions" aria-label="Publicar o buscar">
               <button type="button" class="dqa-btn primary" data-tab-button="propietario">+ Publicar inmueble</button>
               <button type="button" class="dqa-btn" data-tab-button="busqueda">Buscar inmueble</button>
               <button type="button" class="dqa-btn primary" data-tab-button="vehiculoOferta">+ Publicar vehículo</button>
               <button type="button" class="dqa-btn" data-tab-button="vehiculoBusqueda">Buscar vehículo</button>
-            </div>
-            <div class="my-data-card" id="myDataCard" hidden>
-              <div class="my-data-head">
-                <strong>Mis datos</strong>
-                <button type="button" class="my-data-edit" id="myDataEditBtn" onclick="toggleMyDataEdit()">Editar</button>
-              </div>
-              <div class="my-data-view" id="myDataView">
-                <div class="md-row"><span>Nombre</span><b id="mdFirst">—</b></div>
-                <div class="md-row"><span>Apellido</span><b id="mdLast">—</b></div>
-                <div class="md-row"><span>Email</span><b id="mdEmail">—</b></div>
-                <div class="md-row"><span>Celular</span><b id="mdPhone">—</b></div>
-              </div>
-              <div class="my-data-form" id="myDataEdit" hidden>
-                <label class="field full">Nombre<input id="mdFirstInput" type="text" /></label>
-                <label class="field full">Apellido<input id="mdLastInput" type="text" /></label>
-                <label class="field full">Celular<input id="mdPhoneInput" type="text" inputmode="tel" /></label>
-                <div class="md-actions">
-                  <button type="button" class="button primary" onclick="saveMyData()">Guardar</button>
-                  <button type="button" class="button ghost" onclick="toggleMyDataEdit(true)">Cancelar</button>
-                </div>
-                <p class="md-status" id="mdStatus"></p>
-              </div>
             </div>
             <div class="section user-dashboard-tabs">
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
@@ -12944,10 +13014,10 @@
           const title = document.getElementById("dashboardTitle");
           const intro = document.getElementById("dashboardIntro");
           if (title) {
-            title.textContent = "Dashboard usuario / cliente";
+            title.textContent = "Mi panel";
           }
           if (intro) {
-            intro.textContent = "Revisa tus propiedades, solicitudes, resultados y créditos.";
+            intro.textContent = "Revisa tu saldo, publicaciones, resultados y créditos.";
           }
           window.currentDashboardView = target;
           if (window.refineNavActive) window.refineNavActive();
@@ -14094,19 +14164,29 @@
         return { first: parts[0] || "", last: parts.slice(1).join(" "), phone: prof.phone || rememberedPhone() || "" };
       }
       function renderMyData() {
-        const card = document.getElementById("myDataCard");
-        if (!card) return;
-        const loggedIn = Boolean(currentUserEmail);
-        card.hidden = !loggedIn;
-        if (!loggedIn) return;
+        if (!currentUserEmail) return;
         const d = myDataParts();
         const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || "—"; };
         set("mdFirst", d.first); set("mdLast", d.last); set("mdEmail", currentUserEmail); set("mdPhone", d.phone);
       }
+      // Abre/cierra el popup de "Mis datos".
+      function openMyData() {
+        if (!currentUserEmail) { showTab("login"); return; }
+        renderMyData();
+        toggleMyDataEdit(true); // siempre abre en modo lectura
+        const m = document.getElementById("myDataModal");
+        if (m) m.hidden = false;
+      }
+      function closeMyData() {
+        const m = document.getElementById("myDataModal");
+        if (m) m.hidden = true;
+      }
+      window.openMyData = openMyData;
+      window.closeMyData = closeMyData;
       function toggleMyDataEdit(cancel) {
         const view = document.getElementById("myDataView");
         const edit = document.getElementById("myDataEdit");
-        const btn = document.getElementById("myDataEditBtn");
+        const foot = document.getElementById("myDataViewFoot");
         if (!view || !edit) return;
         const opening = edit.hidden && !cancel;
         if (opening) {
@@ -14117,8 +14197,8 @@
           const st = document.getElementById("mdStatus"); if (st) st.textContent = "";
         }
         view.hidden = opening;
+        if (foot) foot.hidden = opening;
         edit.hidden = !opening;
-        if (btn) btn.textContent = opening ? "Ver" : "Editar";
       }
       async function saveMyData() {
         const first = document.getElementById("mdFirstInput").value.trim();
