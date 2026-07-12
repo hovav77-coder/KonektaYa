@@ -7619,6 +7619,34 @@
         display: block;
       }
 
+      .auth-switch {
+        background: #eef2f7;
+        border-radius: 12px;
+        display: flex;
+        gap: 4px;
+        margin: 0 0 18px;
+        padding: 5px;
+      }
+
+      .auth-switch-btn {
+        background: transparent;
+        border: none;
+        border-radius: 9px;
+        color: #64748b;
+        cursor: pointer;
+        flex: 1;
+        font-size: 15px;
+        font-weight: 800;
+        padding: 11px 12px;
+        transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+      }
+
+      .auth-switch-btn.active {
+        background: #ffffff;
+        color: var(--navy);
+        box-shadow: 0 2px 8px rgba(15, 42, 74, 0.12);
+      }
+
       .password-wrap {
         position: relative;
         display: block;
@@ -9287,12 +9315,16 @@
       <section class="container tab-panel" id="login">
         <section class="section">
           <article class="card login-card">
-            <span class="eyebrow">Acceso clientes registrados</span>
-            <h2>Ingresar a mi dashboard</h2>
-            <p class="intro">
+            <span class="eyebrow" id="loginEyebrow">Acceso a KonektaYa</span>
+            <h2 id="loginHeading">Ingresar a mi dashboard</h2>
+            <p class="intro" id="loginIntro">
               Usa el email y la contraseña que creaste al registrar tu propiedad o búsqueda.
             </p>
             <form class="form" id="loginForm">
+              <div class="auth-switch" role="tablist" aria-label="Iniciar sesión o crear cuenta">
+                <button type="button" class="auth-switch-btn active" id="authTabLogin" onclick="setAuthMode('login')">Iniciar sesión</button>
+                <button type="button" class="auth-switch-btn" id="authTabRegister" onclick="setAuthMode('register')">Crear cuenta</button>
+              </div>
               <div class="login-status" id="loginStatus"></div>
               <div class="field-grid">
                 <label class="field full" data-register-only hidden>Nombre completo<input name="name" type="text" autocomplete="name" /></label>
@@ -14005,7 +14037,7 @@
             return;
           }
           const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-          if (error) { showLoginStatus("Email o contraseña incorrectos."); return; }
+          if (error) { showLoginStatus("Email o contraseña incorrectos. Si es tu primera vez, toca \"Crear cuenta\" arriba."); return; }
           // La sesión y el redirect los maneja onAuthStateChange.
           return;
         }
@@ -14026,15 +14058,35 @@
         showTab("admin");
       });
 
+      // Cambia entre iniciar sesión y crear cuenta (desde el selector de arriba).
+      function setAuthMode(mode) {
+        authMode = mode === "register" ? "register" : "login";
+        applyAuthMode();
+      }
+
       function applyAuthMode() {
         const isReg = authMode === "register";
         document.querySelectorAll("#loginForm [data-register-only]").forEach((el) => { el.hidden = !isReg; });
         const btn = document.getElementById("loginSubmitBtn");
-        if (btn) btn.textContent = isReg ? "Crear cuenta" : "Entrar";
+        if (btn) btn.textContent = isReg ? "Crear mi cuenta" : "Entrar";
         const link = document.getElementById("authToggleLink");
         if (link) link.textContent = isReg ? "Inicia sesión" : "Regístrate";
         const prefix = document.getElementById("authTogglePrefix");
         if (prefix) prefix.textContent = isReg ? "¿Ya tienes cuenta? " : "¿No tienes cuenta? ";
+        // Selector segmentado arriba
+        const tabLogin = document.getElementById("authTabLogin");
+        const tabReg = document.getElementById("authTabRegister");
+        if (tabLogin) tabLogin.classList.toggle("active", !isReg);
+        if (tabReg) tabReg.classList.toggle("active", isReg);
+        // Encabezado y descripción según el modo
+        const eyebrow = document.getElementById("loginEyebrow");
+        const heading = document.getElementById("loginHeading");
+        const intro = document.getElementById("loginIntro");
+        if (eyebrow) eyebrow.textContent = isReg ? "Nuevo en KonektaYa" : "Acceso a KonektaYa";
+        if (heading) heading.textContent = isReg ? "Crear mi cuenta" : "Ingresar a mi dashboard";
+        if (intro) intro.textContent = isReg
+          ? "Crea tu cuenta con tu nombre, email y una contraseña. Con ella entrarás a tu panel y podrás publicar y buscar."
+          : "Usa el email y la contraseña que creaste. ¿Primera vez? Toca \"Crear cuenta\".";
         // El navegador guarda mejor si distingue contraseña nueva vs existente.
         const pass = document.getElementById("loginPassword");
         if (pass) pass.setAttribute("autocomplete", isReg ? "new-password" : "current-password");
