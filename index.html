@@ -242,6 +242,29 @@
         max-width: 920px;
       }
 
+      .hero .hero-free {
+        align-items: center;
+        color: #ffffff;
+        display: flex;
+        flex-wrap: wrap;
+        font-size: clamp(24px, 3.4vw, 38px);
+        font-weight: 800;
+        gap: 12px;
+        line-height: 1.15;
+        margin: 0;
+        max-width: none;
+      }
+
+      .hero-free-tag {
+        background: linear-gradient(135deg, #34d399, #10b981);
+        border-radius: 999px;
+        box-shadow: 0 10px 24px rgba(16, 185, 129, 0.35);
+        color: #04231a;
+        font-weight: 900;
+        letter-spacing: 0.5px;
+        padding: 4px 20px;
+      }
+
       .checks {
         border-top: 1px solid rgba(255, 255, 255, 0.18);
         display: grid;
@@ -7596,6 +7619,40 @@
         display: block;
       }
 
+      .password-wrap {
+        position: relative;
+        display: block;
+      }
+
+      .password-wrap input {
+        padding-right: 46px !important;
+      }
+
+      .password-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 1;
+        padding: 4px;
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .password-hint {
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 1.5;
+      }
+
+      .password-hint .pw-ok {
+        color: #15803d;
+        font-weight: 800;
+      }
+
       .login-or {
         align-items: center;
         color: #94a3b8;
@@ -7622,6 +7679,55 @@
         justify-content: center;
         width: 100%;
       }
+
+      .admin-topup {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        margin: 0 0 18px;
+        padding: 16px 18px;
+      }
+
+      .admin-topup-head strong {
+        color: #0f2a4a;
+        display: block;
+        font-size: 15px;
+      }
+
+      .admin-topup-head span {
+        color: #64748b;
+        display: block;
+        font-size: 12.5px;
+        margin: 2px 0 12px;
+      }
+
+      .admin-topup-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .admin-topup-row input {
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        flex: 1;
+        min-width: 140px;
+        padding: 10px 12px;
+      }
+
+      .admin-topup-row input[type="number"] {
+        max-width: 140px;
+      }
+
+      .admin-topup-status {
+        font-size: 13px;
+        font-weight: 700;
+        margin: 10px 0 0;
+        min-height: 1px;
+      }
+
+      .admin-topup-status.ok { color: #15803d; }
+      .admin-topup-status.err { color: #b91c1c; }
 
       .login-forgot {
         margin: 10px 0 0;
@@ -8260,7 +8366,7 @@
         <div class="hero-copy">
           <span class="eyebrow">KonektaYa · Panamá</span>
           <h1>Vende, compra o alquila <span class="hero-accent">propiedades y vehículos</span> mediante el matching de IA.</h1>
-          <p>Publicar y buscar es gratis.</p>
+          <p class="hero-free">Publicar y buscar es <span class="hero-free-tag">GRATIS</span></p>
           <div class="home-proof-pills" aria-label="Beneficios principales">
             <span>✓ Registro rápido</span>
             <span>✓ Sin comisión</span>
@@ -9191,7 +9297,13 @@
               <div class="field-grid">
                 <label class="field full" data-register-only hidden>Nombre completo<input name="name" type="text" autocomplete="name" /></label>
                 <label class="field full">Email<input name="email" id="loginEmail" type="email" required autocomplete="username" /></label>
-                <label class="field full" id="loginPasswordField">Contraseña<input name="password" id="loginPassword" type="password" required minlength="6" autocomplete="current-password" /></label>
+                <label class="field full" id="loginPasswordField">Contraseña
+                  <span class="password-wrap">
+                    <input name="password" id="loginPassword" type="password" required minlength="6" autocomplete="current-password" oninput="updatePasswordHint()" />
+                    <button type="button" class="password-toggle" id="loginPasswordToggle" onclick="toggleLoginPassword()" aria-label="Mostrar u ocultar contraseña" title="Mostrar u ocultar">👁️</button>
+                  </span>
+                  <small class="password-hint" id="loginPasswordHint" hidden>Usa al menos 8 caracteres, con una mayúscula, una minúscula y un número.</small>
+                </label>
               </div>
               <button class="button primary" type="submit" id="loginSubmitBtn">Entrar</button>
               <div class="login-passkey" id="loginPasskeyRow" hidden>
@@ -9335,6 +9447,18 @@
                       <h3>Clientes y créditos</h3>
                       <p>Busca un usuario, revisa saldo, movimientos y registra devoluciones demo.</p>
                     </div>
+                  </div>
+                  <div class="admin-topup" id="adminTopupCard">
+                    <div class="admin-topup-head">
+                      <strong>Acreditar saldo a un usuario</strong>
+                      <span>Suma saldo real (servidor) a cualquier cuenta registrada, por su email. Solo administradores.</span>
+                    </div>
+                    <div class="admin-topup-row">
+                      <input id="adminTopupEmail" type="email" placeholder="email del usuario" />
+                      <input id="adminTopupAmount" type="number" min="1" step="1" placeholder="monto USD" />
+                      <button class="button primary" type="button" onclick="adminAddCredit()">Acreditar</button>
+                    </div>
+                    <p class="admin-topup-status" id="adminTopupStatus"></p>
                   </div>
                   <div class="admin-credit-panel">
                     <div class="admin-client-list">
@@ -13917,7 +14041,38 @@
         // "¿Olvidaste tu contraseña?" solo tiene sentido al iniciar sesión.
         const forgot = document.getElementById("loginForgotRow");
         if (forgot) forgot.hidden = isReg;
+        updatePasswordHint();
         showLoginStatus("");
+      }
+
+      // Mostrar/ocultar la contraseña con el ojito.
+      function toggleLoginPassword() {
+        const input = document.getElementById("loginPassword");
+        const btn = document.getElementById("loginPasswordToggle");
+        if (!input) return;
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        if (btn) { btn.textContent = show ? "🙈" : "👁️"; btn.setAttribute("aria-label", show ? "Ocultar contraseña" : "Mostrar contraseña"); }
+      }
+
+      // Guía de contraseña (solo al crear cuenta / fijar nueva): pinta requisitos en vivo.
+      function updatePasswordHint() {
+        const hint = document.getElementById("loginPasswordHint");
+        const input = document.getElementById("loginPassword");
+        if (!hint || !input) return;
+        const show = authMode === "register" || passwordRecoveryMode;
+        hint.hidden = !show;
+        if (!show) return;
+        const v = input.value || "";
+        const checks = [
+          { ok: v.length >= 8, label: "8+ caracteres" },
+          { ok: /[A-Z]/.test(v), label: "una mayúscula" },
+          { ok: /[a-z]/.test(v), label: "una minúscula" },
+          { ok: /[0-9]/.test(v), label: "un número" }
+        ];
+        hint.innerHTML = "Sugerido: " + checks.map((c) =>
+          `<span class="${c.ok ? "pw-ok" : ""}">${c.ok ? "✓" : "•"} ${c.label}</span>`
+        ).join(" · ");
       }
 
       // "¿Olvidaste tu contraseña?": envía el correo de restablecimiento (Supabase).
@@ -13948,6 +14103,7 @@
         if (toggle) toggle.hidden = true;
         if (pass) { pass.value = ""; pass.setAttribute("autocomplete", "new-password"); }
         if (btn) { btn.textContent = "Guardar nueva contraseña"; }
+        updatePasswordHint();
         showLoginStatus("Escribe tu nueva contraseña y guárdala.");
       }
 
@@ -14007,6 +14163,26 @@
         } catch (e) {
           showLoginStatus("Acceso biométrico cancelado.");
         }
+      }
+
+      // Admin: acreditar saldo real a cualquier usuario por su email (RPC segura).
+      async function adminAddCredit() {
+        const emailEl = document.getElementById("adminTopupEmail");
+        const amtEl = document.getElementById("adminTopupAmount");
+        const status = document.getElementById("adminTopupStatus");
+        const setStatus = (msg, ok) => { if (status) { status.textContent = msg; status.className = "admin-topup-status" + (ok ? " ok" : msg ? " err" : ""); } };
+        const email = String((emailEl || {}).value || "").trim();
+        const amount = Number((amtEl || {}).value || 0);
+        if (!email) { setStatus("Escribe el email del usuario."); return; }
+        if (!(amount > 0)) { setStatus("Escribe un monto mayor a 0."); return; }
+        if (!supabaseEnabled) { setStatus("Disponible solo con el backend conectado."); return; }
+        setStatus("Acreditando…");
+        const { data, error } = await supabaseClient.rpc("admin_add_credit", { target_email: email, amount });
+        if (error) { setStatus("No se pudo acreditar: " + error.message); return; }
+        setStatus(`✓ Acreditado. Nuevo saldo de ${email}: ${money.format(Number(data || 0))}`, true);
+        if (amtEl) amtEl.value = "";
+        // Si el admin se acreditó a sí mismo, refrescar su saldo visible.
+        if (email.toLowerCase() === String(currentUserEmail).toLowerCase()) { try { await refreshBalance(); render(); } catch (e) {} }
       }
 
       // Registrar un passkey para la cuenta actual (requiere sesión iniciada).
