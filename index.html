@@ -14914,11 +14914,11 @@
           regBtn.hidden = !(supported && loggedIn);
           if (supported && loggedIn) {
             const on = (typeof passkeyActivated === "function") && passkeyActivated();
-            regBtn.textContent = on ? "✅ Face ID activo" : "🔒 Activar Face ID";
+            regBtn.textContent = on ? "✅ Face ID activo (este equipo)" : "🔒 Activar Face ID";
             regBtn.classList.toggle("passkey-on", Boolean(on));
             regBtn.title = on
-              ? "Face ID / huella activo en este dispositivo. Tócalo para añadir otro."
-              : "Activa el acceso con Face ID / huella";
+              ? "Face ID / huella activo en este equipo. Tócalo para añadir otro dispositivo."
+              : "Actívalo en este equipo para entrar con Face ID / huella. Se configura por dispositivo.";
           }
         }
         if (typeof renderMyData === "function") renderMyData();
@@ -14930,8 +14930,11 @@
         if (!passkeysSupported()) { showLoginStatus("Tu navegador no soporta acceso biométrico."); return; }
         showLoginStatus("Abriendo Face ID / huella…");
         try {
-          const { error } = await supabaseClient.auth.signInWithPasskey();
+          const { data, error } = await supabaseClient.auth.signInWithPasskey();
           if (error) { showLoginStatus("No se pudo entrar con Face ID: " + error.message); return; }
+          // Entrar con Face ID confirma que este equipo tiene passkey -> marcarlo.
+          const em = data && data.user ? data.user.email : "";
+          if (em) { try { localStorage.setItem("konektaya_passkey_" + em.toLowerCase(), "1"); } catch (e) {} }
           showLoginStatus(""); // la sesión y el redirect los maneja onAuthStateChange
         } catch (e) {
           showLoginStatus("Acceso biométrico cancelado.");
