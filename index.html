@@ -13641,9 +13641,12 @@
       function ensureAccountForForm(form, data) {
         if (supabaseEnabled) {
           if (!currentUserEmail) {
-            const err = form.querySelector("[data-account-error]") || form.querySelector("[data-form-error]");
-            if (err) { err.textContent = "Inicia sesión o crea tu cuenta para publicar."; err.classList.add("show"); }
+            const tab = Object.keys(FORM_TABS).find((t) => FORM_TABS[t] === form.id);
+            if (tab) savePendingForm(tab); // guarda lo escrito para retomarlo
+            authMode = "register";
+            applyAuthMode();
             showTab("login");
+            showLoginStatus("Crea tu cuenta o inicia sesión para publicar. Guardamos lo que escribiste y te lo devolvemos.");
             return false;
           }
           data.email = currentUserEmail; // publica siempre con la cuenta logueada
@@ -13690,6 +13693,60 @@
         delete data.accountPassword;
         delete data.accountPasswordConfirm;
         return data;
+      }
+
+      // ============================================================
+      // Onboarding "cuenta primero": si un visitante sin sesión intenta ir a
+      // publicar o buscar, lo mandamos a crear cuenta/entrar y guardamos un
+      // borrador; al volver (incluso tras confirmar el correo) lo llevamos al
+      // formulario que quería con lo que hubiera escrito.
+      // ============================================================
+      const FORM_TABS = {
+        propietario: "propertyForm",
+        busqueda: "searchForm",
+        vehiculoOferta: "vehicleOfferForm",
+        vehiculoBusqueda: "vehicleSearchForm"
+      };
+      const PENDING_FORM_KEY = "konektaya_pending_form";
+
+      function savePendingForm(tab) {
+        try {
+          const formId = FORM_TABS[tab];
+          const form = formId ? document.getElementById(formId) : null;
+          const data = {};
+          if (form) new FormData(form).forEach((v, k) => { if (typeof v === "string" && v.trim() !== "") data[k] = v; });
+          localStorage.setItem(PENDING_FORM_KEY, JSON.stringify({ tab, formId, data }));
+        } catch (e) {}
+      }
+      function readPendingForm() {
+        try { const raw = localStorage.getItem(PENDING_FORM_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+      }
+      function clearPendingForm() { try { localStorage.removeItem(PENDING_FORM_KEY); } catch (e) {} }
+
+      function restorePendingForm(pending) {
+        if (!pending || !pending.formId || !pending.data) return;
+        const form = document.getElementById(pending.formId);
+        if (!form) return;
+        Object.entries(pending.data).forEach(([k, v]) => {
+          const el = form.elements[k];
+          if (!el || el.type === "hidden") return;
+          try {
+            el.value = v;
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+          } catch (e) {}
+        });
+      }
+
+      // Devuelve true si intercepta (visitante sin sesión yendo a un formulario).
+      function gateFormTab(tab) {
+        if (!supabaseEnabled || !FORM_TABS[tab] || currentUserEmail) return false;
+        savePendingForm(tab);
+        authMode = "register";
+        applyAuthMode();
+        showTab("login");
+        showLoginStatus("Crea tu cuenta o inicia sesión para publicar o buscar. Luego te llevamos a tu formulario.");
+        return true;
       }
 
       function showLoginStatus(message) {
@@ -13742,6 +13799,8 @@
       document.querySelectorAll("[data-tab-button]").forEach((button) => {
         button.addEventListener("click", () => showTab(button.dataset.tabButton));
       });
+      // Expuesto para que el manejador delegado (activatePropertyYaTab) también gate.
+      window.gateFormTab = gateFormTab;
 
       document.getElementById("propertyForm").addEventListener("submit", (event) => {
         event.preventDefault();
@@ -14333,8 +14392,15 @@
           render();
           refreshAuthUI();
           if (redirect && currentUserEmail) {
-            if (window.showDashboardView) window.showDashboardView("user");
-            showTab("admin");
+            const pending = readPendingForm();
+            if (pending && pending.tab && FORM_TABS[pending.tab]) {
+              clearPendingForm();
+              showTab(pending.tab);
+              setTimeout(() => { restorePendingForm(pending); }, 80);
+            } else {
+              if (window.showDashboardView) window.showDashboardView("user");
+              showTab("admin");
+            }
             showLoginStatus("");
           }
         }, 0);
@@ -18708,6 +18774,8 @@
           const tabButton = event.target.closest("[data-tab-button]");
           if (tabButton) {
             event.preventDefault();
+            // Visitante sin cuenta yendo a publicar/buscar -> crear cuenta primero.
+            if (window.gateFormTab && window.gateFormTab(tabButton.dataset.tabButton)) return;
             activatePropertyYaTab(tabButton.dataset.tabButton);
           }
         });
