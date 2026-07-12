@@ -13852,14 +13852,17 @@
           if (passwordRecoveryMode) {
             if (password.length < 6) { showLoginStatus("La contraseña debe tener al menos 6 caracteres."); return; }
             const { error } = await supabaseClient.auth.updateUser({ password });
-            if (error) { showLoginStatus("No se pudo actualizar: " + error.message); return; }
-            passwordRecoveryMode = false;
+            if (error) {
+              // El enlace de recuperación expiró o ya se usó: salir del modo y pedir uno nuevo.
+              const expired = /session|expired|missing|token/i.test(error.message);
+              exitPasswordRecovery();
+              showLoginStatus(expired
+                ? "El enlace de recuperación expiró o ya se usó. Toca \"¿Olvidaste tu contraseña?\" para pedir uno nuevo."
+                : "No se pudo actualizar: " + error.message);
+              return;
+            }
+            exitPasswordRecovery();
             showLoginStatus("¡Contraseña actualizada! Ya puedes usar tu nueva contraseña.");
-            const emailField = document.getElementById("loginEmail");
-            if (emailField && emailField.closest(".field")) emailField.closest(".field").hidden = false;
-            const btn = document.getElementById("loginSubmitBtn");
-            if (btn) btn.textContent = "Entrar";
-            applyAuthMode();
             return;
           }
           if (authMode === "register") {
@@ -13946,6 +13949,22 @@
         if (pass) { pass.value = ""; pass.setAttribute("autocomplete", "new-password"); }
         if (btn) { btn.textContent = "Guardar nueva contraseña"; }
         showLoginStatus("Escribe tu nueva contraseña y guárdala.");
+      }
+
+      // Sale del modo recuperación y restaura el formulario de login normal
+      // (evita quedar atrapado si el enlace expiró o ya se usó).
+      function exitPasswordRecovery() {
+        passwordRecoveryMode = false;
+        const emailField = document.getElementById("loginEmail");
+        if (emailField && emailField.closest(".field")) emailField.closest(".field").hidden = false;
+        const pass = document.getElementById("loginPassword");
+        if (pass) pass.value = "";
+        const btn = document.getElementById("loginSubmitBtn");
+        if (btn) btn.textContent = "Entrar";
+        const toggle = document.querySelector("#loginForm .login-toggle");
+        if (toggle) toggle.hidden = false;
+        authMode = "login";
+        applyAuthMode();
       }
 
       function refreshAuthUI() {
