@@ -160,6 +160,24 @@
         color: var(--white);
       }
 
+      .nav a.nav-cta {
+        background: var(--orange);
+        border: 1px solid var(--orange);
+        border-radius: 999px;
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 850;
+        line-height: 1;
+        padding: 11px 18px;
+        white-space: nowrap;
+      }
+
+      .nav a.nav-cta:hover {
+        background: var(--orange-dark);
+        border-color: var(--orange-dark);
+        color: #ffffff;
+      }
+
       .nav a[data-dashboard-target="admin"] {
         border-color: #ffd6ae;
         color: var(--orange-dark);
@@ -8458,7 +8476,7 @@
         <span class="brand-text">Konekta<span class="ya-bubble">Ya</span></span>
       </a>
       <nav class="nav" aria-label="Principal">
-        <a class="tab-link active" href="#inicio" data-tab="inicio">Inicio</a>
+        <a class="nav-cta" href="#inicio" onclick="goPublishOrSearch(event)">Publicar o buscar</a>
         <a class="tab-link" href="#matches" data-tab="matches">Cómo funciona</a>
         <a class="tab-link" id="loginNavLink" href="#login" data-tab="login">LOGIN</a>
         <a class="tab-link" id="adminNavLink" href="#admin" data-tab="admin" data-dashboard-target="admin">ADMIN</a>
@@ -13791,6 +13809,27 @@
           } catch (e) {}
         });
       }
+
+      // CTA "Publicar o buscar" del menú: lleva a las opciones de publicar/buscar.
+      // Logueado -> Mi panel (accesos directos). Visitante -> inicio + scroll al selector.
+      function goPublishOrSearch(e) {
+        if (e) e.preventDefault();
+        if (supabaseEnabled && currentUserEmail) {
+          if (window.showDashboardView) window.showDashboardView("user");
+          showTab("admin");
+          setTimeout(() => {
+            const el = document.querySelector(".dashboard-quick-actions");
+            if (el) el.scrollIntoView({ behavior: "auto", block: "center" });
+          }, 90);
+          return;
+        }
+        if (window.activatePropertyYaTab) activatePropertyYaTab("inicio"); else showTab("inicio");
+        setTimeout(() => {
+          const el = document.querySelector(".home-actions-panel");
+          if (el) el.scrollIntoView({ behavior: "auto", block: "start" });
+        }, 90);
+      }
+      window.goPublishOrSearch = goPublishOrSearch;
 
       // Tras publicar/registrar con éxito: mensaje + llevar a "Mi panel" (no a inicio).
       function afterPublishSuccess() {
