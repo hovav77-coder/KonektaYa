@@ -8297,9 +8297,9 @@
           box-shadow: 0 14px 24px rgba(10, 47, 85, 0.12);
           display: none;
           flex-direction: column;
-          gap: 6px;
+          gap: 2px;
           left: 0;
-          padding: 10px 18px 16px;
+          padding: 8px 12px 12px;
           position: absolute;
           right: 0;
           top: 100%;
@@ -8310,10 +8310,16 @@
         }
 
         .nav a {
+          border-radius: 8px;
+          font-size: 15px;
+          padding: 10px 12px;
+          text-align: left;
           width: 100%;
         }
 
         .nav a.nav-cta {
+          margin-bottom: 4px;
+          padding: 12px;
           text-align: center;
         }
 
@@ -12943,8 +12949,21 @@
           if (intro) {
             intro.textContent = "Revisa tus propiedades, solicitudes, resultados y créditos.";
           }
+          window.currentDashboardView = target;
+          if (window.refineNavActive) window.refineNavActive();
         };
       }
+
+      // "Mi panel" y "ADMIN" comparten el tab "admin"; se distinguen por la vista
+      // (user vs admin). Esto marca activo el correcto para saber dónde estás.
+      window.refineNavActive = function () {
+        const activePanel = document.querySelector(".tab-panel.active");
+        const onAdmin = activePanel && activePanel.id === "admin";
+        const view = window.currentDashboardView || "user";
+        document.querySelectorAll('.nav a[data-tab="admin"]').forEach((l) => {
+          l.classList.toggle("active", Boolean(onAdmin) && l.dataset.dashboardTarget === view);
+        });
+      };
 
       function setupUserDashboardTabs() {
         const buttons = document.querySelectorAll("[data-user-dashboard-button]");
@@ -14169,6 +14188,7 @@
         });
 
         history.replaceState(null, "", `#${target}`);
+        if (window.refineNavActive) window.refineNavActive();
         window.scrollTo({ top: 0, behavior: "auto" });
       }
 
@@ -19154,6 +19174,7 @@
             history.replaceState(null, "", `#${target}`);
           }
 
+          if (window.refineNavActive) window.refineNavActive();
           window.scrollTo({ top: 0, behavior: "auto" });
         }
 
