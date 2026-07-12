@@ -7676,6 +7676,36 @@
         line-height: 1.5;
       }
 
+      .pw-meter {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+      }
+
+      .pw-meter-track {
+        background: #e2e8f0;
+        border-radius: 999px;
+        flex: 1;
+        height: 7px;
+        overflow: hidden;
+      }
+
+      .pw-meter-track b {
+        background: #e2e8f0;
+        border-radius: 999px;
+        display: block;
+        height: 100%;
+        width: 0;
+        transition: width 200ms ease, background 200ms ease;
+      }
+
+      .pw-meter-label {
+        font-size: 12px;
+        font-weight: 800;
+        min-width: 46px;
+        text-align: right;
+      }
+
       .password-hint .pw-ok {
         color: #15803d;
         font-weight: 800;
@@ -9334,10 +9364,15 @@
                     <input name="password" id="loginPassword" type="password" required minlength="6" autocomplete="current-password" oninput="updatePasswordHint()" />
                     <button type="button" class="password-toggle" id="loginPasswordToggle" onclick="toggleLoginPassword()" aria-label="Mostrar u ocultar contraseña" title="Mostrar u ocultar">👁️</button>
                   </span>
+                  <span class="pw-meter" id="loginPwMeter" hidden>
+                    <span class="pw-meter-track"><b id="loginPwFill"></b></span>
+                    <span class="pw-meter-label" id="loginPwLabel"></span>
+                  </span>
                   <small class="password-hint" id="loginPasswordHint" hidden>Usa al menos 8 caracteres, con una mayúscula, una minúscula y un número.</small>
                 </label>
               </div>
               <button class="button primary" type="submit" id="loginSubmitBtn">Entrar</button>
+              <button class="button ghost" type="button" id="loginCreateHint" hidden onclick="switchToRegisterWithEmail()">Crear cuenta con este email →</button>
               <div class="login-passkey" id="loginPasskeyRow" hidden>
                 <div class="login-or"><span>o</span></div>
                 <button class="button ghost passkey-btn" type="button" id="loginPasskeyBtn" onclick="signInWithPasskeyFlow()">
@@ -14037,7 +14072,12 @@
             return;
           }
           const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-          if (error) { showLoginStatus("Email o contraseña incorrectos. Si es tu primera vez, toca \"Crear cuenta\" arriba."); return; }
+          if (error) {
+            showLoginStatus("No pudimos iniciar sesión con ese email. Si es tu primera vez, crea tu cuenta:");
+            const createHint = document.getElementById("loginCreateHint");
+            if (createHint) createHint.hidden = false;
+            return;
+          }
           // La sesión y el redirect los maneja onAuthStateChange.
           return;
         }
@@ -14062,6 +14102,14 @@
       function setAuthMode(mode) {
         authMode = mode === "register" ? "register" : "login";
         applyAuthMode();
+      }
+
+      // Tras un login fallido: pasa a "Crear cuenta" conservando el email escrito.
+      function switchToRegisterWithEmail() {
+        setAuthMode("register");
+        const nameInput = document.querySelector('#loginForm [data-register-only] input');
+        if (nameInput) nameInput.focus();
+        showLoginStatus("Completa tu nombre y crea tu contraseña para registrarte.");
       }
 
       function applyAuthMode() {
@@ -14093,6 +14141,9 @@
         // "¿Olvidaste tu contraseña?" solo tiene sentido al iniciar sesión.
         const forgot = document.getElementById("loginForgotRow");
         if (forgot) forgot.hidden = isReg;
+        // El atajo "Crear cuenta con este email" solo aparece tras un login fallido.
+        const createHint = document.getElementById("loginCreateHint");
+        if (createHint) createHint.hidden = true;
         updatePasswordHint();
         showLoginStatus("");
       }
@@ -14114,6 +14165,8 @@
         if (!hint || !input) return;
         const show = authMode === "register" || passwordRecoveryMode;
         hint.hidden = !show;
+        const meter = document.getElementById("loginPwMeter");
+        if (meter) meter.hidden = !show;
         if (!show) return;
         const v = input.value || "";
         const checks = [
@@ -14125,6 +14178,19 @@
         hint.innerHTML = "Sugerido: " + checks.map((c) =>
           `<span class="${c.ok ? "pw-ok" : ""}">${c.ok ? "✓" : "•"} ${c.label}</span>`
         ).join(" · ");
+        // Fuerza: requisitos cumplidos + bonus por longitud y símbolo
+        let score = checks.filter((c) => c.ok).length;
+        if (v.length >= 12) score++;
+        if (/[^A-Za-z0-9]/.test(v)) score++;
+        const fill = document.getElementById("loginPwFill");
+        const label = document.getElementById("loginPwLabel");
+        let pct = 0, color = "#e2e8f0", txt = "";
+        if (v.length === 0) { pct = 0; color = "#e2e8f0"; txt = ""; }
+        else if (score <= 2) { pct = 33; color = "#dc2626"; txt = "Débil"; }
+        else if (score <= 4) { pct = 66; color = "#d97706"; txt = "Media"; }
+        else { pct = 100; color = "#15803d"; txt = "Fuerte"; }
+        if (fill) { fill.style.width = pct + "%"; fill.style.background = color; }
+        if (label) { label.textContent = txt; label.style.color = color; }
       }
 
       // "¿Olvidaste tu contraseña?": envía el correo de restablecimiento (Supabase).
