@@ -8055,6 +8055,58 @@
       .admin-topup-status.ok { color: #15803d; }
       .admin-topup-status.err { color: #b91c1c; }
 
+      .admin-users {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        margin: 0 0 18px;
+        padding: 16px 18px;
+      }
+
+      .admin-users-head {
+        align-items: center;
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        margin: 0 0 12px;
+      }
+
+      .admin-users-head strong { color: #0f2a4a; display: block; font-size: 15px; }
+      .admin-users-head span { color: #64748b; display: block; font-size: 12.5px; }
+
+      .admin-users-search {
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        margin: 0 0 12px;
+        padding: 10px 12px;
+        width: 100%;
+      }
+
+      .admin-users-list { display: grid; gap: 8px; max-height: 460px; overflow-y: auto; }
+      .admin-users-empty { color: #64748b; font-size: 13px; margin: 6px 2px; }
+
+      .au-row {
+        align-items: center;
+        border: 1px solid #eef2f7;
+        border-radius: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: space-between;
+        padding: 10px 12px;
+      }
+
+      .au-row.is-blocked { background: #fff5f5; border-color: #f3c9c9; }
+      .au-info { display: grid; gap: 1px; min-width: 160px; }
+      .au-info strong { color: #0f2a4a; font-size: 14px; }
+      .au-email { color: #475569; font-size: 12.5px; }
+      .au-meta { align-items: center; color: #64748b; display: flex; flex-wrap: wrap; font-size: 11.5px; gap: 6px; }
+      .au-tag { background: #eef2f7; border-radius: 999px; color: #334155; font-weight: 800; padding: 2px 8px; }
+      .au-tag.au-blocked { background: #fde8e8; color: #b91c1c; }
+      .au-pub { color: #94a3b8; }
+      .au-bal { color: #0f2a4a; font-size: 15px; font-weight: 800; }
+      .au-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+
       .login-forgot {
         margin: 10px 0 0;
         text-align: right;
@@ -9905,6 +9957,17 @@
                       <button class="button primary" type="button" onclick="adminAddCredit()">Acreditar</button>
                     </div>
                     <p class="admin-topup-status" id="adminTopupStatus"></p>
+                  </div>
+                  <div class="admin-users" id="adminUsersCard">
+                    <div class="admin-users-head">
+                      <div>
+                        <strong>Usuarios registrados</strong>
+                        <span>Todos los que crearon cuenta. Sube/baja saldo o bloquéalos.</span>
+                      </div>
+                      <button class="button small ghost" type="button" onclick="adminLoadUsers()">Actualizar</button>
+                    </div>
+                    <input id="adminUsersSearch" class="admin-users-search" placeholder="Filtrar por email o nombre" oninput="renderAdminUsers()" />
+                    <div class="admin-users-list" id="adminUsersList"><p class="admin-users-empty">Toca “Actualizar” para cargar los usuarios.</p></div>
                   </div>
                   <div class="admin-credit-panel">
                     <div class="admin-client-list">
@@ -14960,6 +15023,66 @@
         // Si el admin se acreditó a sí mismo, refrescar su saldo visible.
         if (email.toLowerCase() === String(currentUserEmail).toLowerCase()) { try { await refreshBalance(); render(); } catch (e) {} }
       }
+
+      // ---- Admin: lista de TODOS los usuarios registrados (servidor) ----
+      let adminUsersData = [];
+      async function adminLoadUsers() {
+        const list = document.getElementById("adminUsersList");
+        if (!supabaseEnabled) { if (list) list.innerHTML = '<p class="admin-users-empty">Disponible solo con el backend conectado.</p>'; return; }
+        if (list) list.innerHTML = '<p class="admin-users-empty">Cargando…</p>';
+        const { data, error } = await supabaseClient.rpc("admin_list_users");
+        if (error) { if (list) list.innerHTML = '<p class="admin-users-empty">No se pudo cargar: ' + escapeHtml(error.message) + "</p>"; return; }
+        adminUsersData = data || [];
+        renderAdminUsers();
+      }
+      function renderAdminUsers() {
+        const list = document.getElementById("adminUsersList");
+        if (!list) return;
+        const q = normalize((document.getElementById("adminUsersSearch") || {}).value || "");
+        const rows = adminUsersData.filter((u) => !q || normalize((u.email || "") + " " + (u.name || "")).includes(q));
+        if (!rows.length) { list.innerHTML = '<p class="admin-users-empty">' + (adminUsersData.length ? "Sin coincidencias." : "No hay usuarios.") + "</p>"; return; }
+        list.innerHTML = rows.map((u) => {
+          const em = escapeHtml(u.email || "");
+          const tags = [];
+          if (u.role === "broker") tags.push('<span class="au-tag">Broker' + (u.broker_status && u.broker_status !== "aprobado" ? " · " + escapeHtml(u.broker_status) : "") + "</span>");
+          if (u.blocked) tags.push('<span class="au-tag au-blocked">Bloqueado</span>');
+          return `<div class="au-row${u.blocked ? " is-blocked" : ""}">
+            <div class="au-info">
+              <strong>${escapeHtml(u.name || "(sin nombre)")}</strong>
+              <span class="au-email">${em}</span>
+              <span class="au-meta">${tags.join(" ")} <span class="au-pub">${u.publicaciones || 0} public.</span></span>
+            </div>
+            <div class="au-money"><span class="au-bal">${money.format(Number(u.balance || 0))}</span></div>
+            <div class="au-actions">
+              <button class="button small" type="button" onclick="adminAdjustCreditUser('${em}', 10)">+10</button>
+              <button class="button small" type="button" onclick="adminAdjustCreditUser('${em}', -10)">−10</button>
+              <button class="button small ghost" type="button" onclick="adminAdjustCreditUser('${em}', null)">Otro…</button>
+              <button class="button small ${u.blocked ? "primary" : "reject"}" type="button" onclick="adminToggleBlocked('${em}', ${u.blocked ? "false" : "true"})">${u.blocked ? "Desbloquear" : "Bloquear"}</button>
+            </div>
+          </div>`;
+        }).join("");
+      }
+      async function adminAdjustCreditUser(email, delta) {
+        if (delta === null) {
+          const v = prompt("Monto a ajustar para " + email + " (usa negativo para restar):", "10");
+          if (v === null) return;
+          delta = Number(v);
+          if (!isFinite(delta) || delta === 0) { alert("Monto inválido."); return; }
+        }
+        const { error } = await supabaseClient.rpc("admin_adjust_credit", { target_email: email, delta });
+        if (error) { alert("No se pudo: " + error.message); return; }
+        adminLoadUsers();
+      }
+      async function adminToggleBlocked(email, blocked) {
+        if (!confirm((blocked ? "Bloquear" : "Desbloquear") + " a " + email + "?")) return;
+        const { error } = await supabaseClient.rpc("admin_set_user_blocked", { target_email: email, p_blocked: blocked });
+        if (error) { alert("No se pudo: " + error.message); return; }
+        adminLoadUsers();
+      }
+      window.adminLoadUsers = adminLoadUsers;
+      window.renderAdminUsers = renderAdminUsers;
+      window.adminAdjustCreditUser = adminAdjustCreditUser;
+      window.adminToggleBlocked = adminToggleBlocked;
 
       // Registrar un passkey para la cuenta actual (requiere sesión iniciada).
       // ¿El usuario ya activó un passkey en este dispositivo/navegador?

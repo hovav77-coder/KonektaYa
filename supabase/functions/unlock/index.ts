@@ -206,6 +206,11 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: "No autenticado" }, 401);
 
     const admin = createClient(url, service);
+
+    // Usuario bloqueado por el admin no puede desbloquear contactos.
+    const { data: me } = await admin.from("profiles").select("blocked").eq("id", user.id).maybeSingle();
+    if (me?.blocked) return json({ error: "Tu cuenta está bloqueada. Contacta al administrador de KonektaYa." }, 403);
+
     const body = await req.json();
     const vertical = body.vertical === "vehiculo" ? "vehiculo" : "inmueble";
     const offerId = body.offerId, searchId = body.searchId;
