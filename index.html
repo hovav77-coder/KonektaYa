@@ -14123,15 +14123,8 @@
       // Logueado -> Mi panel (accesos directos). Visitante -> inicio + scroll al selector.
       function goPublishOrSearch(e) {
         if (e) e.preventDefault();
-        if (supabaseEnabled && currentUserEmail) {
-          if (window.showDashboardView) window.showDashboardView("user");
-          showTab("admin");
-          setTimeout(() => {
-            const el = document.querySelector(".dashboard-quick-actions");
-            if (el) el.scrollIntoView({ behavior: "auto", block: "center" });
-          }, 90);
-          return;
-        }
+        // Siempre lleva al selector "¿Qué quieres hacer hoy?" de la página inicial
+        // (aunque estés en tu panel), no a los accesos directos internos.
         if (window.activatePropertyYaTab) activatePropertyYaTab("inicio"); else showTab("inicio");
         setTimeout(() => {
           const el = document.querySelector(".home-actions-panel");
