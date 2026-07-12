@@ -5885,6 +5885,20 @@
         padding: 6px 20px;
       }
 
+      .mydata-pass-link {
+        background: transparent;
+        border: none;
+        color: var(--orange-dark);
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 800;
+        padding: 0;
+      }
+
+      .mydata-pass-link:hover {
+        text-decoration: underline;
+      }
+
       .mydata-foot {
         display: flex;
         gap: 10px;
@@ -9757,6 +9771,7 @@
                   <div class="md-row"><span>Apellido</span><b id="mdLast">—</b></div>
                   <div class="md-row"><span>Email</span><b id="mdEmail">—</b></div>
                   <div class="md-row"><span>Celular</span><b id="mdPhone">—</b></div>
+                  <div class="md-row"><span>Contraseña</span><button type="button" class="mydata-pass-link" onclick="openMyDataPass()">Cambiar contraseña</button></div>
                 </div>
                 <div class="mydata-foot" id="myDataViewFoot">
                   <button type="button" class="button primary" onclick="toggleMyDataEdit()">Editar</button>
@@ -9771,6 +9786,20 @@
                     <button type="button" class="button ghost" onclick="toggleMyDataEdit(true)">Cancelar</button>
                   </div>
                   <p class="md-status" id="mdStatus"></p>
+                </div>
+                <div class="my-data-form" id="myDataPass" hidden>
+                  <label class="field full">Nueva contraseña
+                    <span class="password-wrap">
+                      <input id="mdNewPass" type="password" minlength="6" autocomplete="new-password" placeholder="Escribe tu nueva contraseña" />
+                      <button type="button" class="password-toggle" id="mdNewPassToggle" onclick="toggleMdNewPass()" aria-label="Mostrar u ocultar">👁️</button>
+                    </span>
+                  </label>
+                  <small class="password-hint" style="display:block">La contraseña no se puede mostrar (se guarda encriptada). Aquí defines una nueva.</small>
+                  <div class="md-actions">
+                    <button type="button" class="button primary" onclick="savePassword()">Guardar contraseña</button>
+                    <button type="button" class="button ghost" onclick="toggleMyDataEdit(true)">Cancelar</button>
+                  </div>
+                  <p class="md-status" id="mdPassStatus"></p>
                 </div>
               </div>
             </div>
@@ -14218,6 +14247,7 @@
         const view = document.getElementById("myDataView");
         const edit = document.getElementById("myDataEdit");
         const foot = document.getElementById("myDataViewFoot");
+        const pass = document.getElementById("myDataPass");
         if (!view || !edit) return;
         const opening = edit.hidden && !cancel;
         if (opening) {
@@ -14230,7 +14260,45 @@
         view.hidden = opening;
         if (foot) foot.hidden = opening;
         edit.hidden = !opening;
+        if (pass) pass.hidden = true;
       }
+
+      // Cambiar contraseña (usuario logueado): no requiere la anterior.
+      function openMyDataPass() {
+        document.getElementById("myDataView").hidden = true;
+        document.getElementById("myDataViewFoot").hidden = true;
+        document.getElementById("myDataEdit").hidden = true;
+        const pass = document.getElementById("myDataPass");
+        pass.hidden = false;
+        const inp = document.getElementById("mdNewPass");
+        if (inp) { inp.value = ""; inp.type = "password"; }
+        const tg = document.getElementById("mdNewPassToggle"); if (tg) tg.textContent = "👁️";
+        const st = document.getElementById("mdPassStatus"); if (st) st.textContent = "";
+      }
+      function toggleMdNewPass() {
+        const inp = document.getElementById("mdNewPass");
+        const tg = document.getElementById("mdNewPassToggle");
+        if (!inp) return;
+        const show = inp.type === "password";
+        inp.type = show ? "text" : "password";
+        if (tg) tg.textContent = show ? "🙈" : "👁️";
+      }
+      async function savePassword() {
+        const inp = document.getElementById("mdNewPass");
+        const st = document.getElementById("mdPassStatus");
+        const p = String((inp || {}).value || "");
+        if (p.length < 6) { if (st) { st.textContent = "La contraseña debe tener al menos 6 caracteres."; st.className = "md-status err"; } return; }
+        if (!supabaseEnabled || !supabaseClient) { if (st) { st.textContent = "Disponible en la versión conectada."; st.className = "md-status err"; } return; }
+        if (st) { st.textContent = "Guardando…"; st.className = "md-status"; }
+        const { error } = await supabaseClient.auth.updateUser({ password: p });
+        if (error) { if (st) { st.textContent = "No se pudo cambiar: " + error.message; st.className = "md-status err"; } return; }
+        if (st) { st.textContent = "✓ Contraseña actualizada"; st.className = "md-status ok"; }
+        if (inp) inp.value = "";
+        setTimeout(() => toggleMyDataEdit(true), 900);
+      }
+      window.openMyDataPass = openMyDataPass;
+      window.toggleMdNewPass = toggleMdNewPass;
+      window.savePassword = savePassword;
       async function saveMyData() {
         const first = document.getElementById("mdFirstInput").value.trim();
         const last = document.getElementById("mdLastInput").value.trim();
