@@ -8366,9 +8366,9 @@
           box-shadow: 0 14px 24px rgba(10, 47, 85, 0.12);
           display: none;
           flex-direction: column;
-          gap: 2px;
+          gap: 0;
           left: 0;
-          padding: 8px 12px 12px;
+          padding: 8px 14px 12px;
           position: absolute;
           right: 0;
           top: 100%;
@@ -8378,17 +8378,49 @@
           display: flex;
         }
 
+        /* Menú tipo lista limpio (no botones de colores apilados) */
         .nav a {
-          border-radius: 8px;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid #eef2f7;
+          border-radius: 0;
+          box-shadow: none;
+          color: var(--navy);
           font-size: 15px;
-          padding: 10px 12px;
+          font-weight: 800;
+          padding: 14px 4px;
           text-align: left;
           width: 100%;
         }
 
+        .nav a:last-child {
+          border-bottom: none;
+        }
+
+        .nav a:hover {
+          background: transparent;
+          border-color: transparent;
+          border-bottom: 1px solid #eef2f7;
+        }
+
+        .nav a.active,
+        .nav a[data-dashboard-target="admin"].active {
+          background: #fff4ec;
+          border-radius: 8px;
+          border-bottom-color: transparent;
+          box-shadow: none;
+          color: var(--orange-dark);
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+
+        /* El CTA sí es un botón */
         .nav a.nav-cta {
-          margin-bottom: 4px;
-          padding: 12px;
+          background: var(--orange);
+          border-radius: 10px;
+          color: #ffffff;
+          margin: 4px 0 8px;
+          padding: 13px;
           text-align: center;
         }
 
