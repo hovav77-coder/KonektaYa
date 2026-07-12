@@ -75,10 +75,9 @@
 
       .topbar {
         align-items: center;
-        backdrop-filter: blur(18px);
-        background: rgba(255, 255, 255, 0.94);
+        background: #ffffff;
         border-bottom: 1px solid rgba(217, 227, 239, 0.9);
-        box-shadow: 0 10px 30px rgba(10, 47, 85, 0.06);
+        box-shadow: 0 6px 20px rgba(10, 47, 85, 0.06);
         display: flex;
         gap: 18px;
         justify-content: space-between;
@@ -5754,6 +5753,90 @@
         margin: 0 0 22px;
       }
 
+      .my-data-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        margin: 0 0 22px;
+        padding: 18px 20px;
+      }
+
+      .my-data-head {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        margin: 0 0 12px;
+      }
+
+      .my-data-head strong {
+        color: #0f2a4a;
+        font-size: 16px;
+      }
+
+      .my-data-edit {
+        background: transparent;
+        border: 1px solid #cbd5e1;
+        border-radius: 999px;
+        color: var(--navy);
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 6px 16px;
+      }
+
+      .my-data-edit:hover {
+        background: #fff8f1;
+        border-color: var(--orange);
+      }
+
+      .my-data-view {
+        display: grid;
+        gap: 1px;
+      }
+
+      .md-row {
+        align-items: center;
+        border-bottom: 1px solid #eef2f7;
+        display: flex;
+        justify-content: space-between;
+        padding: 9px 0;
+      }
+
+      .md-row:last-child {
+        border-bottom: none;
+      }
+
+      .md-row span {
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .md-row b {
+        color: #0f2a4a;
+        font-size: 14.5px;
+        text-align: right;
+      }
+
+      .my-data-form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .md-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .md-status {
+        font-size: 13px;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .md-status.ok { color: #15803d; }
+      .md-status.err { color: #b91c1c; }
+
       .dqa-btn {
         background: #ffffff;
         border: 1px solid #cbd5e1;
@@ -9500,6 +9583,28 @@
               <button type="button" class="dqa-btn" data-tab-button="busqueda">Buscar inmueble</button>
               <button type="button" class="dqa-btn primary" data-tab-button="vehiculoOferta">+ Publicar vehículo</button>
               <button type="button" class="dqa-btn" data-tab-button="vehiculoBusqueda">Buscar vehículo</button>
+            </div>
+            <div class="my-data-card" id="myDataCard" hidden>
+              <div class="my-data-head">
+                <strong>Mis datos</strong>
+                <button type="button" class="my-data-edit" id="myDataEditBtn" onclick="toggleMyDataEdit()">Editar</button>
+              </div>
+              <div class="my-data-view" id="myDataView">
+                <div class="md-row"><span>Nombre</span><b id="mdFirst">—</b></div>
+                <div class="md-row"><span>Apellido</span><b id="mdLast">—</b></div>
+                <div class="md-row"><span>Email</span><b id="mdEmail">—</b></div>
+                <div class="md-row"><span>Celular</span><b id="mdPhone">—</b></div>
+              </div>
+              <div class="my-data-form" id="myDataEdit" hidden>
+                <label class="field full">Nombre<input id="mdFirstInput" type="text" /></label>
+                <label class="field full">Apellido<input id="mdLastInput" type="text" /></label>
+                <label class="field full">Celular<input id="mdPhoneInput" type="text" inputmode="tel" /></label>
+                <div class="md-actions">
+                  <button type="button" class="button primary" onclick="saveMyData()">Guardar</button>
+                  <button type="button" class="button ghost" onclick="toggleMyDataEdit(true)">Cancelar</button>
+                </div>
+                <p class="md-status" id="mdStatus"></p>
+              </div>
             </div>
             <div class="section user-dashboard-tabs">
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
@@ -13880,6 +13985,62 @@
         try { return localStorage.getItem("konektaya_contact_phone") || ""; } catch (e) { return ""; }
       }
 
+      // ---- Tarjeta "Mis datos" en el panel del usuario ----
+      function myDataParts() {
+        const prof = (typeof myProfile !== "undefined" && myProfile) ? myProfile : {};
+        const parts = String(prof.name || "").trim().split(/\s+/).filter(Boolean);
+        return { first: parts[0] || "", last: parts.slice(1).join(" "), phone: prof.phone || rememberedPhone() || "" };
+      }
+      function renderMyData() {
+        const card = document.getElementById("myDataCard");
+        if (!card) return;
+        const loggedIn = Boolean(currentUserEmail);
+        card.hidden = !loggedIn;
+        if (!loggedIn) return;
+        const d = myDataParts();
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || "—"; };
+        set("mdFirst", d.first); set("mdLast", d.last); set("mdEmail", currentUserEmail); set("mdPhone", d.phone);
+      }
+      function toggleMyDataEdit(cancel) {
+        const view = document.getElementById("myDataView");
+        const edit = document.getElementById("myDataEdit");
+        const btn = document.getElementById("myDataEditBtn");
+        if (!view || !edit) return;
+        const opening = edit.hidden && !cancel;
+        if (opening) {
+          const d = myDataParts();
+          document.getElementById("mdFirstInput").value = d.first;
+          document.getElementById("mdLastInput").value = d.last;
+          document.getElementById("mdPhoneInput").value = d.phone;
+          const st = document.getElementById("mdStatus"); if (st) st.textContent = "";
+        }
+        view.hidden = opening;
+        edit.hidden = !opening;
+        if (btn) btn.textContent = opening ? "Ver" : "Editar";
+      }
+      async function saveMyData() {
+        const first = document.getElementById("mdFirstInput").value.trim();
+        const last = document.getElementById("mdLastInput").value.trim();
+        const phone = document.getElementById("mdPhoneInput").value.trim();
+        const name = [first, last].filter(Boolean).join(" ");
+        const st = document.getElementById("mdStatus");
+        if (typeof myProfile !== "undefined") { myProfile = myProfile || {}; myProfile.name = name; myProfile.phone = phone; }
+        rememberContactPhone(phone);
+        if (supabaseEnabled && supabaseClient) {
+          try {
+            const { data: s } = await supabaseClient.auth.getSession();
+            const uid = s && s.session ? s.session.user.id : null;
+            if (uid) {
+              const { error } = await supabaseClient.from("profiles").update({ name, phone }).eq("id", uid);
+              if (error) { if (st) { st.textContent = "No se pudo guardar: " + error.message; st.className = "md-status err"; } return; }
+            }
+          } catch (e) { if (st) { st.textContent = "No se pudo guardar."; st.className = "md-status err"; } return; }
+        }
+        if (st) { st.textContent = "✓ Datos actualizados"; st.className = "md-status ok"; }
+        renderMyData();
+        setTimeout(() => toggleMyDataEdit(true), 700);
+      }
+
       // Devuelve true si intercepta (visitante sin sesión yendo a un formulario).
       function gateFormTab(tab) {
         if (!supabaseEnabled || !FORM_TABS[tab] || currentUserEmail) return false;
@@ -14468,6 +14629,7 @@
         if (passkeyRow) passkeyRow.hidden = !(supported && !loggedIn);
         const regBtn = document.getElementById("registerPasskeyBtn");
         if (regBtn) regBtn.hidden = !(supported && loggedIn);
+        if (typeof renderMyData === "function") renderMyData();
       }
 
       // Entrar solo con biometría (passwordless): el dispositivo muestra las
