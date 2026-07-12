@@ -2695,6 +2695,12 @@
         resize: vertical;
       }
 
+      .field input.field-readonly {
+        background: #eef2f7;
+        color: #475569;
+        cursor: not-allowed;
+      }
+
       .field input:focus,
       .field select:focus,
       .field textarea:focus {
@@ -13738,6 +13744,39 @@
         });
       }
 
+      // Tras publicar/registrar con éxito: mensaje + llevar a "Mi panel" (no a inicio).
+      function afterPublishSuccess() {
+        if (supabaseEnabled && currentUserEmail) {
+          if (window.showDashboardView) window.showDashboardView("user");
+          showTab("admin");
+        } else {
+          showTab("inicio");
+        }
+      }
+
+      // Prellena los datos de contacto desde la cuenta (no pedirlos de nuevo).
+      // Email: siempre el de la cuenta y de solo lectura. Nombre/teléfono: por
+      // defecto desde el perfil, pero editables (el teléfono suele faltar).
+      function prefillContactFields(form) {
+        if (!supabaseEnabled || !currentUserEmail || !form) return;
+        const emailEl = form.querySelector('[name="email"]');
+        if (emailEl) { emailEl.value = currentUserEmail; emailEl.readOnly = true; emailEl.classList.add("field-readonly"); }
+        const prof = (typeof myProfile !== "undefined" && myProfile) ? myProfile : {};
+        const parts = String(prof.name || "").trim().split(/\s+/).filter(Boolean);
+        const firstEl = form.querySelector('[name="firstName"]');
+        const lastEl = form.querySelector('[name="lastName"]');
+        if (firstEl && !firstEl.value && parts.length) firstEl.value = parts[0];
+        if (lastEl && !lastEl.value && parts.length > 1) lastEl.value = parts.slice(1).join(" ");
+        const phoneEl = form.querySelector('[name="phone"]');
+        if (phoneEl && !phoneEl.value && prof.phone) phoneEl.value = prof.phone;
+      }
+
+      function prefillFormForTab(tab) {
+        const formId = FORM_TABS[tab];
+        if (formId) prefillContactFields(document.getElementById(formId));
+      }
+      window.prefillFormForTab = prefillFormForTab;
+
       // Devuelve true si intercepta (visitante sin sesión yendo a un formulario).
       function gateFormTab(tab) {
         if (!supabaseEnabled || !FORM_TABS[tab] || currentUserEmail) return false;
@@ -13873,7 +13912,7 @@
         if (supabaseEnabled) supaUpsertPublication("properties", savedProperty);
         showToast("propertyToast");
         render();
-        showTab("inicio");
+        afterPublishSuccess();
       });
 
       function saveSearchFromForm(event, toastId) {
@@ -13941,7 +13980,7 @@
         if (supabaseEnabled) supaUpsertPublication("searches", savedSearch);
         showToast(toastId);
         render();
-        showTab("inicio");
+        afterPublishSuccess();
       }
 
       document.getElementById("searchForm").addEventListener("submit", (event) => {
@@ -14021,7 +14060,7 @@
         if (supabaseEnabled) supaUpsertPublication("vehicleOffers", savedVehicleOffer);
         showToast("vehicleOfferToast");
         render();
-        showTab("inicio");
+        afterPublishSuccess();
       }
 
       function saveVehicleSearchFromForm(event) {
@@ -14085,7 +14124,7 @@
         if (supabaseEnabled) supaUpsertPublication("vehicleSearches", savedVehicleSearch);
         showToast("vehicleSearchToast");
         render();
-        showTab("inicio");
+        afterPublishSuccess();
       }
 
       document.getElementById("vehicleOfferForm").addEventListener("submit", saveVehicleOfferFromForm);
@@ -14396,7 +14435,7 @@
             if (pending && pending.tab && FORM_TABS[pending.tab]) {
               clearPendingForm();
               showTab(pending.tab);
-              setTimeout(() => { restorePendingForm(pending); }, 80);
+              setTimeout(() => { prefillFormForTab(pending.tab); restorePendingForm(pending); }, 80);
             } else {
               if (window.showDashboardView) window.showDashboardView("user");
               showTab("admin");
@@ -18777,6 +18816,7 @@
             // Visitante sin cuenta yendo a publicar/buscar -> crear cuenta primero.
             if (window.gateFormTab && window.gateFormTab(tabButton.dataset.tabButton)) return;
             activatePropertyYaTab(tabButton.dataset.tabButton);
+            if (window.prefillFormForTab) window.prefillFormForTab(tabButton.dataset.tabButton);
           }
         });
 
