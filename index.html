@@ -18925,8 +18925,8 @@
           const tabButton = event.target.closest("[data-tab-button]");
           if (tabButton) {
             event.preventDefault();
-            // Visitante sin cuenta yendo a publicar/buscar -> crear cuenta primero.
-            if (window.gateFormTab && window.gateFormTab(tabButton.dataset.tabButton)) return;
+            // Se permite llenar el formulario sin cuenta; la cuenta se pide al
+            // ENVIAR (y se guarda un borrador para no perder lo escrito).
             activatePropertyYaTab(tabButton.dataset.tabButton);
             if (window.prefillFormForTab) window.prefillFormForTab(tabButton.dataset.tabButton);
           }
