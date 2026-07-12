@@ -13822,7 +13822,7 @@
         });
 
         history.replaceState(null, "", `#${target}`);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: "auto" });
       }
 
       document.querySelectorAll("[data-tab]").forEach((link) => {
@@ -14414,19 +14414,28 @@
         }
       }
 
+      let lastAuthEmail = null; // evita recargar todo dos veces (arranque, token refresh)
       function applySupabaseSession(session, redirect) {
         currentUserEmail = session && session.user ? (session.user.email || "") : "";
         save();
         // Diferido: el listener puede dispararse durante el arranque, antes de que
         // exista la versión final de render(). setTimeout garantiza que corra después.
         setTimeout(async () => {
-          if (currentUserEmail) {
-            try { await supaLoadMyProfile(); } catch (e) { console.warn("supaLoadMyProfile", e); }
-            try { await supaLoadConfig(); } catch (e) { console.warn("supaLoadConfig", e); }
-            try { await supaLoadAll(); } catch (e) { console.warn("supaLoadAll", e); }
-            try { await refreshBalance(); } catch (e) { console.warn("refreshBalance", e); }
-            try { await supaLoadUnlocks(); } catch (e) { console.warn("supaLoadUnlocks", e); }
-            try { await supaLoadRequests(); } catch (e) { console.warn("supaLoadRequests", e); }
+          const email = currentUserEmail;
+          if (email && email !== lastAuthEmail) {
+            lastAuthEmail = email;
+            const warn = (n) => (e) => console.warn(n, e);
+            // Cargar todo EN PARALELO (antes eran 6 llamadas en fila = lento en celular)
+            await Promise.all([
+              supaLoadMyProfile().catch(warn("supaLoadMyProfile")),
+              supaLoadConfig().catch(warn("supaLoadConfig")),
+              supaLoadAll().catch(warn("supaLoadAll")),
+              refreshBalance().catch(warn("refreshBalance")),
+              supaLoadUnlocks().catch(warn("supaLoadUnlocks")),
+              supaLoadRequests().catch(warn("supaLoadRequests"))
+            ]);
+          } else if (!email) {
+            lastAuthEmail = null;
           }
           render();
           refreshAuthUI();
@@ -18797,7 +18806,7 @@
             history.replaceState(null, "", `#${target}`);
           }
 
-          window.scrollTo({ top: 0, behavior: "smooth" });
+          window.scrollTo({ top: 0, behavior: "auto" });
         }
 
         window.activatePropertyYaTab = activatePropertyYaTab;
