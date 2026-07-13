@@ -15732,6 +15732,30 @@
           .single();
         if (error) { console.warn("supaUpsertPublication", cfg.table, error.message); return; }
         record._sbId = res.id;
+        // Avisar por email a los clientes de la contraparte que hacen match.
+        // Fire-and-forget: no debe frenar ni afectar la publicación.
+        notifyMatchesForPublication(entityKey, res.id);
+      }
+
+      // Dispara la Edge Function que detecta matches del nuevo aviso y manda el
+      // correo. El servidor recalcula el match (no confiamos en el navegador) y
+      // deduplica para no reenviar el mismo aviso.
+      const NOTIFY_MATCH_FN = "notify-matches";
+      const ENTITY_NOTIFY = {
+        properties: { vertical: "inmueble", kind: "offer" },
+        searches: { vertical: "inmueble", kind: "search" },
+        vehicleOffers: { vertical: "vehiculo", kind: "offer" },
+        vehicleSearches: { vertical: "vehiculo", kind: "search" }
+      };
+      function notifyMatchesForPublication(entityKey, id) {
+        if (!supabaseEnabled || !id) return;
+        const map = ENTITY_NOTIFY[entityKey];
+        if (!map) return;
+        try {
+          supabaseClient.functions
+            .invoke(NOTIFY_MATCH_FN, { body: { vertical: map.vertical, kind: map.kind, id } })
+            .catch(() => {});
+        } catch (e) {}
       }
 
       async function supaSetActive(entityKey, record) {
