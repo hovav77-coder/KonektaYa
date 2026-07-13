@@ -8329,6 +8329,9 @@
       .au-status { font-size: 13px; font-weight: 700; margin: 0 0 10px; min-height: 1px; }
       .au-status.ok { color: #15803d; }
       .au-status.err { color: #b91c1c; }
+      .au-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+      .au-danger { background: #fff; border: 1px solid #f0b7b7; color: #b91c1c; }
+      .au-danger:hover { background: #b91c1c; border-color: #b91c1c; color: #fff; }
       .au-activity { margin-top: 14px; }
       .au-acth { align-items: center; color: #0f2a4a; display: flex; font-size: 14px; font-weight: 800; gap: 8px; margin: 14px 0 8px; }
       .au-acth .n { background: #eef2f7; border-radius: 999px; color: #475569; font-size: 11px; padding: 1px 8px; }
@@ -15560,7 +15563,10 @@
           </div>
           <p class="au-hint">Escribe el monto: positivo suma, negativo resta. Luego “Aplicar”.</p>
           <p class="au-status" id="adminUserStatus"></p>
-          <button class="button small ${u.blocked ? "primary" : "reject"}" type="button" onclick="adminToggleBlocked('${emAttr}', ${u.blocked ? "false" : "true"})">${u.blocked ? "Desbloquear usuario" : "Bloquear usuario"}</button>
+          <div class="au-actions">
+            <button class="button small ${u.blocked ? "primary" : "reject"}" type="button" onclick="adminToggleBlocked('${emAttr}', ${u.blocked ? "false" : "true"})">${u.blocked ? "Desbloquear usuario" : "Bloquear usuario"}</button>
+            <button class="button small au-danger" type="button" onclick="adminDeleteUser('${emAttr}')">🗑️ Eliminar usuario</button>
+          </div>
           <div class="au-activity">
             ${section("🏠 Ofertas publicadas", act.ofertas)}
             ${section("🔎 Búsquedas", act.busquedas)}
@@ -15586,10 +15592,25 @@
         if (error) { alert("No se pudo: " + error.message); return; }
         adminLoadUsers();
       }
+      // Elimina por completo un usuario (auth + perfil + publicaciones + saldo).
+      // Deja libre el email para volver a registrarse. Doble confirmación.
+      async function adminDeleteUser(email) {
+        if (!confirm("¿ELIMINAR por completo a " + email + "?\n\nSe borran su cuenta, publicaciones, saldo e historial. Esta acción NO se puede deshacer.")) return;
+        const typed = prompt('Para confirmar, escribe ELIMINAR (en mayúsculas):');
+        if (String(typed || "").trim().toUpperCase() !== "ELIMINAR") { alert("Cancelado: no se escribió ELIMINAR."); return; }
+        const st = document.getElementById("adminUserStatus");
+        if (st) { st.textContent = "Eliminando…"; st.className = "au-status"; }
+        const { error } = await supabaseClient.rpc("admin_delete_user", { target_email: email });
+        if (error) { if (st) { st.textContent = "No se pudo: " + error.message; st.className = "au-status err"; } else { alert("No se pudo: " + error.message); } return; }
+        adminSelectedUserId = null;
+        await adminLoadUsers();
+        alert("✓ Usuario eliminado. El email quedó libre para registrarse de nuevo.");
+      }
       window.adminLoadUsers = adminLoadUsers;
       window.renderAdminUsers = renderAdminUsers;
       window.applyAdminCredit = applyAdminCredit;
       window.adminToggleBlocked = adminToggleBlocked;
+      window.adminDeleteUser = adminDeleteUser;
 
       // Registrar un passkey para la cuenta actual (requiere sesión iniciada).
       // ¿El usuario ya activó un passkey en este dispositivo/navegador?
