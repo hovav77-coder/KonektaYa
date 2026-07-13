@@ -8085,9 +8085,10 @@
       .admin-users-list { display: grid; gap: 8px; max-height: 460px; overflow-y: auto; }
       .admin-users-empty { color: #64748b; font-size: 13px; margin: 6px 2px; }
 
-      .au-panel { display: grid; grid-template-columns: 300px 1fr; gap: 14px; }
+      .au-panel { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 14px; }
       @media (max-width: 760px) { .au-panel { grid-template-columns: 1fr; } }
       .admin-users-list { max-height: 520px; }
+      .au-detailcol { min-width: 0; overflow: hidden; }
 
       .au-item {
         align-items: center;
@@ -8110,17 +8111,17 @@
       .au-item-bal { align-items: center; color: #0f2a4a; display: flex; font-size: 13px; font-weight: 800; gap: 6px; white-space: nowrap; }
       .au-dot { background: #dc2626; border-radius: 50%; display: inline-block; height: 8px; width: 8px; }
 
-      .au-detailcol { background: #fbfdff; border: 1px solid #eef2f7; border-radius: 12px; padding: 18px; }
+      .au-detailcol { background: #fbfdff; border: 1px solid #eef2f7; border-radius: 12px; padding: 18px; min-width: 0; }
       .au-dtop { align-items: center; display: flex; gap: 12px; margin-bottom: 14px; }
       .au-av { align-items: center; background: var(--orange); border-radius: 50%; color: #fff; display: flex; font-weight: 800; height: 46px; justify-content: center; width: 46px; }
       .au-dtop h3 { color: #0f2a4a; font-size: 18px; margin: 0; }
       .au-dtop p { color: #64748b; font-size: 13px; margin: 0; }
       .au-rolpill { background: #eef2f7; border-radius: 999px; color: #334155; font-size: 11px; font-weight: 800; padding: 2px 9px; vertical-align: middle; }
-      .au-datagrid { border: 1px solid #eef2f7; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; margin-bottom: 14px; padding: 2px 14px; }
-      @media (max-width: 520px) { .au-datagrid { grid-template-columns: 1fr; } }
-      .au-drow { align-items: center; border-bottom: 1px solid #eef2f7; display: flex; gap: 10px; justify-content: space-between; padding: 9px 0; }
-      .au-drow span { color: #64748b; font-size: 12.5px; font-weight: 700; }
-      .au-drow b { color: #0f2a4a; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; }
+      .au-datagrid { border: 1px solid #eef2f7; border-radius: 12px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 18px; margin-bottom: 14px; padding: 2px 14px; }
+      @media (max-width: 620px) { .au-datagrid { grid-template-columns: 1fr; } }
+      .au-drow { align-items: center; border-bottom: 1px solid #eef2f7; display: flex; gap: 10px; justify-content: space-between; padding: 9px 0; min-width: 0; }
+      .au-drow span { color: #64748b; font-size: 12.5px; font-weight: 700; flex: none; }
+      .au-drow b { color: #0f2a4a; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
       .au-moneybox { align-items: center; background: #f7fafc; border: 1px solid #eef2f7; border-radius: 12px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; padding: 12px 14px; }
       .au-moneybox .cur { color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; display: block; }
       .au-moneybox .amt { color: #0f2a4a; font-size: 22px; font-weight: 800; }
@@ -8134,10 +8135,10 @@
       .au-acth { align-items: center; color: #0f2a4a; display: flex; font-size: 14px; font-weight: 800; gap: 8px; margin: 14px 0 8px; }
       .au-acth .n { background: #eef2f7; border-radius: 999px; color: #475569; font-size: 11px; padding: 1px 8px; }
       .au-actitem { border: 1px solid #eef2f7; border-radius: 10px; display: flex; gap: 10px; justify-content: space-between; margin-bottom: 8px; padding: 10px 12px; }
-      .au-actitem-t { display: grid; gap: 1px; }
-      .au-actitem-t b { color: #0f2a4a; font-size: 13.5px; }
+      .au-actitem-t { display: grid; gap: 2px; min-width: 0; }
+      .au-actitem-t b { color: #0f2a4a; font-size: 13.5px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
       .au-actitem-t span { color: #64748b; font-size: 12px; }
-      .au-actitem-m { color: #94a3b8; font-size: 12px; text-align: right; white-space: nowrap; }
+      .au-actitem-m { color: #94a3b8; font-size: 12px; text-align: right; white-space: nowrap; flex: none; }
       .au-chip { border-radius: 999px; font-size: 10.5px; font-weight: 800; padding: 2px 8px; }
       .au-chip.of { background: #e6f1fb; color: #0c447c; }
       .au-chip.bs { background: #fef0e7; color: #9a3d18; }
@@ -13177,9 +13178,12 @@
           views.forEach((view) => {
             view.classList.toggle("active", view.dataset.dashboardView === target);
           });
-          // Al abrir el admin, cargar la lista real de usuarios (para las métricas y la ficha)
-          if (target === "admin" && supabaseEnabled && isAdminEmail(currentUserEmail) && !adminUsersLoaded && typeof adminLoadUsers === "function") {
-            adminLoadUsers();
+          // Al abrir el admin (modo servidor): ocultar la lista local antigua y
+          // cargar la lista real de usuarios (para las métricas y la ficha).
+          if (target === "admin" && supabaseEnabled && isAdminEmail(currentUserEmail)) {
+            const oldPanel = document.querySelector(".admin-credit-panel");
+            if (oldPanel) oldPanel.style.display = "none";
+            if (!adminUsersLoaded && typeof adminLoadUsers === "function") adminLoadUsers();
           }
           const header = document.getElementById("dashboardHeader");
           if (header) {
@@ -15079,6 +15083,9 @@
         if (error) { if (list) list.innerHTML = '<p class="admin-users-empty">No se pudo cargar: ' + escapeHtml(error.message) + "</p>"; return; }
         adminUsersData = data || [];
         adminUsersLoaded = true;
+        // La lista local antigua queda redundante con esta del servidor.
+        const oldPanel = document.querySelector(".admin-credit-panel");
+        if (oldPanel) oldPanel.style.display = "none";
         renderAdminUsers();
         if (typeof render === "function") render(); // refresca las métricas (clientes/bloqueados)
       }
@@ -15107,7 +15114,11 @@
 
       function adminUserActivity(uid) {
         const lbl = (v) => (typeof label === "function" ? label(v) : v) || "";
-        const fecha = (d) => (typeof publicationLabel === "function" ? publicationLabel(d) : (d ? String(d).slice(0, 10) : ""));
+        const fecha = (d) => {
+          if (!d) return "";
+          try { return new Date(d).toLocaleDateString("es-PA", { day: "numeric", month: "short", year: "numeric" }); }
+          catch (e) { return String(d).slice(0, 10); }
+        };
         const mine = (arr) => (arr || []).filter((r) => String(r.ownerId) === String(uid));
         const ofertas = [
           ...mine(properties).map((p) => ({ chip: "Inmueble", cls: "of", title: `${lbl(p.operation)} · ${lbl(p.propertyType)}${p.zone ? " · " + p.zone : ""}`, sub: money.format(Number(p.salePrice || p.rentalPrice || p.expectedPrice || 0)), date: fecha(p.publishedAt), active: p.available !== false })),
