@@ -14523,11 +14523,15 @@
         if (!form) return;
         Object.entries(pending.data).forEach(([k, v]) => {
           const el = form.elements[k];
-          if (!el || el.type === "hidden") return;
+          if (!el) return;
           try {
             el.value = v;
-            el.dispatchEvent(new Event("input", { bubbles: true }));
-            el.dispatchEvent(new Event("change", { bubbles: true }));
+            // Los ocultos (lat/lng/place_id) solo necesitan el valor; los visibles
+            // disparan input/change para re-ejecutar su lógica (mapas, selects, etc.).
+            if (el.type !== "hidden") {
+              el.dispatchEvent(new Event("input", { bubbles: true }));
+              el.dispatchEvent(new Event("change", { bubbles: true }));
+            }
           } catch (e) {}
         });
       }
@@ -15643,7 +15647,21 @@
             if (pending && pending.tab && FORM_TABS[pending.tab]) {
               clearPendingForm();
               showTab(pending.tab);
-              setTimeout(() => { prefillFormForTab(pending.tab); restorePendingForm(pending); }, 80);
+              setTimeout(() => {
+                prefillFormForTab(pending.tab);
+                restorePendingForm(pending);
+                // Auto-guardar lo que dejó pendiente: así la publicación queda
+                // registrada al volver de confirmar el correo (no "desaparece").
+                setTimeout(() => {
+                  const form = document.getElementById(pending.formId);
+                  if (!form) return;
+                  try { form.requestSubmit(); }
+                  catch (e) {
+                    const btn = form.querySelector('button[type="submit"]');
+                    if (btn) btn.click();
+                  }
+                }, 200);
+              }, 80);
             } else {
               if (window.showDashboardView) window.showDashboardView("user");
               showTab("admin");
