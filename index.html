@@ -81,7 +81,6 @@
         box-shadow: 0 6px 20px rgba(10, 47, 85, 0.06);
         display: flex;
         gap: 18px;
-        justify-content: space-between;
         padding: 12px clamp(18px, 4vw, 56px);
         position: sticky;
         top: 0;
@@ -95,6 +94,7 @@
         cursor: pointer;
         display: inline-flex;
         justify-content: center;
+        order: 2;
         padding: 0;
       }
 
@@ -314,7 +314,9 @@
         flex-wrap: wrap;
         gap: 6px;
         justify-content: flex-end;
+        margin-left: auto;
         max-width: none;
+        order: 1;
       }
 
       .nav a {
@@ -8664,6 +8666,12 @@
           display: inline-flex;
         }
 
+        /* En celular el avatar/Entrar va afuera, pegado al ☰ (a la derecha). */
+        .session-chip {
+          margin-left: auto;
+          order: 0;
+        }
+
         .nav {
           background: #ffffff;
           border-bottom: 1px solid #e2e8f0;
@@ -15341,10 +15349,15 @@
         const loginLink = document.getElementById("loginNavLink");
         if (loginLink) {
           if (loggedIn) {
+            // Con sesión: link "Mi panel" (el avatar es el estado).
+            loginLink.hidden = false;
             loginLink.textContent = "Mi panel";
             loginLink.dataset.tab = "admin";
             loginLink.dataset.dashboardTarget = "user";
           } else {
+            // Sin sesión: el chip "Entrar" es el único acceso; ocultamos
+            // el "LOGIN" del nav para no duplicar (ni dentro del acordeón móvil).
+            loginLink.hidden = true;
             loginLink.textContent = "LOGIN";
             loginLink.dataset.tab = "login";
             delete loginLink.dataset.dashboardTarget;
