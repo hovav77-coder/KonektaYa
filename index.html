@@ -13177,6 +13177,10 @@
           views.forEach((view) => {
             view.classList.toggle("active", view.dataset.dashboardView === target);
           });
+          // Al abrir el admin, cargar la lista real de usuarios (para las métricas y la ficha)
+          if (target === "admin" && supabaseEnabled && isAdminEmail(currentUserEmail) && !adminUsersLoaded && typeof adminLoadUsers === "function") {
+            adminLoadUsers();
+          }
           const header = document.getElementById("dashboardHeader");
           if (header) {
             header.hidden = target === "admin";
@@ -15066,6 +15070,7 @@
 
       // ---- Admin: lista de TODOS los usuarios registrados (servidor) ----
       let adminUsersData = [];
+      let adminUsersLoaded = false;
       async function adminLoadUsers() {
         const list = document.getElementById("adminUsersList");
         if (!supabaseEnabled) { if (list) list.innerHTML = '<p class="admin-users-empty">Disponible solo con el backend conectado.</p>'; return; }
@@ -15073,7 +15078,9 @@
         const { data, error } = await supabaseClient.rpc("admin_list_users");
         if (error) { if (list) list.innerHTML = '<p class="admin-users-empty">No se pudo cargar: ' + escapeHtml(error.message) + "</p>"; return; }
         adminUsersData = data || [];
+        adminUsersLoaded = true;
         renderAdminUsers();
+        if (typeof render === "function") render(); // refresca las métricas (clientes/bloqueados)
       }
       let adminSelectedUserId = null;
       function renderAdminUsers() {
@@ -17349,13 +17356,16 @@
             : adminVerticalFilter === "vehicle"
               ? vehicleMatches.length
               : matches.length + vehicleMatches.length;
+        const usaSupaUsers = supabaseEnabled && adminUsersLoaded;
+        const clientesRegistrados = usaSupaUsers ? adminUsersData.length : allAdminClients().length;
+        const usuariosBloqueados = usaSupaUsers ? adminUsersData.filter((u) => u.blocked).length : Object.keys(blockedUsers).length;
         const adminStats = [
           ["Ofertas publicadas", kpiOffers],
           ["Solicitudes creadas", kpiSearches],
           ["Resultados IA", kpiResults],
           ["Contactos desbloqueados", unlockedCount],
-          ["Clientes registrados", allAdminClients().length],
-          ["Usuarios bloqueados", Object.keys(blockedUsers).length],
+          ["Clientes registrados", clientesRegistrados],
+          ["Usuarios bloqueados", usuariosBloqueados],
           [
             "Reportes / validación",
             validationReports.length +
