@@ -8085,27 +8085,62 @@
       .admin-users-list { display: grid; gap: 8px; max-height: 460px; overflow-y: auto; }
       .admin-users-empty { color: #64748b; font-size: 13px; margin: 6px 2px; }
 
-      .au-row {
+      .au-panel { display: grid; grid-template-columns: 300px 1fr; gap: 14px; }
+      @media (max-width: 760px) { .au-panel { grid-template-columns: 1fr; } }
+      .admin-users-list { max-height: 520px; }
+
+      .au-item {
         align-items: center;
+        background: #fff;
         border: 1px solid #eef2f7;
-        border-radius: 12px;
+        border-radius: 10px;
+        cursor: pointer;
         display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
         justify-content: space-between;
         padding: 10px 12px;
+        text-align: left;
+        width: 100%;
       }
+      .au-item:hover { border-color: #cbd5e1; }
+      .au-item.sel { background: #fff4ec; border-color: #f1883f; }
+      .au-item-nm { display: grid; gap: 1px; min-width: 0; }
+      .au-item-nm b { color: #0f2a4a; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .au-item-nm span { color: #64748b; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .au-item-bal { align-items: center; color: #0f2a4a; display: flex; font-size: 13px; font-weight: 800; gap: 6px; white-space: nowrap; }
+      .au-dot { background: #dc2626; border-radius: 50%; display: inline-block; height: 8px; width: 8px; }
 
-      .au-row.is-blocked { background: #fff5f5; border-color: #f3c9c9; }
-      .au-info { display: grid; gap: 1px; min-width: 160px; }
-      .au-info strong { color: #0f2a4a; font-size: 14px; }
-      .au-email { color: #475569; font-size: 12.5px; }
-      .au-meta { align-items: center; color: #64748b; display: flex; flex-wrap: wrap; font-size: 11.5px; gap: 6px; }
-      .au-tag { background: #eef2f7; border-radius: 999px; color: #334155; font-weight: 800; padding: 2px 8px; }
-      .au-tag.au-blocked { background: #fde8e8; color: #b91c1c; }
-      .au-pub { color: #94a3b8; }
-      .au-bal { color: #0f2a4a; font-size: 15px; font-weight: 800; }
-      .au-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+      .au-detailcol { background: #fbfdff; border: 1px solid #eef2f7; border-radius: 12px; padding: 18px; }
+      .au-dtop { align-items: center; display: flex; gap: 12px; margin-bottom: 14px; }
+      .au-av { align-items: center; background: var(--orange); border-radius: 50%; color: #fff; display: flex; font-weight: 800; height: 46px; justify-content: center; width: 46px; }
+      .au-dtop h3 { color: #0f2a4a; font-size: 18px; margin: 0; }
+      .au-dtop p { color: #64748b; font-size: 13px; margin: 0; }
+      .au-rolpill { background: #eef2f7; border-radius: 999px; color: #334155; font-size: 11px; font-weight: 800; padding: 2px 9px; vertical-align: middle; }
+      .au-datagrid { border: 1px solid #eef2f7; border-radius: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; margin-bottom: 14px; padding: 2px 14px; }
+      @media (max-width: 520px) { .au-datagrid { grid-template-columns: 1fr; } }
+      .au-drow { align-items: center; border-bottom: 1px solid #eef2f7; display: flex; gap: 10px; justify-content: space-between; padding: 9px 0; }
+      .au-drow span { color: #64748b; font-size: 12.5px; font-weight: 700; }
+      .au-drow b { color: #0f2a4a; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; }
+      .au-moneybox { align-items: center; background: #f7fafc; border: 1px solid #eef2f7; border-radius: 12px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; padding: 12px 14px; }
+      .au-moneybox .cur { color: #64748b; font-size: 11px; font-weight: 800; text-transform: uppercase; display: block; }
+      .au-moneybox .amt { color: #0f2a4a; font-size: 22px; font-weight: 800; }
+      .au-adj { display: flex; gap: 8px; }
+      .au-adj input { border: 1px solid #cbd5e1; border-radius: 10px; padding: 9px 11px; text-align: right; width: 130px; }
+      .au-hint { color: #64748b; font-size: 12px; margin: 8px 0 4px; }
+      .au-status { font-size: 13px; font-weight: 700; margin: 0 0 10px; min-height: 1px; }
+      .au-status.ok { color: #15803d; }
+      .au-status.err { color: #b91c1c; }
+      .au-activity { margin-top: 14px; }
+      .au-acth { align-items: center; color: #0f2a4a; display: flex; font-size: 14px; font-weight: 800; gap: 8px; margin: 14px 0 8px; }
+      .au-acth .n { background: #eef2f7; border-radius: 999px; color: #475569; font-size: 11px; padding: 1px 8px; }
+      .au-actitem { border: 1px solid #eef2f7; border-radius: 10px; display: flex; gap: 10px; justify-content: space-between; margin-bottom: 8px; padding: 10px 12px; }
+      .au-actitem-t { display: grid; gap: 1px; }
+      .au-actitem-t b { color: #0f2a4a; font-size: 13.5px; }
+      .au-actitem-t span { color: #64748b; font-size: 12px; }
+      .au-actitem-m { color: #94a3b8; font-size: 12px; text-align: right; white-space: nowrap; }
+      .au-chip { border-radius: 999px; font-size: 10.5px; font-weight: 800; padding: 2px 8px; }
+      .au-chip.of { background: #e6f1fb; color: #0c447c; }
+      .au-chip.bs { background: #fef0e7; color: #9a3d18; }
 
       .login-forgot {
         margin: 10px 0 0;
@@ -9966,8 +10001,13 @@
                       </div>
                       <button class="button small ghost" type="button" onclick="adminLoadUsers()">Actualizar</button>
                     </div>
-                    <input id="adminUsersSearch" class="admin-users-search" placeholder="Filtrar por email o nombre" oninput="renderAdminUsers()" />
-                    <div class="admin-users-list" id="adminUsersList"><p class="admin-users-empty">Toca “Actualizar” para cargar los usuarios.</p></div>
+                    <div class="au-panel">
+                      <div class="au-listcol">
+                        <input id="adminUsersSearch" class="admin-users-search" placeholder="Filtrar por email o nombre" oninput="renderAdminUsers()" />
+                        <div class="admin-users-list" id="adminUsersList"><p class="admin-users-empty">Toca “Actualizar” para cargar los usuarios.</p></div>
+                      </div>
+                      <aside class="au-detailcol" id="adminUserDetail"><p class="admin-users-empty">Selecciona un usuario para ver su ficha.</p></aside>
+                    </div>
                   </div>
                   <div class="admin-credit-panel">
                     <div class="admin-client-list">
@@ -15035,43 +15075,100 @@
         adminUsersData = data || [];
         renderAdminUsers();
       }
+      let adminSelectedUserId = null;
       function renderAdminUsers() {
         const list = document.getElementById("adminUsersList");
         if (!list) return;
         const q = normalize((document.getElementById("adminUsersSearch") || {}).value || "");
         const rows = adminUsersData.filter((u) => !q || normalize((u.email || "") + " " + (u.name || "")).includes(q));
-        if (!rows.length) { list.innerHTML = '<p class="admin-users-empty">' + (adminUsersData.length ? "Sin coincidencias." : "No hay usuarios.") + "</p>"; return; }
-        list.innerHTML = rows.map((u) => {
-          const em = escapeHtml(u.email || "");
-          const tags = [];
-          if (u.role === "broker") tags.push('<span class="au-tag">Broker' + (u.broker_status && u.broker_status !== "aprobado" ? " · " + escapeHtml(u.broker_status) : "") + "</span>");
-          if (u.blocked) tags.push('<span class="au-tag au-blocked">Bloqueado</span>');
-          return `<div class="au-row${u.blocked ? " is-blocked" : ""}">
-            <div class="au-info">
-              <strong>${escapeHtml(u.name || "(sin nombre)")}</strong>
-              <span class="au-email">${em}</span>
-              <span class="au-meta">${tags.join(" ")} <span class="au-pub">${u.publicaciones || 0} public.</span></span>
-            </div>
-            <div class="au-money"><span class="au-bal">${money.format(Number(u.balance || 0))}</span></div>
-            <div class="au-actions">
-              <button class="button small" type="button" onclick="adminAdjustCreditUser('${em}', 10)">+10</button>
-              <button class="button small" type="button" onclick="adminAdjustCreditUser('${em}', -10)">−10</button>
-              <button class="button small ghost" type="button" onclick="adminAdjustCreditUser('${em}', null)">Otro…</button>
-              <button class="button small ${u.blocked ? "primary" : "reject"}" type="button" onclick="adminToggleBlocked('${em}', ${u.blocked ? "false" : "true"})">${u.blocked ? "Desbloquear" : "Bloquear"}</button>
-            </div>
-          </div>`;
-        }).join("");
-      }
-      async function adminAdjustCreditUser(email, delta) {
-        if (delta === null) {
-          const v = prompt("Monto a ajustar para " + email + " (usa negativo para restar):", "10");
-          if (v === null) return;
-          delta = Number(v);
-          if (!isFinite(delta) || delta === 0) { alert("Monto inválido."); return; }
+        if (!rows.length) {
+          list.innerHTML = '<p class="admin-users-empty">' + (adminUsersData.length ? "Sin coincidencias." : "No hay usuarios.") + "</p>";
+        } else {
+          list.innerHTML = rows.map((u) => `
+            <button type="button" class="au-item${u.id === adminSelectedUserId ? " sel" : ""}" onclick="selectAdminUser('${u.id}')">
+              <span class="au-item-nm">
+                <b>${escapeHtml(u.name || "(sin nombre)")}</b>
+                <span>${escapeHtml(u.email || "")}</span>
+              </span>
+              <span class="au-item-bal">${money.format(Number(u.balance || 0))}${u.blocked ? '<span class="au-dot" title="Bloqueado"></span>' : ""}</span>
+            </button>`).join("");
         }
+        renderAdminUserDetail();
+      }
+      function selectAdminUser(id) { adminSelectedUserId = id; renderAdminUsers(); }
+      window.selectAdminUser = selectAdminUser;
+
+      function adminUserActivity(uid) {
+        const lbl = (v) => (typeof label === "function" ? label(v) : v) || "";
+        const fecha = (d) => (typeof publicationLabel === "function" ? publicationLabel(d) : (d ? String(d).slice(0, 10) : ""));
+        const mine = (arr) => (arr || []).filter((r) => String(r.ownerId) === String(uid));
+        const ofertas = [
+          ...mine(properties).map((p) => ({ chip: "Inmueble", cls: "of", title: `${lbl(p.operation)} · ${lbl(p.propertyType)}${p.zone ? " · " + p.zone : ""}`, sub: money.format(Number(p.salePrice || p.rentalPrice || p.expectedPrice || 0)), date: fecha(p.publishedAt), active: p.available !== false })),
+          ...mine(vehicleOffers).map((o) => ({ chip: "Vehículo", cls: "of", title: `${o.brand || ""} ${o.model || ""}`.trim() || "Vehículo", sub: money.format(Number(o.salePrice || 0)), date: fecha(o.publishedAt), active: o.available !== false }))
+        ];
+        const busquedas = [
+          ...mine(searches).map((s) => ({ chip: "Inmueble", cls: "bs", title: `${lbl(s.desiredOperation)} · ${lbl(s.propertyType)}${s.desiredZone ? " · " + s.desiredZone : ""}`, sub: "Hasta " + money.format(Number(s.maxBudget || 0)), date: fecha(s.publishedAt), active: s.active !== false })),
+          ...mine(vehicleSearches).map((s) => ({ chip: "Vehículo", cls: "bs", title: `${s.desiredBrand || "Cualquier marca"} ${s.desiredModel && s.desiredModel !== "indiferente" ? s.desiredModel : ""}`.trim(), sub: "Hasta " + money.format(Number(s.maxBudget || 0)), date: fecha(s.publishedAt), active: s.active !== false }))
+        ];
+        return { ofertas, busquedas };
+      }
+
+      function renderAdminUserDetail() {
+        const box = document.getElementById("adminUserDetail");
+        if (!box) return;
+        const u = adminUsersData.find((x) => x.id === adminSelectedUserId);
+        if (!u) { box.innerHTML = '<p class="admin-users-empty">Selecciona un usuario para ver su ficha.</p>'; return; }
+        const parts = String(u.name || "").trim().split(/\s+/).filter(Boolean);
+        const first = parts[0] || "—", last = parts.slice(1).join(" ") || "—";
+        const initials = ((first[0] || "") + (last[0] || "")).toUpperCase() || "?";
+        const rol = u.role === "broker" ? "Broker" + (u.broker_status && u.broker_status !== "aprobado" ? " · " + escapeHtml(u.broker_status) : "") : "Cliente";
+        const act = adminUserActivity(u.id);
+        const itemHtml = (it) => `<div class="au-actitem">
+          <div class="au-actitem-t"><b><span class="au-chip ${it.cls}">${it.chip}</span> ${escapeHtml(it.title)}</b><span>${escapeHtml(it.sub)}${it.active ? "" : " · dado de baja"}</span></div>
+          <div class="au-actitem-m">${escapeHtml(it.date)}</div>
+        </div>`;
+        const section = (titulo, arr) => `<div class="au-acth">${titulo} <span class="n">${arr.length}</span></div>` +
+          (arr.length ? arr.map(itemHtml).join("") : '<p class="admin-users-empty">Sin registros.</p>');
+        const emAttr = escapeHtml(u.email || "").replace(/'/g, "\\'");
+        box.innerHTML = `
+          <div class="au-dtop">
+            <span class="au-av">${escapeHtml(initials)}</span>
+            <div><h3>${escapeHtml(u.name || "(sin nombre)")} <span class="au-rolpill">${rol}</span></h3><p>${u.publicaciones || 0} publicaciones${u.blocked ? ' · <b style="color:#b91c1c">Bloqueado</b>' : ""}</p></div>
+          </div>
+          <div class="au-datagrid">
+            <div class="au-drow"><span>Nombre</span><b>${escapeHtml(first)}</b></div>
+            <div class="au-drow"><span>Apellido</span><b>${escapeHtml(last)}</b></div>
+            <div class="au-drow"><span>Email</span><b>${escapeHtml(u.email || "—")}</b></div>
+            <div class="au-drow"><span>Celular</span><b>${escapeHtml(u.phone || "—")}</b></div>
+          </div>
+          <div class="au-moneybox">
+            <div><span class="cur">Saldo</span><span class="amt">${money.format(Number(u.balance || 0))}</span></div>
+            <div class="au-adj">
+              <input id="adminAdjustInput" type="number" step="1" placeholder="Ej. 20 o -10" />
+              <button class="button primary small" type="button" onclick="applyAdminCredit('${emAttr}')">Aplicar</button>
+            </div>
+          </div>
+          <p class="au-hint">Escribe el monto: positivo suma, negativo resta. Luego “Aplicar”.</p>
+          <p class="au-status" id="adminUserStatus"></p>
+          <button class="button small ${u.blocked ? "primary" : "reject"}" type="button" onclick="adminToggleBlocked('${emAttr}', ${u.blocked ? "false" : "true"})">${u.blocked ? "Desbloquear usuario" : "Bloquear usuario"}</button>
+          <div class="au-activity">
+            ${section("🏠 Ofertas publicadas", act.ofertas)}
+            ${section("🔎 Búsquedas", act.busquedas)}
+          </div>`;
+      }
+
+      async function applyAdminCredit(email) {
+        const inp = document.getElementById("adminAdjustInput");
+        const st = document.getElementById("adminUserStatus");
+        const delta = Number((inp || {}).value);
+        if (!isFinite(delta) || delta === 0) { if (st) { st.textContent = "Escribe un número (positivo o negativo)."; st.className = "au-status err"; } return; }
+        if (st) { st.textContent = "Aplicando…"; st.className = "au-status"; }
         const { error } = await supabaseClient.rpc("admin_adjust_credit", { target_email: email, delta });
-        if (error) { alert("No se pudo: " + error.message); return; }
-        adminLoadUsers();
+        if (error) { if (st) { st.textContent = "No se pudo: " + error.message; st.className = "au-status err"; } return; }
+        await adminLoadUsers();
+        const st2 = document.getElementById("adminUserStatus");
+        if (st2) { st2.textContent = "✓ Saldo actualizado"; st2.className = "au-status ok"; }
+        if (email.toLowerCase() === String(currentUserEmail).toLowerCase()) { try { await refreshBalance(); render(); } catch (e) {} }
       }
       async function adminToggleBlocked(email, blocked) {
         if (!confirm((blocked ? "Bloquear" : "Desbloquear") + " a " + email + "?")) return;
@@ -15081,7 +15178,7 @@
       }
       window.adminLoadUsers = adminLoadUsers;
       window.renderAdminUsers = renderAdminUsers;
-      window.adminAdjustCreditUser = adminAdjustCreditUser;
+      window.applyAdminCredit = applyAdminCredit;
       window.adminToggleBlocked = adminToggleBlocked;
 
       // Registrar un passkey para la cuenta actual (requiere sesión iniciada).
