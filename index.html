@@ -18282,11 +18282,25 @@
         "busqueda-vehiculo": { badge: "Búsqueda vehículo", chip: "Búsq. vehículos" }
       };
 
+      // En modo servidor las publicaciones no llevan el nombre (está en el perfil
+      // privado). El admin sí tiene los nombres via admin_list_users → resolvemos
+      // por ownerId. Fallback: fullName local.
+      function ownerNameForAdmin(record) {
+        const local = fullName(record);
+        if (local && local !== "Sin nombre") return local;
+        const uid = record && record.ownerId;
+        if (uid && typeof adminUsersData !== "undefined" && Array.isArray(adminUsersData)) {
+          const u = adminUsersData.find((x) => String(x.id) === String(uid));
+          if (u && (u.name || u.email)) return u.name || u.email;
+        }
+        return local || "Sin nombre";
+      }
+
       function allAdminRecords() {
         const records = [];
         properties.forEach((property) => {
           const fields = [
-            ["Propietario", fullName(property)],
+            ["Propietario", ownerNameForAdmin(property)],
             ["Tipo", `${label(property.propertyType)} · ${availabilityLabel(property)}`],
             ["Equipamiento", equipmentLabel(property.equipment)],
             ["Disponibilidad", urgencyLabel(property.availabilityNeed, "property")],
@@ -18315,7 +18329,7 @@
             date: search.publishedAt || "",
             title: searchHeader(search),
             fields: [
-              ["Solicitante", `${fullName(search)} · ${label(search.role)}`],
+              ["Solicitante", `${ownerNameForAdmin(search)} · ${label(search.role)}`],
               ["Zona", `${search.desiredZone}, ${search.province}`],
               ["Metraje deseado", `~${Number(search.minSizeM2 || 0).toLocaleString("es-PA")} m2`],
               ["Urgencia", urgencyLabel(search.urgency)]
@@ -18330,7 +18344,7 @@
             date: offer.publishedAt || "",
             title: vehicleOfferTitle(offer),
             fields: [
-              ["Vendedor", `${fullName(offer)} · ${vehicleSourceLabel(offer)}`],
+              ["Vendedor", `${ownerNameForAdmin(offer)} · ${vehicleSourceLabel(offer)}`],
               ["Año / km", `${offer.year} · ${Number(offer.mileage || 0).toLocaleString("es-PA")} km`],
               ["Ubicación", `${offer.zone}, ${offer.province}`],
               ["Estado", vehicleLabel(offer.status)]
@@ -18345,7 +18359,7 @@
             date: search.publishedAt || "",
             title: vehicleSearchTitle(search),
             fields: [
-              ["Solicitante", `${fullName(search)} · ${vehicleApplicantLabel(search)}`],
+              ["Solicitante", `${ownerNameForAdmin(search)} · ${vehicleApplicantLabel(search)}`],
               ["Año mínimo", `${search.minYear || "Indiferente"} · Km máx. ${Number(search.maxMileage || 0).toLocaleString("es-PA")}`],
               ["Zona", `${search.zone}, ${search.province}`],
               ["Urgencia", vehicleLabel(search.urgency)]
