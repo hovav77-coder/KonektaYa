@@ -784,6 +784,24 @@
         color: #64748b;
       }
 
+      .place-confirm {
+        align-items: flex-start;
+        background: #eafaf0;
+        border: 1px solid #b6e6c8;
+        border-radius: 10px;
+        color: #15683a;
+        display: none;
+        font-size: 12.5px;
+        gap: 6px;
+        line-height: 1.45;
+        margin-top: 8px;
+        padding: 8px 11px;
+      }
+
+      .place-confirm.show { display: flex; }
+      .place-confirm strong { color: #0f5132; }
+      .place-confirm .pc-check { font-weight: 900; }
+
       .pub-status {
         display: grid;
         gap: 6px;
@@ -9048,8 +9066,8 @@
                   Zona / corregimiento
                   <select name="zone" data-location-zone="property" required></select>
                 </label>
-                <label class="field full">Calle o barriada<input name="streetOrNeighborhood" placeholder="Ej. Calle 50, Avenida Balboa, Brisas del Golf" /></label>
-                <label class="field full">Nombre del PH / edificio<input name="phName" placeholder="Ej. PH Oceanía, PH The Towers" /></label>
+                <label class="field full">Ubicación (calle, barriada o PH)<input name="streetOrNeighborhood" placeholder="Busca tu calle, barriada o el nombre del PH" /></label>
+                <label class="field full" hidden><input name="phName" /></label>
                 <label class="field">Metros cuadrados (M2)<input name="sizeM2" type="text" inputmode="numeric" data-thousands required /></label>
                 <label class="field" data-hectares-field hidden>Hectáreas (ha)<input name="hectares" type="number" step="0.0001" min="0" disabled /></label>
                 <label class="field" data-rental-price-field>Valor de alquiler<input name="rentalPrice" type="text" inputmode="numeric" data-thousands /></label>
@@ -9140,8 +9158,8 @@
                   Zona deseada
                   <select name="desiredZone" data-location-zone="search" required></select>
                 </label>
-                <label class="field full">Calle o barriada deseada<input name="desiredStreetOrNeighborhood" placeholder="Opcional: calle, avenida o barriada" /></label>
-                <label class="field full">Nombre del PH deseado<input name="desiredPh" placeholder="Opcional: PH, edificio o proyecto" /></label>
+                <label class="field full">Ubicación deseada (calle, barriada o PH)<input name="desiredStreetOrNeighborhood" placeholder="Busca calle, barriada o el nombre del PH (opcional)" /></label>
+                <label class="field full" hidden><input name="desiredPh" /></label>
                 <label class="field">Metraje deseado (m²)<input name="minSizeM2" type="text" inputmode="numeric" data-thousands required /><span class="field-hint">El match acepta un rango aprox. de ±20% sobre lo que pides.</span></label>
                 <label class="field">Presupuesto máximo<input name="maxBudget" type="text" inputmode="numeric" data-thousands required /></label>
                 <label class="field">
@@ -9273,8 +9291,8 @@
                   Zona deseada
                   <select name="desiredZone" data-location-zone="broker" required></select>
                 </label>
-                <label class="field full">Calle o barriada deseada<input name="desiredStreetOrNeighborhood" placeholder="Opcional: calle, avenida o barriada" /></label>
-                <label class="field full">Nombre del PH deseado<input name="desiredPh" placeholder="Opcional: PH, edificio o proyecto" /></label>
+                <label class="field full">Ubicación deseada (calle, barriada o PH)<input name="desiredStreetOrNeighborhood" placeholder="Busca calle, barriada o el nombre del PH (opcional)" /></label>
+                <label class="field full" hidden><input name="desiredPh" /></label>
                 <label class="field">Metraje deseado (m²)<input name="minSizeM2" type="text" inputmode="numeric" data-thousands required /><span class="field-hint">El match acepta un rango aprox. de ±20% sobre lo que pides.</span></label>
                 <label class="field">Presupuesto máximo<input name="maxBudget" type="text" inputmode="numeric" data-thousands required /></label>
                 <label class="field">
@@ -11884,7 +11902,12 @@
         }
         let token = new places.AutocompleteSessionToken();
         let timer = null;
-        const clearGeo = () => { hidId.value = ""; hidLat.value = ""; hidLng.value = ""; };
+        const phFieldName = prefix === "desiredStreet" ? "desiredPh" : "phName";
+        let confEl = wrapper.querySelector(".place-confirm");
+        const clearGeo = () => {
+          hidId.value = ""; hidLat.value = ""; hidLng.value = "";
+          if (confEl) { confEl.textContent = ""; confEl.classList.remove("show"); }
+        };
         const closeList = () => { list.innerHTML = ""; list.classList.remove("show"); };
         input.addEventListener("input", () => {
           clearGeo();
@@ -11914,12 +11937,27 @@
                   closeList();
                   try {
                     const place = p.toPlace();
-                    await place.fetchFields({ fields: ["id", "location"] });
+                    await place.fetchFields({ fields: ["id", "location", "displayName", "formattedAddress", "addressComponents", "types"] });
                     hidId.value = place.id || "";
                     if (place.location) {
                       hidLat.value = place.location.lat();
                       hidLng.value = place.location.lng();
                     }
+                    const comps = place.addressComponents || [];
+                    const getc = (t) => { const c = comps.find((x) => (x.types || []).includes(t)); return c ? (c.longText || c.long_name || "") : ""; };
+                    const route = getc("route");
+                    const area = getc("neighborhood") || getc("sublocality") || getc("sublocality_level_1") || getc("locality");
+                    const dName = typeof place.displayName === "string" ? place.displayName : (place.displayName && place.displayName.text) || main;
+                    const isEstab = (place.types || []).some((t) => ["establishment", "point_of_interest", "premise", "subpremise", "lodging", "shopping_mall"].includes(t));
+                    // Campo visible = calle (+ área). El nombre del PH va al campo oculto.
+                    const streetText = route ? (area && area !== route ? route + ", " + area : route) : (area || place.formattedAddress || main);
+                    input.value = streetText;
+                    const phEl = form.elements[phFieldName];
+                    if (phEl) phEl.value = isEstab ? dName : "";
+                    // Confirmación para que el usuario verifique
+                    if (!confEl) { confEl = document.createElement("div"); confEl.className = "place-confirm"; wrapper.appendChild(confEl); }
+                    confEl.innerHTML = `<span class="pc-check">✓</span><span>${isEstab ? "<strong>" + escapeHtml(dName) + "</strong> · " : ""}${escapeHtml(place.formattedAddress || streetText)}</span>`;
+                    confEl.classList.add("show");
                   } catch (e) { console.warn("fetchFields", e); }
                   token = new places.AutocompleteSessionToken();
                   if (typeof updateProtectedFieldWarning === "function") updateProtectedFieldWarning(input);
