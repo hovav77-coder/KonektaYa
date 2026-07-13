@@ -88,6 +88,163 @@
         z-index: 20;
       }
 
+      .session-chip {
+        align-items: center;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        justify-content: center;
+        padding: 0;
+      }
+
+      .session-chip.out {
+        background: var(--navy, #0a2f55);
+        border-radius: 999px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 9px 18px;
+      }
+
+      .session-chip.in {
+        background: var(--orange, #e05b2a);
+        border-radius: 50%;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 800;
+        height: 38px;
+        letter-spacing: 0.02em;
+        position: relative;
+        width: 38px;
+      }
+
+      .session-chip.in::after {
+        background: #22c55e;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        bottom: -1px;
+        content: "";
+        height: 12px;
+        position: absolute;
+        right: -1px;
+        width: 12px;
+      }
+
+      .rd-modal {
+        align-items: center;
+        display: flex;
+        inset: 0;
+        justify-content: center;
+        padding: 20px;
+        position: fixed;
+        z-index: 80;
+      }
+
+      .rd-modal[hidden] {
+        display: none;
+      }
+
+      .rd-scrim {
+        background: rgba(10, 25, 47, 0.55);
+        inset: 0;
+        position: absolute;
+      }
+
+      .rd-card {
+        background: #fff;
+        border-radius: 18px;
+        box-shadow: 0 24px 60px rgba(10, 25, 47, 0.4);
+        max-width: 100%;
+        overflow: hidden;
+        position: relative;
+        text-align: center;
+        width: 420px;
+      }
+
+      .rd-head {
+        background: linear-gradient(135deg, #0a2f55, #0f2a4a);
+        color: #fff;
+        padding: 26px 20px 22px;
+      }
+
+      .rd-ico {
+        align-items: center;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        display: flex;
+        font-size: 30px;
+        height: 60px;
+        justify-content: center;
+        margin: 0 auto 10px;
+        width: 60px;
+      }
+
+      .rd-head h3 {
+        font-size: 20px;
+        margin: 0;
+      }
+
+      .rd-body {
+        padding: 20px;
+      }
+
+      .rd-body p {
+        color: #334155;
+        font-size: 14px;
+        line-height: 1.55;
+        margin: 0 0 8px;
+      }
+
+      .rd-email {
+        background: #f4f7fb;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        color: #0a2f55;
+        font-weight: 800;
+        margin: 8px 0 14px;
+        padding: 9px;
+        word-break: break-all;
+      }
+
+      .rd-actions {
+        display: grid;
+        gap: 8px;
+      }
+
+      .rd-btn {
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 800;
+      }
+
+      .rd-btn-primary {
+        background: var(--orange, #e05b2a);
+        border: none;
+        color: #fff;
+        font-size: 15px;
+        padding: 13px;
+      }
+
+      .rd-btn-ghost {
+        background: #fff;
+        border: 1px solid #cbd5e1;
+        color: #0a2f55;
+        font-size: 14px;
+        padding: 12px;
+      }
+
+      .rd-resend {
+        color: #64748b;
+        font-size: 12.5px;
+        margin-top: 10px;
+      }
+
+      .rd-resend a {
+        color: #c2410c;
+        font-weight: 800;
+      }
+
       .nav-toggle {
         display: none;
         flex-direction: column;
@@ -8869,6 +9026,7 @@
         </span>
         <span class="brand-text">Konekta<span class="ya-bubble">Ya</span></span>
       </a>
+      <button class="session-chip" id="sessionChip" type="button" hidden onclick="sessionChipClick()"></button>
       <button class="nav-toggle" id="navToggle" type="button" aria-label="Abrir menú" aria-expanded="false" onclick="toggleNav()">
         <span></span><span></span><span></span>
       </button>
@@ -8880,6 +9038,27 @@
         <a class="tab-link nav-logout" id="logoutNavLink" href="#" hidden onclick="event.preventDefault(); logoutUser();">Salir</a>
       </nav>
     </header>
+
+    <!-- Popup: cuenta creada, falta confirmar el correo -->
+    <div class="rd-modal" id="registerDoneModal" hidden>
+      <div class="rd-scrim" onclick="closeRegisterDone()"></div>
+      <div class="rd-card" role="dialog" aria-modal="true" aria-labelledby="rdTitle">
+        <div class="rd-head">
+          <div class="rd-ico" aria-hidden="true">📧</div>
+          <h3 id="rdTitle">¡Cuenta creada!</h3>
+        </div>
+        <div class="rd-body">
+          <p>Falta un paso: <strong>confirma tu correo</strong> para activar tu cuenta.</p>
+          <p>Te enviamos un enlace a:</p>
+          <div class="rd-email" id="rdEmail">—</div>
+          <div class="rd-actions">
+            <button type="button" class="rd-btn rd-btn-primary" onclick="openMailProvider()">Abrir mi correo</button>
+            <button type="button" class="rd-btn rd-btn-ghost" onclick="closeRegisterDone()">Entendido</button>
+          </div>
+          <p class="rd-resend">¿No llegó? Revisa spam o <a href="#" onclick="event.preventDefault(); resendConfirmation()">reenviar correo</a></p>
+        </div>
+      </div>
+    </div>
 
     <main>
       <section class="hero tab-panel active" id="inicio">
@@ -9521,7 +9700,6 @@
                   <select name="useCase">
                     <option value="personal">Personal</option>
                     <option value="empresa">Empresa</option>
-                    <option value="cliente">Cliente</option>
                     <option value="flota">Flota</option>
                   </select>
                 </label>
@@ -14458,6 +14636,57 @@
       }
       window.openMyData = openMyData;
       window.closeMyData = closeMyData;
+
+      // Popup de "cuenta creada, confirma tu correo".
+      let registerDoneEmail = "";
+      function openRegisterDone(email) {
+        registerDoneEmail = String(email || "").trim();
+        const em = document.getElementById("rdEmail");
+        if (em) em.textContent = registerDoneEmail || "tu correo";
+        const m = document.getElementById("registerDoneModal");
+        if (m) m.hidden = false;
+      }
+      function closeRegisterDone() {
+        const m = document.getElementById("registerDoneModal");
+        if (m) m.hidden = true;
+      }
+      window.openRegisterDone = openRegisterDone;
+      window.closeRegisterDone = closeRegisterDone;
+
+      // "Abrir mi correo": abre el webmail del proveedor según el dominio.
+      function openMailProvider() {
+        const dom = (registerDoneEmail.split("@")[1] || "").toLowerCase();
+        const map = {
+          "gmail.com": "https://mail.google.com/",
+          "googlemail.com": "https://mail.google.com/",
+          "outlook.com": "https://outlook.live.com/mail/",
+          "hotmail.com": "https://outlook.live.com/mail/",
+          "live.com": "https://outlook.live.com/mail/",
+          "yahoo.com": "https://mail.yahoo.com/",
+          "icloud.com": "https://www.icloud.com/mail/",
+          "me.com": "https://www.icloud.com/mail/"
+        };
+        const url = map[dom] || (dom ? "https://" + dom : "");
+        if (url) window.open(url, "_blank", "noopener");
+      }
+      window.openMailProvider = openMailProvider;
+
+      // Reenvía el correo de confirmación de registro.
+      async function resendConfirmation() {
+        if (!registerDoneEmail || !supabaseEnabled) return;
+        const note = document.querySelector("#registerDoneModal .rd-resend");
+        try {
+          const { error } = await supabaseClient.auth.resend({ type: "signup", email: registerDoneEmail });
+          if (note) {
+            note.innerHTML = error
+              ? "No se pudo reenviar: " + escapeHtml(error.message)
+              : "✅ Reenviamos el correo a <b>" + escapeHtml(registerDoneEmail) + "</b>. Revisa tu bandeja o spam.";
+          }
+        } catch (e) {
+          if (note) note.textContent = "No se pudo reenviar. Intenta de nuevo en un momento.";
+        }
+      }
+      window.resendConfirmation = resendConfirmation;
       function toggleMyDataEdit(cancel) {
         const view = document.getElementById("myDataView");
         const edit = document.getElementById("myDataEdit");
@@ -14923,7 +15152,8 @@
             });
             if (error) { showLoginStatus(error.message || "No se pudo crear la cuenta."); return; }
             if (!res.session) {
-              showLoginStatus("Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.");
+              showLoginStatus("");
+              openRegisterDone(email);
               authMode = "login";
               applyAuthMode();
             }
@@ -15136,8 +15366,49 @@
               : "Actívalo en este equipo para entrar con Face ID / huella. Se configura por dispositivo.";
           }
         }
+        // Avatar de sesión en el header (siempre visible): con sesión = iniciales
+        // + punto verde; sin sesión = botón "Entrar".
+        const chip = document.getElementById("sessionChip");
+        if (chip) {
+          chip.hidden = false;
+          if (loggedIn) {
+            const d = (typeof myDataParts === "function") ? myDataParts() : {};
+            const nm = [d.first, d.last].filter(Boolean).join(" ") || currentUserEmail || "";
+            chip.className = "session-chip in";
+            chip.textContent = sessionInitials(d.first, d.last, currentUserEmail);
+            chip.title = "Conectado" + (nm ? ": " + nm : "") + " — ir a Mi panel";
+            chip.setAttribute("aria-label", "Conectado. Ir a Mi panel");
+          } else {
+            chip.className = "session-chip out";
+            chip.textContent = "Entrar";
+            chip.title = "Iniciar sesión";
+            chip.setAttribute("aria-label", "Iniciar sesión");
+          }
+        }
         if (typeof renderMyData === "function") renderMyData();
       }
+
+      // Iniciales para el avatar: primera letra de nombre + apellido; si no hay
+      // nombre, las 2 primeras del email.
+      function sessionInitials(first, last, email) {
+        const a = String(first || "").trim();
+        const b = String(last || "").trim();
+        if (a || b) return ((a[0] || "") + (b[0] || a[1] || "")).toUpperCase();
+        const e = String(email || "").trim();
+        return (e.slice(0, 2) || "?").toUpperCase();
+      }
+
+      // Clic en el avatar/Entrar del header: con sesión abre "Mi panel";
+      // sin sesión lleva al formulario de acceso.
+      function sessionChipClick() {
+        if (currentUserEmail) {
+          if (typeof showDashboardView === "function") showDashboardView("user");
+          showTab("admin");
+        } else {
+          showTab("login");
+        }
+      }
+      window.sessionChipClick = sessionChipClick;
 
       // Entrar solo con biometría (passwordless): el dispositivo muestra las
       // cuentas guardadas y el usuario elige con Face ID / huella.
