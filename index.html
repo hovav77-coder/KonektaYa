@@ -15198,7 +15198,7 @@
         const list = document.getElementById("adminUsersList");
         if (!list) return;
         const q = normalize((document.getElementById("adminUsersSearch") || {}).value || "");
-        const rows = adminUsersData.filter((u) => !q || normalize((u.email || "") + " " + (u.name || "")).includes(q));
+        const rows = adminUsersData.filter((u) => !isAdminEmail(u.email) && (!q || normalize((u.email || "") + " " + (u.name || "")).includes(q)));
         if (!rows.length) {
           list.innerHTML = '<p class="admin-users-empty">' + (adminUsersData.length ? "Sin coincidencias." : "No hay usuarios.") + "</p>";
         } else {
@@ -17473,8 +17473,9 @@
               ? vehicleMatches.length
               : matches.length + vehicleMatches.length;
         const usaSupaUsers = supabaseEnabled && adminUsersLoaded;
-        const clientesRegistrados = usaSupaUsers ? adminUsersData.length : allAdminClients().length;
-        const usuariosBloqueados = usaSupaUsers ? adminUsersData.filter((u) => u.blocked).length : Object.keys(blockedUsers).length;
+        const clientesNoAdmin = usaSupaUsers ? adminUsersData.filter((u) => !isAdminEmail(u.email)) : [];
+        const clientesRegistrados = usaSupaUsers ? clientesNoAdmin.length : allAdminClients().length;
+        const usuariosBloqueados = usaSupaUsers ? clientesNoAdmin.filter((u) => u.blocked).length : Object.keys(blockedUsers).length;
         const adminStats = [
           ["Ofertas publicadas", kpiOffers],
           ["Solicitudes creadas", kpiSearches],
