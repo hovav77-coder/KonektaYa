@@ -245,6 +245,10 @@
         font-weight: 800;
       }
 
+      .rd-ico.pd-ok {
+        background: rgba(34, 197, 94, 0.22);
+      }
+
       .nav-toggle {
         display: none;
         flex-direction: column;
@@ -9191,6 +9195,24 @@
       </div>
     </div>
 
+    <!-- Popup: publicación registrada con éxito -->
+    <div class="rd-modal" id="publishDoneModal" hidden>
+      <div class="rd-scrim" onclick="publishDoneGoHome()"></div>
+      <div class="rd-card" role="dialog" aria-modal="true" aria-labelledby="pdTitle">
+        <div class="rd-head">
+          <div class="rd-ico pd-ok" aria-hidden="true">✅</div>
+          <h3 id="pdTitle">¡Registrado con éxito!</h3>
+        </div>
+        <div class="rd-body">
+          <p id="pdMsg">Tu publicación quedó guardada. ¿Quieres publicar o buscar algo más?</p>
+          <div class="rd-actions">
+            <button type="button" class="rd-btn rd-btn-primary" onclick="publishDoneGoHome()">Publicar o buscar más</button>
+            <button type="button" class="rd-btn rd-btn-ghost" onclick="publishDoneGoPanel()">Ir a Mi panel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <main>
       <section class="hero tab-panel active" id="inicio">
         <div class="hero-copy">
@@ -10248,6 +10270,7 @@
             <div class="section user-dashboard-tabs">
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
                 <div class="vertical-switch" aria-label="Vertical del dashboard">
+                  <button type="button" data-user-vertical-filter="all">Todos</button>
                   <button type="button" data-user-vertical-filter="property">Inmuebles <span class="vertical-count" data-vertical-count="property">0</span></button>
                   <button type="button" data-user-vertical-filter="vehicle">Vehículos <span class="vertical-count" data-vertical-count="vehicle">0</span></button>
                 </div>
@@ -14701,13 +14724,33 @@
 
       // Tras publicar/registrar con éxito: mensaje + llevar a "Mi panel" (no a inicio).
       function afterPublishSuccess() {
-        if (supabaseEnabled && currentUserEmail) {
-          if (window.showDashboardView) window.showDashboardView("user");
-          showTab("admin");
-        } else {
-          showTab("inicio");
-        }
+        openPublishDone();
       }
+
+      // Popup "registrado con éxito": aparece al terminar cada publicación.
+      // Por defecto lleva a la página inicial (formularios) para seguir; o a Mi panel.
+      function openPublishDone() {
+        const m = document.getElementById("publishDoneModal");
+        if (m) m.hidden = false;
+        else goPublishOrSearch(); // fallback si no existe el modal
+      }
+      function closePublishDone() {
+        const m = document.getElementById("publishDoneModal");
+        if (m) m.hidden = true;
+      }
+      function publishDoneGoHome() {
+        closePublishDone();
+        goPublishOrSearch();
+      }
+      function publishDoneGoPanel() {
+        closePublishDone();
+        if (window.showDashboardView) window.showDashboardView("user");
+        showTab("admin");
+      }
+      window.openPublishDone = openPublishDone;
+      window.closePublishDone = closePublishDone;
+      window.publishDoneGoHome = publishDoneGoHome;
+      window.publishDoneGoPanel = publishDoneGoPanel;
 
       // Prellena los datos de contacto desde la cuenta (no pedirlos de nuevo).
       // Email: siempre el de la cuenta y de solo lectura. Nombre/teléfono: por
@@ -18308,16 +18351,9 @@
             isContactRequested(m) &&
             !isVehicleMatchUnlocked(m, "vehicleOffer")
         ).length;
-        if (userDashboardVerticalFilter !== "property" && userDashboardVerticalFilter !== "vehicle") {
-          userDashboardVerticalFilter =
-            vehiclePendingInterest > propertyPendingInterest
-              ? "vehicle"
-              : propertyPendingInterest > 0
-                ? "property"
-                : vehicleRecordCount > propertyRecordCount
-                  ? "vehicle"
-                  : "property";
-        }
+        // "Todos" (all) muestra inmuebles + vehículos juntos. No forzamos un
+        // vertical automáticamente: así el contador refleja el total real de
+        // ofertas/solicitudes (1 inmueble + 1 vehículo = 2 ofertas), sin confundir.
         setupUserDashboardVerticalFilter();
         const propertyCountEl = document.querySelector('[data-vertical-count="property"]');
         const vehicleCountEl = document.querySelector('[data-vertical-count="vehicle"]');
@@ -18329,32 +18365,33 @@
           vehicleCountEl.textContent = vehicleRecordCount;
           vehicleCountEl.classList.toggle("hot", vehiclePendingInterest > 0 && userDashboardVerticalFilter !== "vehicle");
         }
+        // Con "Todos" mostramos ambos verticales; los contadores suman lo que
+        // está visible (no solo un vertical) para que "Ofertas" refleje el total.
         const isVehicleVertical = userDashboardVerticalFilter === "vehicle";
+        const showProps = userDashboardVerticalFilter !== "vehicle";
+        const showVeh = userDashboardVerticalFilter !== "property";
+        const isAllVertical = showProps && showVeh;
+        const totalOffers = (showProps ? userProperties.length : 0) + (showVeh ? userVehicleOffersAll.length : 0);
+        const totalSearches = (showProps ? userSearches.length : 0) + (showVeh ? userVehicleSearchesAll.length : 0);
+        const totalPending = (showProps ? propertyPendingInterest : 0) + (showVeh ? vehiclePendingInterest : 0);
         const offersPaneTitle = document.getElementById("offersPaneTitle");
         const offersPaneNote = document.getElementById("offersPaneNote");
-        if (offersPaneTitle) offersPaneTitle.textContent = isVehicleVertical ? "Ofertas de vehículos" : "Ofertas de inmuebles";
+        if (offersPaneTitle) offersPaneTitle.textContent = isAllVertical ? "Mis ofertas" : isVehicleVertical ? "Ofertas de vehículos" : "Ofertas de inmuebles";
         if (offersPaneNote) {
-          const offerCount = isVehicleVertical ? userVehicleOffersAll.length : userProperties.length;
-          const pendingInterest = isVehicleVertical ? vehiclePendingInterest : propertyPendingInterest;
-          offersPaneNote.textContent = `${offerCount} publicada${offerCount === 1 ? "" : "s"}${
-            pendingInterest ? ` · ${pendingInterest} con interés activo` : ""
+          offersPaneNote.textContent = `${totalOffers} publicada${totalOffers === 1 ? "" : "s"}${
+            totalPending ? ` · ${totalPending} con interés activo` : ""
           }`;
         }
         const searchesPaneTitle = document.getElementById("searchesPaneTitle");
         const searchesPaneNote = document.getElementById("searchesPaneNote");
-        if (searchesPaneTitle) searchesPaneTitle.textContent = isVehicleVertical ? "Solicitudes de vehículos" : "Solicitudes de inmuebles";
+        if (searchesPaneTitle) searchesPaneTitle.textContent = isAllVertical ? "Mis solicitudes" : isVehicleVertical ? "Solicitudes de vehículos" : "Solicitudes de inmuebles";
         if (searchesPaneNote) {
-          const searchCount = isVehicleVertical ? userVehicleSearchesAll.length : userSearches.length;
-          searchesPaneNote.textContent = `${searchCount} creada${searchCount === 1 ? "" : "s"}`;
+          searchesPaneNote.textContent = `${totalSearches} creada${totalSearches === 1 ? "" : "s"}`;
         }
         const offersTabCount = document.getElementById("offersTabCount");
-        if (offersTabCount) {
-          offersTabCount.textContent = isVehicleVertical ? userVehicleOffersAll.length : userProperties.length;
-        }
+        if (offersTabCount) offersTabCount.textContent = totalOffers;
         const searchesTabCount = document.getElementById("searchesTabCount");
-        if (searchesTabCount) {
-          searchesTabCount.textContent = isVehicleVertical ? userVehicleSearchesAll.length : userSearches.length;
-        }
+        if (searchesTabCount) searchesTabCount.textContent = totalSearches;
         const showUserPropertiesVertical = userDashboardVerticalFilter !== "vehicle";
         const showUserVehiclesVertical = userDashboardVerticalFilter !== "property";
         const userPropertiesTarget = document.getElementById("userProperties");
