@@ -802,6 +802,17 @@
       .place-confirm strong { color: #0f5132; }
       .place-confirm .pc-check { font-weight: 900; }
 
+      .place-map {
+        border: 1px solid #dce7f4;
+        border-radius: 12px;
+        height: 190px;
+        margin-top: 8px;
+        overflow: hidden;
+        width: 100%;
+      }
+
+      .place-map[hidden] { display: none; }
+
       /* Ubicación de inmuebles: se quita el menú Provincia/Zona (ahora es el buscador de Google). */
       .field:has([data-location-province="property"]),
       .field:has([data-location-zone="property"]),
@@ -11931,6 +11942,8 @@
         const clearGeo = () => {
           hidId.value = ""; hidLat.value = ""; hidLng.value = "";
           if (confEl) { confEl.textContent = ""; confEl.classList.remove("show"); }
+          const mapEl = wrapper.querySelector(".place-map");
+          if (mapEl) mapEl.hidden = true;
         };
         const closeList = () => { list.innerHTML = ""; list.classList.remove("show"); };
         input.addEventListener("input", () => {
@@ -11993,6 +12006,23 @@
                     if (!confEl) { confEl = document.createElement("div"); confEl.className = "place-confirm"; wrapper.appendChild(confEl); }
                     confEl.innerHTML = `<span class="pc-check">📍</span><span>Ubicación fijada en el mapa · ${isEstab ? "<strong>" + escapeHtml(dName) + "</strong> · " : ""}${escapeHtml(place.formattedAddress || area || city || streetText)}</span>`;
                     confEl.classList.add("show");
+                    // Mini mapa con el pin, para verificar visualmente el punto elegido.
+                    if (place.location) {
+                      try {
+                        const { Map } = await google.maps.importLibrary("maps");
+                        const { Marker } = await google.maps.importLibrary("marker");
+                        let mapEl = wrapper.querySelector(".place-map");
+                        if (!mapEl) { mapEl = document.createElement("div"); mapEl.className = "place-map"; wrapper.appendChild(mapEl); }
+                        mapEl.hidden = false;
+                        const center = { lat: place.location.lat(), lng: place.location.lng() };
+                        const miniMap = new Map(mapEl, {
+                          center, zoom: 16,
+                          disableDefaultUI: true, zoomControl: true,
+                          clickableIcons: false, gestureHandling: "cooperative"
+                        });
+                        new Marker({ map: miniMap, position: center, title: dName || streetText });
+                      } catch (e) { console.warn("mini mapa", e); }
+                    }
                   } catch (e) { console.warn("fetchFields", e); }
                   token = new places.AutocompleteSessionToken();
                   if (typeof updateProtectedFieldWarning === "function") updateProtectedFieldWarning(input);
