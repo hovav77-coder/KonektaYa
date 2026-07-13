@@ -24,7 +24,7 @@ const DEFAULT_CONFIG = {
   inmuebles: {
     umbral: 70, presupuestoMinPct: 75, metrajeMinPct: 80, metrajeMaxPct: 125,
     base: 30, puntosClienteFinal: 15, puntosBroker: 12, puntosBrokerAnonimo: 8,
-    puntosCalle: 10, distanciaCalleM: 500, puntosPh: 15, metrajeCercaPct: 10, puntosMetrajeCerca: 10, puntosMetrajeLejos: 6,
+    puntosCalle: 10, distanciaCalleM: 500, distanciaZonaM: 2000, puntosPh: 15, metrajeCercaPct: 10, puntosMetrajeCerca: 10, puntosMetrajeLejos: 6,
     puntosPrecioA: 15, puntosPrecioB: 11, puntosPrecioC: 8,
     puntosEquipamiento: 5, puntosEstacionamiento: 3, puntosDeposito: 2,
     pisoPh: 85, pisoPhEquipCliente: 95, pisoBroker: 75, pisoClienteFinal: 70,
@@ -88,12 +88,24 @@ function streetsMatchSrv(p: any, s: any, c: any) {
   return false;
 }
 
+// "Misma zona" por ubicacion real (reemplaza el filtro de zona por texto).
+function locationWithinZoneSrv(property: any, search: any, c: any) {
+  if (isSamePh(property, search) || streetsMatchSrv(property, search, c)) return true;
+  const pLat = Number(property.streetLat), pLng = Number(property.streetLng);
+  const sLat = Number(search.desiredStreetLat), sLng = Number(search.desiredStreetLng);
+  const bothGeo = isFinite(pLat) && isFinite(pLng) && (pLat || pLng) && isFinite(sLat) && isFinite(sLng) && (sLat || sLng);
+  if (bothGeo) return haversineMeters(pLat, pLng, sLat, sLng) <= (Number(c.distanciaZonaM) || 2000);
+  const pz = norm(property.zone), sz = norm(search.desiredZone);
+  if (pz && sz) return pz === sz;
+  return true;
+}
+
 function calcInmuebleScore(property: any, search: any, c: any) {
   if (!propSupportsOp(property, search.desiredOperation)) return 0;
   const matchPrice = propPriceForOp(property, search.desiredOperation);
   if (matchPrice <= 0) return 0;
   if (property.propertyType !== search.propertyType) return 0;
-  if (norm(property.zone) !== norm(search.desiredZone)) return 0;
+  if (!locationWithinZoneSrv(property, search, c)) return 0;
   const budget = Number(search.maxBudget || 0);
   if (!budget || matchPrice > budget * (100 / c.presupuestoMinPct)) return 0;
   const minSize = Number(search.minSizeM2 || 0);

@@ -802,6 +802,16 @@
       .place-confirm strong { color: #0f5132; }
       .place-confirm .pc-check { font-weight: 900; }
 
+      /* Ubicación de inmuebles: se quita el menú Provincia/Zona (ahora es el buscador de Google). */
+      .field:has([data-location-province="property"]),
+      .field:has([data-location-zone="property"]),
+      .field:has([data-location-province="search"]),
+      .field:has([data-location-zone="search"]),
+      .field:has([data-location-province="broker"]),
+      .field:has([data-location-zone="broker"]) {
+        display: none;
+      }
+
       .pub-status {
         display: grid;
         gap: 6px;
@@ -10620,6 +10630,20 @@
         return false;
       }
 
+      // "Misma zona" por ubicación real (reemplaza el filtro de zona por texto):
+      // mismo PH / place_id / calle, o coordenadas a <= distanciaZonaM metros.
+      // Si falta la coordenada, cae al texto de zona (solo bloquea si AMBOS la tienen).
+      function locationWithinZone(property, search, cfg) {
+        if (isSamePh(property, search) || streetsMatch(property, search)) return true;
+        const pLat = Number(property.streetLat), pLng = Number(property.streetLng);
+        const sLat = Number(search.desiredStreetLat), sLng = Number(search.desiredStreetLng);
+        const bothGeo = isFinite(pLat) && isFinite(pLng) && (pLat || pLng) && isFinite(sLat) && isFinite(sLng) && (sLat || sLng);
+        if (bothGeo) return haversineMeters(pLat, pLng, sLat, sLng) <= (Number((cfg || matchConfig.inmuebles).distanciaZonaM) || 2000);
+        const pz = normalize(property.zone), sz = normalize(search.desiredZone);
+        if (pz && sz) return pz === sz;
+        return true;
+      }
+
       function interestedQualityScore(search) {
         const cfg = matchConfig.inmuebles;
         if (search.role === "cliente final") return cfg.puntosClienteFinal;
@@ -11946,7 +11970,9 @@
                     const comps = place.addressComponents || [];
                     const getc = (t) => { const c = comps.find((x) => (x.types || []).includes(t)); return c ? (c.longText || c.long_name || "") : ""; };
                     const route = getc("route");
-                    const area = getc("neighborhood") || getc("sublocality") || getc("sublocality_level_1") || getc("locality");
+                    const city = getc("locality") || getc("administrative_area_level_2");
+                    const area = getc("neighborhood") || getc("sublocality") || getc("sublocality_level_1") || city;
+                    const provinceName = getc("administrative_area_level_1") || "Panamá";
                     const dName = typeof place.displayName === "string" ? place.displayName : (place.displayName && place.displayName.text) || main;
                     const isEstab = (place.types || []).some((t) => ["establishment", "point_of_interest", "premise", "subpremise", "lodging", "shopping_mall"].includes(t));
                     // Campo visible = calle (+ área). El nombre del PH va al campo oculto.
@@ -11954,9 +11980,18 @@
                     input.value = streetText;
                     const phEl = form.elements[phFieldName];
                     if (phEl) phEl.value = isEstab ? dName : "";
-                    // Confirmación para que el usuario verifique
+                    // Autollenar la Zona/Provincia (ocultas) desde el lugar real, para que
+                    // las pantallas sigan mostrando ubicación. El match usa coordenadas.
+                    const setSel = (sel, val) => {
+                      if (!sel || !val) return;
+                      if (![...sel.options].some((o) => o.value === val)) { const o = document.createElement("option"); o.value = val; o.textContent = val; sel.appendChild(o); }
+                      sel.value = val;
+                    };
+                    setSel(form.querySelector("[data-location-province]"), provinceName);
+                    setSel(form.querySelector("[data-location-zone]"), area || city);
+                    // Confirmación para que el usuario verifique (📍 barrio/ciudad + dirección).
                     if (!confEl) { confEl = document.createElement("div"); confEl.className = "place-confirm"; wrapper.appendChild(confEl); }
-                    confEl.innerHTML = `<span class="pc-check">✓</span><span>${isEstab ? "<strong>" + escapeHtml(dName) + "</strong> · " : ""}${escapeHtml(place.formattedAddress || streetText)}</span>`;
+                    confEl.innerHTML = `<span class="pc-check">📍</span><span>Ubicación fijada en el mapa · ${isEstab ? "<strong>" + escapeHtml(dName) + "</strong> · " : ""}${escapeHtml(place.formattedAddress || area || city || streetText)}</span>`;
                     confEl.classList.add("show");
                   } catch (e) { console.warn("fetchFields", e); }
                   token = new places.AutocompleteSessionToken();
@@ -12003,6 +12038,7 @@
           puntosBrokerAnonimo: 8, // Calidad del interesado: broker con cliente anonimo
           puntosCalle: 10, // Misma calle o barriada
           distanciaCalleM: 500, // Con Google Places: misma calle/barriada si estan a <= N metros
+          distanciaZonaM: 2000, // "Misma zona": ubicaciones a <= N metros hacen match (reemplaza el filtro de zona por texto)
           puntosPh: 15, // Mismo PH / edificio
           metrajeCercaPct: 10, // Banda "cerca" de metraje: +/- este %
           puntosMetrajeCerca: 10, // Metraje dentro de la banda cerca
@@ -12148,7 +12184,7 @@
         const matchPrice = propertyPriceForOperation(property, search.desiredOperation);
         if (matchPrice <= 0) return 0;
         if (property.propertyType !== search.propertyType) return 0;
-        if (normalize(property.zone) !== normalize(search.desiredZone)) return 0;
+        if (!locationWithinZone(property, search, cfg)) return 0;
         const budget = Number(search.maxBudget || 0);
         // El presupuesto del cliente debe ser >= presupuestoMinPct% del precio.
         if (!budget || matchPrice > budget * (100 / cfg.presupuestoMinPct)) return 0;
@@ -16241,6 +16277,7 @@
             ["puntosBrokerAnonimo", "Interesado: broker anónimo"],
             ["puntosCalle", "Misma calle o barriada"],
             ["distanciaCalleM", "Distancia misma calle/barriada (m)"],
+            ["distanciaZonaM", "Radio 'misma zona' (m)"],
             ["puntosPh", "Mismo PH / edificio"],
             ["metrajeCercaPct", "Banda de metraje \"cerca\" (± %)"],
             ["puntosMetrajeCerca", "Metraje dentro de la banda"],
