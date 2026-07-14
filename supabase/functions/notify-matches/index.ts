@@ -220,9 +220,12 @@ function matchEmailHtml(vertical: string, recipientIsSearcher: boolean, name: st
 }
 
 async function sendResendEmail(to: string, vertical: string, recipientIsSearcher: boolean, name: string) {
-  const key = Deno.env.get("RESEND_API_KEY");
+  // La API key debe ir en el header sin caracteres invisibles (espacios, saltos
+  // de línea, comillas raras que se cuelan al pegar) o fetch falla con "not a
+  // valid ByteString". Dejamos solo ASCII imprimible sin espacios.
+  const key = (Deno.env.get("RESEND_API_KEY") || "").replace(/[^\x21-\x7E]/g, "");
   if (!key) throw new Error("RESEND_API_KEY no configurado");
-  const from = Deno.env.get("NOTIFY_FROM") || "KonektaYa <avisos@konektaya.com>";
+  const from = (Deno.env.get("NOTIFY_FROM") || "KonektaYa <avisos@konektaya.com>").replace(/[^\x20-\x7E]/g, "");
   const cosa = vertical === "vehiculo" ? "vehículo" : "inmueble";
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -273,6 +276,11 @@ Deno.serve(async (req) => {
     if (fresh.owner_id !== user.id) return json({ error: "Solo el dueño puede disparar avisos" }, 403);
     if (fresh.active === false) return json({ ok: true, notified: 0, skipped: "inactive" });
 
+    // Solo avisamos al PROPIETARIO (dueño de la oferta/propiedad): cuando entra una
+    // BÚSQUEDA nueva que coincide con su publicación. Al publicar una oferta, el
+    // propietario ya ve sus resultados en vivo, así que ahí no mandamos correos.
+    if (kind !== "search") return json({ ok: true, notified: 0, skipped: "solo-propietario" });
+
     // Config global (fallback a defaults).
     let config: any = DEFAULT_CONFIG;
     const { data: cfgRow } = await admin.from("match_config").select("config").eq("id", 1).maybeSingle();
@@ -282,9 +290,10 @@ Deno.serve(async (req) => {
     const calc = vertical === "vehiculo" ? calcVehiculoScore : calcInmuebleScore;
 
     // Contrapartes activas de OTROS usuarios.
-    const { data: counterparts } = await admin
+    const { data: counterparts, error: cpErr } = await admin
       .from(counterTable).select("id,owner_id,data")
       .eq("active", true).neq("owner_id", user.id).limit(2000);
+    console.log("notify-matches:start", { vertical, kind, id, umbral, counterparts: (counterparts || []).length, cpErr: cpErr?.message });
 
     // Mejor score por destinatario (un usuario puede tener varias publicaciones).
     const best = new Map<string, number>();
@@ -299,6 +308,7 @@ Deno.serve(async (req) => {
       count.set(rid, (count.get(rid) || 0) + 1);
     }
     const recipientIds = [...best.keys()];
+    console.log("notify-matches:scored", { recipients: recipientIds.length, bestScores: [...best.values()] });
     if (!recipientIds.length) return json({ ok: true, notified: 0 });
 
     // Perfiles: email, nombre, bloqueo y preferencia de avisos.
@@ -330,13 +340,15 @@ Deno.serve(async (req) => {
       try {
         await sendResendEmail(p.email, vertical, recipientIsSearcher, String(p.name || "").split(/\s+/)[0] || "");
         notified++;
+        console.log("notify-matches:sent", { to: p.email });
       } catch (e) {
         // Falló el envío: borramos el registro para permitir reintento en la próxima publicación.
         await admin.from("match_notifications").delete().eq("publication_id", String(id)).eq("recipient_id", rid);
-        console.warn("sendResendEmail", String((e as Error)?.message || e));
+        console.warn("sendResendEmail:error", { to: p.email, err: String((e as Error)?.message || e) });
       }
     }
 
+    console.log("notify-matches:done", { notified, candidates: recipientIds.length });
     return json({ ok: true, notified, candidates: recipientIds.length });
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500);
