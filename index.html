@@ -3150,6 +3150,63 @@
         padding: clamp(20px, 3vw, 34px);
       }
 
+      /* Onboarding: pasos bloqueados hasta crear cuenta (después de "Tus datos") */
+      .form-step-locked {
+        filter: saturate(0.55);
+        opacity: 0.5;
+        pointer-events: none;
+        position: relative;
+        user-select: none;
+      }
+
+      .form-step-locked::after {
+        content: "🔒";
+        font-size: 18px;
+        opacity: 0.75;
+        position: absolute;
+        right: 18px;
+        top: 16px;
+      }
+
+      .form-account-gate {
+        background: linear-gradient(135deg, rgba(224, 91, 42, 0.09), rgba(10, 47, 85, 0.06));
+        border: 1px solid #f1d8ca;
+        border-radius: 20px;
+        display: grid;
+        gap: 12px;
+        padding: 20px clamp(18px, 3vw, 26px);
+      }
+
+      .form-account-gate[hidden] {
+        display: none;
+      }
+
+      .form-account-gate .fag-head {
+        align-items: center;
+        color: var(--navy);
+        display: flex;
+        font-size: 16px;
+        font-weight: 800;
+        gap: 9px;
+      }
+
+      .form-account-gate .fag-note {
+        color: #6a7a90;
+        font-size: 13.5px;
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .form-account-gate .fag-continue {
+        font-size: 15px;
+        justify-self: start;
+        padding: 13px 26px;
+      }
+
+      .form-submit-row.gate-hidden {
+        display: none;
+      }
+
       .form-step-title {
         align-items: center;
         display: flex;
@@ -14993,9 +15050,80 @@
 
       function prefillFormForTab(tab) {
         const formId = FORM_TABS[tab];
-        if (formId) prefillContactFields(document.getElementById(formId));
+        if (formId) {
+          const form = document.getElementById(formId);
+          prefillContactFields(form);
+          applyFormGate(form);
+        }
       }
       window.prefillFormForTab = prefillFormForTab;
+
+      // ============================================================
+      // Onboarding: crear cuenta DESPUÉS de "Tus datos" (paso 1). Los pasos
+      // siguientes quedan bloqueados hasta tener sesión. Solo aplica a visitantes
+      // sin cuenta; con sesión el formulario se muestra completo.
+      // ============================================================
+      function buildFormGate(form) {
+        if (!form || form.dataset.gateReady === "true") return;
+        const firstStep = form.querySelector(".form-step");
+        if (!firstStep) return;
+        const gate = document.createElement("div");
+        gate.className = "form-account-gate";
+        gate.setAttribute("data-account-gate", "");
+        gate.hidden = true;
+        gate.innerHTML =
+          '<div class="fag-head">🔒 Crea tu cuenta para continuar</div>' +
+          '<p class="fag-note">Con tu nombre y email creamos tu cuenta. Confirmas por correo y sigues llenando el resto — no perderás lo que escribiste.</p>' +
+          '<button type="button" class="button primary fag-continue">Crear cuenta y continuar</button>';
+        gate.querySelector(".fag-continue").addEventListener("click", () => startAccountFromForm(form));
+        firstStep.insertAdjacentElement("afterend", gate);
+        form.dataset.gateReady = "true";
+      }
+
+      function applyFormGate(form) {
+        if (!form) return;
+        buildFormGate(form);
+        const loggedIn = Boolean(currentUserEmail);
+        const steps = form.querySelectorAll(".form-step");
+        steps.forEach((step, i) => {
+          if (i === 0) return; // "Tus datos" siempre abierto
+          step.classList.toggle("form-step-locked", !loggedIn);
+        });
+        const gate = form.querySelector("[data-account-gate]");
+        if (gate) gate.hidden = loggedIn;
+        const submitRow = form.querySelector(".form-submit-row");
+        if (submitRow) submitRow.classList.toggle("gate-hidden", !loggedIn);
+      }
+
+      function applyAllFormGates() {
+        Object.values(FORM_TABS).forEach((formId) => {
+          const f = document.getElementById(formId);
+          if (f) applyFormGate(f);
+        });
+      }
+      window.applyAllFormGates = applyAllFormGates;
+
+      // "Crear cuenta y continuar": valida "Tus datos" y manda a crear la cuenta
+      // (guarda borrador + pantalla de registro prellenada). Al volver logueado,
+      // el retorno reabre el formulario con los pasos desbloqueados.
+      function startAccountFromForm(form) {
+        const data = formToObject(form);
+        const first = String(data.firstName || "").trim();
+        const last = String(data.lastName || "").trim();
+        const email = String(data.email || "").trim();
+        const phone = String(data.phone || "").trim();
+        const faltan = [];
+        if (!first) faltan.push("nombre");
+        if (!last) faltan.push("apellido");
+        if (!/^\S+@\S+\.\S+$/.test(email)) faltan.push("email válido");
+        if (!phone) faltan.push("teléfono");
+        if (faltan.length) {
+          alert("Completa tus datos para crear la cuenta: " + faltan.join(", ") + ".");
+          return;
+        }
+        ensureAccountForForm(form, data); // guarda borrador + lleva a registro prellenado
+      }
+      window.startAccountFromForm = startAccountFromForm;
 
       // Recuerda el teléfono (una vez ingresado, se rellena solo en próximos
       // formularios). En memoria + localStorage; en el servidor lo guarda
@@ -15808,6 +15936,8 @@
           }
         }
         if (typeof renderMyData === "function") renderMyData();
+        // Bloquear/desbloquear los pasos de los formularios según haya sesión.
+        if (typeof applyAllFormGates === "function") applyAllFormGates();
       }
 
       // Iniciales para el avatar: primera letra de nombre + apellido; si no hay
@@ -16073,17 +16203,15 @@
               setTimeout(() => {
                 prefillFormForTab(pending.tab);
                 restorePendingForm(pending);
-                // Auto-guardar lo que dejó pendiente: así la publicación queda
-                // registrada al volver de confirmar el correo (no "desaparece").
-                setTimeout(() => {
-                  const form = document.getElementById(pending.formId);
-                  if (!form) return;
-                  try { form.requestSubmit(); }
-                  catch (e) {
-                    const btn = form.querySelector('button[type="submit"]');
-                    if (btn) btn.click();
-                  }
-                }, 200);
+                // Nuevo flujo: la cuenta se creó tras "Tus datos", así que los
+                // pasos 2+ estaban vacíos. Al volver logueado, desbloqueamos y lo
+                // dejamos completar el resto (NO auto-enviamos).
+                const form = document.getElementById(pending.formId);
+                if (form) {
+                  applyFormGate(form);
+                  const step2 = form.querySelectorAll(".form-step")[1];
+                  if (step2) step2.scrollIntoView({ behavior: "auto", block: "center" });
+                }
               }, 80);
             } else {
               if (window.showDashboardView) window.showDashboardView("user");
@@ -20505,6 +20633,8 @@
         }
 
         Object.entries(formLayouts).forEach(([formId, config]) => enhanceForm(formId, config));
+        // Aplicar el bloqueo de pasos según sesión, ya construidos los formularios.
+        if (typeof window.applyAllFormGates === "function") window.applyAllFormGates();
       })();
     </script>
     <script>
