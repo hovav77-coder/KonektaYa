@@ -646,6 +646,48 @@
         color: var(--orange);
       }
 
+      /* Toggle Publicar / Buscar del panel de flujos */
+      .flow-seg {
+        background: #eef3fa;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        display: flex;
+        gap: 4px;
+        margin-bottom: 16px;
+        padding: 4px;
+      }
+
+      .flow-seg-btn {
+        align-items: center;
+        background: transparent;
+        border: none;
+        border-radius: 10px;
+        color: var(--muted, #64748b);
+        cursor: pointer;
+        display: inline-flex;
+        flex: 1;
+        font-size: 15px;
+        font-weight: 800;
+        gap: 8px;
+        justify-content: center;
+        padding: 11px 14px;
+      }
+
+      .flow-seg-btn svg {
+        height: 17px;
+        width: 17px;
+      }
+
+      .flow-seg-btn.active {
+        background: var(--navy);
+        box-shadow: 0 4px 12px rgba(10, 47, 85, 0.22);
+        color: #ffffff;
+      }
+
+      .home-choice-grid[data-flow-pane][hidden] {
+        display: none;
+      }
+
       .home-benefit-grid {
         display: grid;
         gap: 16px;
@@ -9306,45 +9348,47 @@
         <aside class="home-actions-panel" aria-label="Flujos disponibles">
           <span class="eyebrow">Flujos disponibles</span>
           <h2>¿Qué quieres hacer hoy?</h2>
-          <div class="home-choice-groups">
-            <div class="home-choice-group">
-              <p class="home-choice-label">Inmuebles</p>
-              <div class="home-choice-grid">
-                <button class="home-choice-card" type="button" data-tab-button="propietario">
-                  <span class="home-choice-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><path d="M10 20v-5h4v5"></path></svg>
-                  </span>
-                  <span class="home-choice-text"><strong>Publicar inmueble</strong><span>Venta o alquiler</span></span>
-                  <span class="home-choice-chev" aria-hidden="true">›</span>
-                </button>
-                <button class="home-choice-card" type="button" data-tab-button="busqueda">
-                  <span class="home-choice-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg>
-                  </span>
-                  <span class="home-choice-text"><strong>Buscar inmueble</strong><span>Para ti o tu empresa</span></span>
-                  <span class="home-choice-chev" aria-hidden="true">›</span>
-                </button>
-              </div>
-            </div>
-            <div class="home-choice-group">
-              <p class="home-choice-label">Vehículos</p>
-              <div class="home-choice-grid">
-                <button class="home-choice-card" type="button" data-tab-button="vehiculoOferta">
-                  <span class="home-choice-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9h11l1.5 4H5l1.5-4Z"></path><path d="M5 13v4h2"></path><path d="M17 17h2v-4"></path><circle cx="8.5" cy="17" r="1.5"></circle><circle cx="15.5" cy="17" r="1.5"></circle></svg>
-                  </span>
-                  <span class="home-choice-text"><strong>Publicar vehículo</strong><span>Autos, motos, flotas</span></span>
-                  <span class="home-choice-chev" aria-hidden="true">›</span>
-                </button>
-                <button class="home-choice-card" type="button" data-tab-button="vehiculoBusqueda">
-                  <span class="home-choice-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path><path d="M8 10.5h5"></path></svg>
-                  </span>
-                  <span class="home-choice-text"><strong>Buscar vehículo</strong><span>Opciones compatibles</span></span>
-                  <span class="home-choice-chev" aria-hidden="true">›</span>
-                </button>
-              </div>
-            </div>
+          <div class="flow-seg" role="tablist" aria-label="Publicar o buscar">
+            <button class="flow-seg-btn active" type="button" data-flow="publicar" onclick="setHomeFlow('publicar')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
+              Publicar
+            </button>
+            <button class="flow-seg-btn" type="button" data-flow="buscar" onclick="setHomeFlow('buscar')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.2-3.2"></path></svg>
+              Buscar
+            </button>
+          </div>
+          <div class="home-choice-grid" data-flow-pane="publicar">
+            <button class="home-choice-card" type="button" data-tab-button="propietario">
+              <span class="home-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><path d="M10 20v-5h4v5"></path></svg>
+              </span>
+              <span class="home-choice-text"><strong>Inmueble</strong><span>Venta o alquiler</span></span>
+              <span class="home-choice-chev" aria-hidden="true">›</span>
+            </button>
+            <button class="home-choice-card" type="button" data-tab-button="vehiculoOferta">
+              <span class="home-choice-icon home-choice-icon-orange" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9h11l1.5 4H5l1.5-4Z"></path><path d="M5 13v4h2"></path><path d="M17 17h2v-4"></path><circle cx="8.5" cy="17" r="1.5"></circle><circle cx="15.5" cy="17" r="1.5"></circle></svg>
+              </span>
+              <span class="home-choice-text"><strong>Vehículo</strong><span>Autos, motos, flotas</span></span>
+              <span class="home-choice-chev" aria-hidden="true">›</span>
+            </button>
+          </div>
+          <div class="home-choice-grid" data-flow-pane="buscar" hidden>
+            <button class="home-choice-card" type="button" data-tab-button="busqueda">
+              <span class="home-choice-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><circle cx="11" cy="13" r="2.4"></circle><path d="m14 16 2 2"></path></svg>
+              </span>
+              <span class="home-choice-text"><strong>Inmueble</strong><span>Para ti o tu empresa</span></span>
+              <span class="home-choice-chev" aria-hidden="true">›</span>
+            </button>
+            <button class="home-choice-card" type="button" data-tab-button="vehiculoBusqueda">
+              <span class="home-choice-icon home-choice-icon-orange" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path><path d="M8 10.5h5"></path></svg>
+              </span>
+              <span class="home-choice-text"><strong>Vehículo</strong><span>Opciones compatibles</span></span>
+              <span class="home-choice-chev" aria-hidden="true">›</span>
+            </button>
           </div>
         </aside>
       </section>
@@ -14814,6 +14858,18 @@
         }, 90);
       }
       window.goPublishOrSearch = goPublishOrSearch;
+
+      // Toggle "Publicar / Buscar" del panel de flujos de la página inicial.
+      function setHomeFlow(flow) {
+        const f = flow === "buscar" ? "buscar" : "publicar";
+        document.querySelectorAll(".flow-seg-btn").forEach((b) => {
+          b.classList.toggle("active", b.dataset.flow === f);
+        });
+        document.querySelectorAll("[data-flow-pane]").forEach((p) => {
+          p.hidden = p.dataset.flowPane !== f;
+        });
+      }
+      window.setHomeFlow = setHomeFlow;
 
       // Tras publicar/registrar con éxito: mensaje + llevar a "Mi panel" (no a inicio).
       function afterPublishSuccess() {
