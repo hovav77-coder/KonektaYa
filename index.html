@@ -3898,6 +3898,72 @@
         min-width: 200px;
       }
 
+      /* Billetera · diseño B: identidad arriba, saldo protagonista, acciones en fila */
+      .wab-b {
+        display: grid;
+        flex-wrap: nowrap;
+        gap: 15px;
+      }
+
+      .wab-id {
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+        display: flex;
+        gap: 11px;
+        padding-bottom: 14px;
+      }
+
+      .wab-idmeta {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .wab-id .session-avatar {
+        font-size: 15px;
+        height: 42px;
+        position: relative;
+        width: 42px;
+      }
+
+      .wab-id .session-avatar::after {
+        background: var(--green, #22c55e);
+        border: 2px solid var(--navy, #0a2f55);
+        border-radius: 50%;
+        bottom: -1px;
+        content: "";
+        display: none;
+        height: 12px;
+        position: absolute;
+        right: -1px;
+        width: 12px;
+      }
+
+      .wab-id:has(.session-status:not(.off)) .session-avatar::after {
+        display: block;
+      }
+
+      .wab-b .wallet-balance {
+        min-width: 0;
+      }
+
+      .wab-add {
+        min-height: 50px;
+        width: 100%;
+      }
+
+      .wab-acts {
+        display: flex;
+        gap: 9px;
+      }
+
+      .wab-acts .button {
+        flex: 1;
+        min-height: 44px;
+        padding: 8px 6px;
+        white-space: nowrap;
+      }
+
       .wallet-label {
         color: var(--muted);
         font-size: 12px;
@@ -10202,24 +10268,24 @@
 
           <div class="dashboard-view active" data-dashboard-view="user">
             <div class="wallet-panel">
-              <div class="wallet-account-bar">
-                <div class="wallet-balance">
-                  <span class="wallet-label">Billetera demo</span>
-                  <strong id="walletBalanceValue">USD 0.00</strong>
-                  <span>Saldo para probar desbloqueos</span>
-                </div>
-                <div class="wallet-actions">
-                  <button class="button primary" type="button" onclick="openPayModal(50)">+ Agregar crédito</button>
-                  <button class="button wallet-ghost" type="button" onclick="openMyData()">👤 Mis datos</button>
-                  <button class="button wallet-ghost" type="button" id="registerPasskeyBtn" hidden onclick="registerPasskeyFlow()">🔒 Activar Face ID</button>
-                  <button class="button wallet-ghost" type="button" onclick="logoutUser()">Cerrar sesión</button>
-                </div>
-                <div class="wallet-session">
+              <div class="wallet-account-bar wab-b">
+                <div class="wab-id">
                   <span class="session-avatar" id="currentUserAvatar">PY</span>
-                  <span class="session-meta">
+                  <span class="wab-idmeta">
                     <span class="session-pill" id="currentUserLabel">Sesión demo no iniciada.</span>
                     <span class="session-status off" id="sessionStatusLabel"><span class="session-status-dot"></span>Sin sesión</span>
                   </span>
+                </div>
+                <div class="wallet-balance">
+                  <span class="wallet-label">Billetera · Demo</span>
+                  <strong id="walletBalanceValue">USD 0.00</strong>
+                  <span>Saldo para desbloquear contactos</span>
+                </div>
+                <button class="button primary wab-add" type="button" onclick="openPayModal(50)">+ Agregar crédito</button>
+                <div class="wab-acts">
+                  <button class="button wallet-ghost" type="button" onclick="openMyData()">👤 Mis datos</button>
+                  <button class="button wallet-ghost" type="button" id="registerPasskeyBtn" hidden onclick="registerPasskeyFlow()">🔒 Face ID</button>
+                  <button class="button wallet-ghost" type="button" onclick="logoutUser()">⏻ Salir</button>
                 </div>
               </div>
               <div class="wallet-note">
@@ -15572,7 +15638,7 @@
           regBtn.hidden = !(supported && loggedIn);
           if (supported && loggedIn) {
             const on = (typeof passkeyActivated === "function") && passkeyActivated();
-            regBtn.textContent = on ? "✅ Face ID activo (este equipo)" : "🔒 Activar Face ID";
+            regBtn.textContent = on ? "✅ Face ID" : "🔒 Face ID";
             regBtn.classList.toggle("passkey-on", Boolean(on));
             regBtn.title = on
               ? "Face ID / huella activo en este equipo. Tócalo para añadir otro dispositivo."
