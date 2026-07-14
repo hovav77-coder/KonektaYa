@@ -9266,7 +9266,7 @@
           <p>Te enviamos un enlace a:</p>
           <div class="rd-email" id="rdEmail">—</div>
           <div class="rd-actions">
-            <button type="button" class="rd-btn rd-btn-primary" onclick="openMailProvider()">Abrir mi correo</button>
+            <button type="button" class="rd-btn rd-btn-primary" id="rdOpenMailBtn" onclick="openMailProvider()">Abrir mi correo</button>
             <button type="button" class="rd-btn rd-btn-ghost" onclick="closeRegisterDone()">Entendido</button>
           </div>
           <p class="rd-resend">¿No llegó? Revisa spam o <a href="#" onclick="event.preventDefault(); resendConfirmation()">reenviar correo</a></p>
@@ -14913,10 +14913,36 @@
 
       // Popup de "cuenta creada, confirma tu correo".
       let registerDoneEmail = "";
+      // Webmail SOLO de proveedores conocidos. OJO: para dominios corporativos
+      // (ej. imrsa.com) NO adivinamos "https://dominio" porque eso abre la página
+      // web de la empresa, no el buzón. En esos casos ocultamos el botón.
+      const WEBMAIL_PROVIDERS = {
+        "gmail.com": "https://mail.google.com/",
+        "googlemail.com": "https://mail.google.com/",
+        "outlook.com": "https://outlook.live.com/mail/",
+        "hotmail.com": "https://outlook.live.com/mail/",
+        "live.com": "https://outlook.live.com/mail/",
+        "msn.com": "https://outlook.live.com/mail/",
+        "yahoo.com": "https://mail.yahoo.com/",
+        "yahoo.es": "https://mail.yahoo.com/",
+        "icloud.com": "https://www.icloud.com/mail/",
+        "me.com": "https://www.icloud.com/mail/",
+        "proton.me": "https://mail.proton.me/",
+        "protonmail.com": "https://mail.proton.me/"
+      };
+      function webmailUrlFor(email) {
+        const dom = (String(email || "").split("@")[1] || "").toLowerCase();
+        return WEBMAIL_PROVIDERS[dom] || "";
+      }
+
       function openRegisterDone(email) {
         registerDoneEmail = String(email || "").trim();
         const em = document.getElementById("rdEmail");
         if (em) em.textContent = registerDoneEmail || "tu correo";
+        // "Abrir mi correo" solo si es un proveedor de webmail conocido; para
+        // correos corporativos se oculta (no sabemos su buzón).
+        const openBtn = document.getElementById("rdOpenMailBtn");
+        if (openBtn) openBtn.hidden = !webmailUrlFor(registerDoneEmail);
         const m = document.getElementById("registerDoneModal");
         if (m) m.hidden = false;
       }
@@ -14927,20 +14953,9 @@
       window.openRegisterDone = openRegisterDone;
       window.closeRegisterDone = closeRegisterDone;
 
-      // "Abrir mi correo": abre el webmail del proveedor según el dominio.
+      // "Abrir mi correo": abre el webmail del proveedor (solo conocidos).
       function openMailProvider() {
-        const dom = (registerDoneEmail.split("@")[1] || "").toLowerCase();
-        const map = {
-          "gmail.com": "https://mail.google.com/",
-          "googlemail.com": "https://mail.google.com/",
-          "outlook.com": "https://outlook.live.com/mail/",
-          "hotmail.com": "https://outlook.live.com/mail/",
-          "live.com": "https://outlook.live.com/mail/",
-          "yahoo.com": "https://mail.yahoo.com/",
-          "icloud.com": "https://www.icloud.com/mail/",
-          "me.com": "https://www.icloud.com/mail/"
-        };
-        const url = map[dom] || (dom ? "https://" + dom : "");
+        const url = webmailUrlFor(registerDoneEmail);
         if (url) window.open(url, "_blank", "noopener");
       }
       window.openMailProvider = openMailProvider;
