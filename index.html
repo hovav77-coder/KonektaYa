@@ -92,6 +92,13 @@
         z-index: 20;
       }
 
+      .session-wrap {
+        align-items: center;
+        display: inline-flex;
+        order: 2;
+        position: relative;
+      }
+
       .session-chip {
         align-items: center;
         background: transparent;
@@ -99,7 +106,6 @@
         cursor: pointer;
         display: inline-flex;
         justify-content: center;
-        order: 2;
         padding: 0;
       }
 
@@ -134,6 +140,115 @@
         position: absolute;
         right: -1px;
         width: 12px;
+      }
+
+      /* Menú de cuenta que se abre desde el avatar */
+      .session-menu {
+        background: #fff;
+        border: 1px solid #e6ebf2;
+        border-radius: 14px;
+        box-shadow: 0 18px 44px rgba(10, 25, 47, 0.18);
+        overflow: hidden;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        width: 244px;
+        z-index: 60;
+      }
+
+      .session-menu[hidden] {
+        display: none;
+      }
+
+      .session-menu .sm-head {
+        align-items: center;
+        border-bottom: 1px solid #eef2f7;
+        display: flex;
+        gap: 11px;
+        padding: 14px;
+      }
+
+      .session-menu .sm-av {
+        align-items: center;
+        background: var(--orange, #e05b2a);
+        border-radius: 50%;
+        color: #fff;
+        display: inline-flex;
+        flex-shrink: 0;
+        font-size: 14px;
+        font-weight: 800;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+
+      .session-menu .sm-id {
+        display: grid;
+        gap: 1px;
+        min-width: 0;
+      }
+
+      .session-menu .sm-nm {
+        color: #0f2a4a;
+        font-size: 14px;
+        font-weight: 800;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .session-menu .sm-st {
+        align-items: center;
+        color: #15803d;
+        display: flex;
+        font-size: 11.5px;
+        font-weight: 800;
+        gap: 5px;
+      }
+
+      .session-menu .sm-st .sm-dot {
+        background: #22c55e;
+        border-radius: 50%;
+        height: 8px;
+        width: 8px;
+      }
+
+      .session-menu .sm-item {
+        align-items: center;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid #eef2f7;
+        color: #0f2a4a;
+        cursor: pointer;
+        display: flex;
+        font-size: 14px;
+        font-weight: 700;
+        gap: 11px;
+        padding: 12px 14px;
+        text-align: left;
+        width: 100%;
+      }
+
+      .session-menu .sm-item:last-child {
+        border-bottom: none;
+      }
+
+      .session-menu .sm-item:hover {
+        background: #f4f7fb;
+      }
+
+      .session-menu .sm-item .sm-ic {
+        color: #64748b;
+        font-size: 15px;
+        width: 18px;
+      }
+
+      .session-menu .sm-item.sm-admin {
+        color: var(--oranged, #c2410c);
+      }
+
+      .session-menu .sm-item.sm-exit {
+        color: #b91c1c;
       }
 
       .rd-modal {
@@ -9040,9 +9155,14 @@
         }
 
         /* En celular el avatar/Entrar va afuera, pegado al ☰ (a la derecha). */
-        .session-chip {
+        .session-wrap {
           margin-left: auto;
           order: 0;
+        }
+
+        /* El menú de cuenta no debe salirse por la derecha en pantallas chicas. */
+        .session-menu {
+          right: -6px;
         }
 
         .nav {
@@ -9407,7 +9527,22 @@
         </span>
         <span class="brand-text">Konekta<span class="ya-bubble">Ya</span></span>
       </a>
-      <button class="session-chip" id="sessionChip" type="button" hidden onclick="sessionChipClick()"></button>
+      <div class="session-wrap" id="sessionWrap">
+        <button class="session-chip" id="sessionChip" type="button" hidden onclick="sessionChipClick()"></button>
+        <div class="session-menu" id="sessionMenu" role="menu" hidden>
+          <div class="sm-head">
+            <span class="sm-av" id="sessionMenuAv" aria-hidden="true">·</span>
+            <div class="sm-id">
+              <span class="sm-nm" id="sessionMenuName">Cuenta</span>
+              <span class="sm-st"><span class="sm-dot"></span> Sesión activa</span>
+            </div>
+          </div>
+          <button class="sm-item" type="button" role="menuitem" onclick="sessionMenuGo('panel')"><span class="sm-ic" aria-hidden="true">▦</span> Mi panel</button>
+          <button class="sm-item" type="button" role="menuitem" onclick="sessionMenuGo('datos')"><span class="sm-ic" aria-hidden="true">👤</span> Mis datos</button>
+          <button class="sm-item sm-admin" id="sessionMenuAdmin" type="button" role="menuitem" hidden onclick="sessionMenuGo('admin')"><span class="sm-ic" aria-hidden="true">⚙</span> ADMIN</button>
+          <button class="sm-item sm-exit" type="button" role="menuitem" onclick="sessionMenuGo('salir')"><span class="sm-ic" aria-hidden="true">⏻</span> Cerrar sesión</button>
+        </div>
+      </div>
       <button class="nav-toggle" id="navToggle" type="button" aria-label="Abrir menú" aria-expanded="false" onclick="toggleNav()">
         <span></span><span></span><span></span>
       </button>
@@ -15675,7 +15810,13 @@
           // Modo recuperación: guardar la nueva contraseña de la sesión de recovery.
           if (passwordRecoveryMode) {
             if (password.length < 6) { showLoginStatus("La contraseña debe tener al menos 6 caracteres."); return; }
+            // Feedback inmediato: sin esto la pantalla parecía "congelada" mientras
+            // esperaba a Supabase.
+            const rBtn = document.getElementById("loginSubmitBtn");
+            if (rBtn) { rBtn.disabled = true; rBtn.textContent = "Guardando…"; }
+            showLoginStatus("Guardando tu nueva contraseña…");
             const { error } = await supabaseClient.auth.updateUser({ password });
+            if (rBtn) { rBtn.disabled = false; }
             if (error) {
               // El enlace de recuperación expiró o ya se usó: salir del modo y pedir uno nuevo.
               const expired = /session|expired|missing|token/i.test(error.message);
@@ -15685,8 +15826,14 @@
                 : "No se pudo actualizar: " + error.message);
               return;
             }
+            // Éxito: confirmamos y llevamos rápido a Mi panel (ya hay sesión activa).
             exitPasswordRecovery();
-            showLoginStatus("¡Contraseña actualizada! Ya puedes usar tu nueva contraseña.");
+            showLoginStatus("✅ ¡Contraseña actualizada! Entrando a tu panel…");
+            setTimeout(() => {
+              if (window.showDashboardView) window.showDashboardView("user");
+              showTab("admin");
+              showLoginStatus("");
+            }, 500);
             return;
           }
           if (authMode === "register") {
@@ -15877,29 +16024,14 @@
 
       function refreshAuthUI() {
         const loggedIn = Boolean(currentUserEmail);
+        // Mi panel, ADMIN y Salir viven ahora en el MENÚ del avatar; los ocultamos
+        // del nav para no repetir el estado de sesión.
         const adminLink = document.getElementById("adminNavLink");
-        if (adminLink) adminLink.hidden = !isAdminEmail(currentUserEmail);
+        if (adminLink) adminLink.hidden = true;
         const logoutLink = document.getElementById("logoutNavLink");
-        if (logoutLink) logoutLink.hidden = !loggedIn;
-        // El link "LOGIN" se vuelve "Mi panel" cuando hay sesión y lleva al
-        // dashboard del usuario (en vez de re-mostrar el formulario de acceso).
+        if (logoutLink) logoutLink.hidden = true;
         const loginLink = document.getElementById("loginNavLink");
-        if (loginLink) {
-          if (loggedIn) {
-            // Con sesión: link "Mi panel" (el avatar es el estado).
-            loginLink.hidden = false;
-            loginLink.textContent = "Mi panel";
-            loginLink.dataset.tab = "admin";
-            loginLink.dataset.dashboardTarget = "user";
-          } else {
-            // Sin sesión: el chip "Entrar" es el único acceso; ocultamos
-            // el "LOGIN" del nav para no duplicar (ni dentro del acordeón móvil).
-            loginLink.hidden = true;
-            loginLink.textContent = "LOGIN";
-            loginLink.dataset.tab = "login";
-            delete loginLink.dataset.dashboardTarget;
-          }
-        }
+        if (loginLink) loginLink.hidden = true;
         // Passkeys (Face ID): "Entrar con Face ID" solo sin sesión; "Activar Face ID" solo con sesión.
         const supported = passkeysSupported();
         const passkeyRow = document.getElementById("loginPasskeyRow");
@@ -15924,15 +16056,26 @@
           if (loggedIn) {
             const d = (typeof myDataParts === "function") ? myDataParts() : {};
             const nm = [d.first, d.last].filter(Boolean).join(" ") || currentUserEmail || "";
+            const initials = sessionInitials(d.first, d.last, currentUserEmail);
             chip.className = "session-chip in";
-            chip.textContent = sessionInitials(d.first, d.last, currentUserEmail);
-            chip.title = "Conectado" + (nm ? ": " + nm : "") + " — ir a Mi panel";
-            chip.setAttribute("aria-label", "Conectado. Ir a Mi panel");
+            chip.textContent = initials;
+            chip.title = "Tu cuenta" + (nm ? ": " + nm : "");
+            chip.setAttribute("aria-label", "Menú de cuenta");
+            chip.setAttribute("aria-haspopup", "true");
+            // Rellenar el menú del avatar (nombre, iniciales, ADMIN si aplica).
+            const mAv = document.getElementById("sessionMenuAv");
+            const mNm = document.getElementById("sessionMenuName");
+            const mAdmin = document.getElementById("sessionMenuAdmin");
+            if (mAv) mAv.textContent = initials;
+            if (mNm) mNm.textContent = nm;
+            if (mAdmin) mAdmin.hidden = !isAdminEmail(currentUserEmail);
           } else {
             chip.className = "session-chip out";
             chip.textContent = "Entrar";
             chip.title = "Iniciar sesión";
             chip.setAttribute("aria-label", "Iniciar sesión");
+            chip.removeAttribute("aria-haspopup");
+            if (typeof closeSessionMenu === "function") closeSessionMenu();
           }
         }
         if (typeof renderMyData === "function") renderMyData();
@@ -15950,17 +16093,59 @@
         return (e.slice(0, 2) || "?").toUpperCase();
       }
 
-      // Clic en el avatar/Entrar del header: con sesión abre "Mi panel";
+      // Clic en el avatar/Entrar del header: con sesión abre el MENÚ de cuenta;
       // sin sesión lleva al formulario de acceso.
       function sessionChipClick() {
         if (currentUserEmail) {
-          if (typeof showDashboardView === "function") showDashboardView("user");
-          showTab("admin");
+          toggleSessionMenu();
         } else {
           showTab("login");
         }
       }
       window.sessionChipClick = sessionChipClick;
+
+      // Menú del avatar (Mi panel · Mis datos · ADMIN · Cerrar sesión).
+      function toggleSessionMenu() {
+        const menu = document.getElementById("sessionMenu");
+        if (!menu) return;
+        menu.hidden ? openSessionMenu() : closeSessionMenu();
+      }
+      function openSessionMenu() {
+        const menu = document.getElementById("sessionMenu");
+        if (menu) menu.hidden = false;
+      }
+      function closeSessionMenu() {
+        const menu = document.getElementById("sessionMenu");
+        if (menu) menu.hidden = true;
+      }
+      window.closeSessionMenu = closeSessionMenu;
+
+      function sessionMenuGo(action) {
+        closeSessionMenu();
+        if (action === "panel") {
+          if (typeof showDashboardView === "function") showDashboardView("user");
+          showTab("admin");
+        } else if (action === "datos") {
+          if (typeof openMyData === "function") openMyData();
+        } else if (action === "admin") {
+          if (typeof showDashboardView === "function") showDashboardView("admin");
+          showTab("admin");
+        } else if (action === "salir") {
+          if (typeof logoutUser === "function") logoutUser();
+        }
+      }
+      window.sessionMenuGo = sessionMenuGo;
+
+      // Cerrar el menú del avatar al hacer clic fuera o con Escape.
+      document.addEventListener("click", (e) => {
+        const wrap = document.getElementById("sessionWrap");
+        const menu = document.getElementById("sessionMenu");
+        if (!wrap || !menu || menu.hidden) return;
+        if (!wrap.contains(e.target)) closeSessionMenu();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeSessionMenu();
+      });
 
       // Entrar solo con biometría (passwordless): el dispositivo muestra las
       // cuentas guardadas y el usuario elige con Face ID / huella.
