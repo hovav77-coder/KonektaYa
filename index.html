@@ -3,7 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Rendimiento: adelantar DNS+TLS de los dominios que la app usará.
+         El SDK de Supabase se carga al FINAL del body (antes era bloqueante aquí). -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+    <link rel="preconnect" href="https://agjzczxxawojicpxbiuu.supabase.co" crossorigin />
+    <link rel="dns-prefetch" href="https://maps.googleapis.com" />
+    <link rel="dns-prefetch" href="https://www.paypal.com" />
     <title>KonektaYa — Publica o busca propiedades y vehículos en Panamá</title>
     <meta name="description" content="KonektaYa conecta tu oferta o necesidad de propiedades y vehículos con personas realmente interesadas en Panamá. Publicar y buscar es gratis, sin comisión por cierre." />
     <link rel="canonical" href="https://konektaya.com/" />
@@ -10860,6 +10865,10 @@
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
     </a>
 
+    <!-- Supabase SDK: aquí (fin del body) el HTML/CSS ya pintó; solo retrasa la
+         ejecución de los scripts siguientes, que de todos modos lo necesitan. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
       const money = new Intl.NumberFormat("es-PA", {
         style: "currency",
@@ -16757,8 +16766,9 @@
         render();
       }
 
-      render();
-      showTab(location.hash.replace("#", "") || "inicio");
+      // Rendimiento: el render() + showTab() de arranque corren UNA sola vez al
+      // final del último bloque de scripts (antes se ejecutaban aquí también,
+      // duplicando el recálculo de matches y el repintado inicial).
     </script>
     <script>
       // Modelo actual: saldo demo para desbloquear MACH por categoría.
@@ -19341,6 +19351,9 @@
         demoDatabaseKeys.forEach((key) => localStorage.removeItem(key));
         Object.entries(backup).forEach(([key, value]) => localStorage.setItem(key, value));
         localStorage.removeItem("propertyYaDemoBackup");
+        // Cancelar cualquier guardado pendiente: el flush de pagehide pisaría
+        // el backup recién restaurado con el estado viejo en memoria.
+        if (window.__cancelPendingSave) window.__cancelPendingSave();
         window.location.reload();
       }
 
@@ -20539,6 +20552,80 @@
         });
 
         activatePropertyYaTab((location.hash || "#inicio").replace("#", ""));
+      })();
+    </script>
+    <script>
+      // ============================================================
+      // Optimización de rendimiento (Fase A). Corre al final: envuelve las
+      // versiones DEFINITIVAS de save/recalculateMatches/render.
+      //
+      // 1) save() con debounce: antes cada cambio serializaba ~30 claves a
+      //    localStorage (síncrono = micro-congeladas en celular). Ahora se
+      //    agrupan en UNA escritura 300ms después del último cambio, y se
+      //    vacía al ocultar/cerrar la página para no perder datos.
+      // 2) recalculateMatches() con caché: solo recalcula cuando los datos
+      //    cambiaron (todo cambio de datos pasa por save()). Los repintados
+      //    de UI que no tocan datos ya no pagan el O(n×m) del matching.
+      // 3) render() anti-apilamiento: si varios render() caen en el mismo
+      //    ciclo, corre el primero al instante y UNO más al final (microtask);
+      //    los intermedios se descartan.
+      // ============================================================
+      (() => {
+        const saveNow = save;
+        const recalcNow = recalculateMatches;
+        const renderNow = render;
+
+        // --- 1) save() con debounce ---
+        let saveTimer = null;
+        let savePending = false;
+        let dataDirty = true; // primer recálculo garantizado
+
+        function flushSave() {
+          if (!savePending) return;
+          savePending = false;
+          clearTimeout(saveTimer);
+          saveNow();
+        }
+        // La zona de mantenimiento restaura backups escribiendo localStorage a
+        // mano + reload: debe poder cancelar una escritura pendiente para que
+        // el estado en memoria no pise el backup restaurado.
+        window.__cancelPendingSave = () => { savePending = false; clearTimeout(saveTimer); };
+
+        save = function () {
+          dataDirty = true; // los datos cambiaron → el próximo render recalcula matches
+          savePending = true;
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(flushSave, 300);
+        };
+
+        window.addEventListener("pagehide", flushSave);
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "hidden") flushSave();
+        });
+
+        // --- 2) matches con caché ---
+        recalculateMatches = function () {
+          if (!dataDirty) return;
+          dataDirty = false;
+          recalcNow();
+        };
+        window.forceMatchRecalc = () => { dataDirty = true; };
+
+        // --- 3) render() anti-apilamiento (primero síncrono + uno al final) ---
+        let renderRanThisTick = false;
+        let renderTrailing = false;
+        render = function () {
+          if (renderRanThisTick) {
+            if (!renderTrailing) {
+              renderTrailing = true;
+              queueMicrotask(() => { renderTrailing = false; renderRanThisTick = false; renderNow(); });
+            }
+            return;
+          }
+          renderRanThisTick = true;
+          queueMicrotask(() => { renderRanThisTick = false; });
+          renderNow();
+        };
       })();
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
