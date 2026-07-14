@@ -3031,6 +3031,69 @@
         margin: 0;
       }
 
+      /* Distintivo de categoría (Inmueble/Vehículo) + acción en el cabezal */
+      .form-hero-tags {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .form-hero-cat {
+        align-items: center;
+        border-radius: 999px;
+        display: inline-flex;
+        font-size: 14px;
+        font-weight: 800;
+        gap: 9px;
+        padding: 6px 15px 6px 6px;
+      }
+
+      .form-hero-cat .fhc-ic {
+        align-items: center;
+        border-radius: 50%;
+        display: inline-flex;
+        height: 30px;
+        justify-content: center;
+        width: 30px;
+      }
+
+      .form-hero-cat .fhc-ic svg {
+        height: 18px;
+        width: 18px;
+      }
+
+      .form-hero-cat.inm {
+        background: rgba(255, 255, 255, 0.14);
+        color: #ffffff;
+      }
+
+      .form-hero-cat.inm .fhc-ic {
+        background: #ffffff;
+        color: var(--navy);
+      }
+
+      .form-hero-cat.veh {
+        background: rgba(224, 91, 42, 0.24);
+        color: #ffd8c6;
+      }
+
+      .form-hero-cat.veh .fhc-ic {
+        background: var(--orange);
+        color: #ffffff;
+      }
+
+      .form-hero-act {
+        border: 1px solid rgba(255, 255, 255, 0.28);
+        border-radius: 999px;
+        color: #cfe0f2;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        padding: 5px 12px;
+        text-transform: uppercase;
+      }
+
       .form-hero-modern h2 {
         color: #ffffff;
         font-size: clamp(34px, 4.4vw, 58px);
@@ -20235,7 +20298,7 @@
         const formLayouts = {
           propertyForm: {
             eyebrow: "Oferta",
-            title: "Registra tu propiedad",
+            title: "Publicar inmueble",
             note: "Solo compartimos tu contacto cuando tú lo apruebas.",
             sections: [
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "registeredBy"] },
@@ -20246,7 +20309,7 @@
           },
           searchForm: {
             eyebrow: "Demanda",
-            title: "Registra tu búsqueda",
+            title: "Buscar inmueble",
             note: "Tu búsqueda se guarda gratis y tu contacto permanece protegido.",
             sections: [
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "role", "searchFor"] },
@@ -20303,6 +20366,12 @@
           `;
         }
 
+        function catIconSvg(isVeh) {
+          return isVeh
+            ? `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13"></path><path d="M4 13h16v4H4z"></path><circle cx="7.5" cy="17.5" r="1.5"></circle><circle cx="16.5" cy="17.5" r="1.5"></circle></svg>`
+            : `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><path d="M10 20v-5h4v5"></path></svg>`;
+        }
+
         function buildModernHero(form, config) {
           const block = form.closest(".form-block");
           if (!block || block.querySelector(".form-hero-modern")) return;
@@ -20314,10 +20383,23 @@
           hero.className = "form-hero-modern";
           const copy = document.createElement("div");
           copy.className = "form-hero-copy";
-          if (eyebrow) {
-            eyebrow.textContent = config.eyebrow;
-            copy.appendChild(eyebrow);
-          }
+
+          // Distintivo de categoría (Inmueble/Vehículo) + acción (Publicar/Buscar).
+          // Se deriva del id del formulario y reemplaza al eyebrow de texto.
+          const isVeh = /vehicle/i.test(form.id);
+          const isBuscar = /search|broker/i.test(form.id);
+          const tags = document.createElement("div");
+          tags.className = "form-hero-tags";
+          const catChip = document.createElement("span");
+          catChip.className = "form-hero-cat " + (isVeh ? "veh" : "inm");
+          catChip.innerHTML = `<span class="fhc-ic">${catIconSvg(isVeh)}</span>${isVeh ? "Vehículo" : "Inmueble"}`;
+          const actChip = document.createElement("span");
+          actChip.className = "form-hero-act";
+          actChip.textContent = isBuscar ? "Buscar" : "Publicar";
+          tags.append(catChip, actChip);
+          copy.appendChild(tags);
+          if (eyebrow) eyebrow.remove(); // el distintivo reemplaza al eyebrow
+
           if (title) {
             title.textContent = config.title;
             copy.appendChild(title);
