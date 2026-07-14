@@ -5166,17 +5166,30 @@
 
       .results-modal-close {
         align-items: center;
-        background: #ffffff;
-        border: 1px solid #dce5ef;
-        border-radius: 10px;
-        color: var(--muted);
+        background: var(--navy, #0a2f55);
+        border: none;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(10, 47, 85, 0.28);
+        color: #ffffff;
         cursor: pointer;
         display: inline-flex;
-        font-size: 16px;
+        font-size: 20px;
         font-weight: 900;
-        height: 36px;
+        height: 42px;
         justify-content: center;
-        width: 36px;
+        line-height: 1;
+        transition: background 140ms ease, transform 140ms ease;
+        width: 42px;
+      }
+
+      .results-modal-close:hover {
+        background: var(--orange, #e05b2a);
+        transform: scale(1.06);
+      }
+
+      .results-modal-close:focus-visible {
+        outline: 3px solid rgba(224, 91, 42, 0.5);
+        outline-offset: 2px;
       }
 
       .results-modal-body {
@@ -9413,11 +9426,11 @@
                 <label class="field" data-availability-other hidden>Especifica en cuántos días<input name="availabilityNeedOther" type="number" min="1" max="365" /></label>
                 <label class="field">
                   Provincia
-                  <select name="province" data-location-province="property" required></select>
+                  <select name="province" data-location-province="property"></select>
                 </label>
                 <label class="field">
                   Zona / corregimiento
-                  <select name="zone" data-location-zone="property" required></select>
+                  <select name="zone" data-location-zone="property"></select>
                 </label>
                 <label class="field full">Ubicación (calle, barriada o PH)<input name="streetOrNeighborhood" placeholder="Busca tu calle, barriada o el nombre del PH" /></label>
                 <label class="field full" hidden><input name="phName" /></label>
@@ -9505,11 +9518,11 @@
                 </div>
                 <label class="field">
                   Provincia
-                  <select name="province" data-location-province="search" required></select>
+                  <select name="province" data-location-province="search"></select>
                 </label>
                 <label class="field">
                   Zona deseada
-                  <select name="desiredZone" data-location-zone="search" required></select>
+                  <select name="desiredZone" data-location-zone="search"></select>
                 </label>
                 <label class="field full">Ubicación deseada (calle, barriada o PH)<input name="desiredStreetOrNeighborhood" placeholder="Busca calle, barriada o el nombre del PH (opcional)" /></label>
                 <label class="field full" hidden><input name="desiredPh" /></label>
@@ -9638,11 +9651,11 @@
                 </div>
                 <label class="field">
                   Provincia
-                  <select name="province" data-location-province="broker" required></select>
+                  <select name="province" data-location-province="broker"></select>
                 </label>
                 <label class="field">
                   Zona deseada
-                  <select name="desiredZone" data-location-zone="broker" required></select>
+                  <select name="desiredZone" data-location-zone="broker"></select>
                 </label>
                 <label class="field full">Ubicación deseada (calle, barriada o PH)<input name="desiredStreetOrNeighborhood" placeholder="Busca calle, barriada o el nombre del PH (opcional)" /></label>
                 <label class="field full" hidden><input name="desiredPh" /></label>
@@ -14588,6 +14601,13 @@
             authMode = "register";
             applyAuthMode();
             showTab("login");
+            // Auto-completar nombre y email con lo que la persona ya escribió en
+            // el formulario, para que no tenga que volver a teclearlos.
+            const regName = document.querySelector('#loginForm [data-register-only] input');
+            const regEmail = document.getElementById("loginEmail");
+            const fullNm = [data.firstName, data.lastName].filter(Boolean).join(" ").trim() || String(data.name || "").trim();
+            if (regName && fullNm) regName.value = fullNm;
+            if (regEmail && data.email) regEmail.value = String(data.email).trim();
             showLoginStatus("Crea tu cuenta o inicia sesión para publicar. Guardamos lo que escribiste y te lo devolvemos.");
             return false;
           }
@@ -14674,6 +14694,13 @@
           const el = form.elements[k];
           if (!el) return;
           try {
+            // Los <select> (ej. Zona/Provincia derivadas del lugar) pueden no tener
+            // la opción guardada tras re-inicializar el formulario: la agregamos.
+            if (el.tagName === "SELECT" && ![...el.options].some((o) => o.value === v)) {
+              const opt = document.createElement("option");
+              opt.value = v; opt.textContent = v;
+              el.appendChild(opt);
+            }
             el.value = v;
             // Los ocultos (lat/lng/place_id) solo necesitan el valor; los visibles
             // disparan input/change para re-ejecutar su lógica (mapas, selects, etc.).
