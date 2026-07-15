@@ -18,7 +18,16 @@ language plpgsql
 immutable
 set search_path = public
 as $$
-declare t text; d text;
+declare t text; d text; tok text; g text; i int;
+  pares text[] := array[
+    'diecinueve','19','dieciocho','18','diecisiete','17','dieciseis','16',
+    'nineteen','19','eighteen','18','seventeen','17','fourteen','14','thirteen','13',
+    'diez','10','once','11','doce','12','trece','13','catorce','14','quince','15','sixteen','16','fifteen','15','twelve','12','eleven','11',
+    'veinte','20','treinta','30','cuarenta','40','cincuenta','50','sesenta','60','setenta','70','ochenta','80','noventa','90','cien','100',
+    'twenty','20','thirty','30','forty','40','fifty','50','sixty','60','seventy','70','eighty','80','ninety','90','hundred','100','ten','10',
+    'cero','0','uno','1','una','1','dos','2','tres','3','cuatro','4','cinco','5','seis','6','siete','7','ocho','8','nueve','9',
+    'zero','0','one','1','two','2','three','3','four','4','five','5','six','6','seven','7','eight','8','nine','9','oh','0'
+  ];
 begin
   if raw is null or btrim(raw) = '' then return false; end if;
   t := lower(raw);
@@ -97,6 +106,21 @@ begin
   if strict and (select count(*) from regexp_matches(d, '[0-9]+', 'g')) >= 4 then
     return true;
   end if;
+
+  -- Números PEGADOS a letras en un mismo token ("615019nuevenueve"): por cada
+  -- palabra, quitar lo no alfanumérico, convertir palabras-número (aunque estén
+  -- pegadas, de más larga a más corta) y buscar 7+ dígitos seguidos.
+  foreach tok in array regexp_split_to_array(t, '[[:space:]]+') loop
+    g := regexp_replace(tok, '[^a-z0-9]', '', 'g');
+    if g <> '' then
+      i := 1;
+      while i <= array_length(pares, 1) loop
+        g := replace(g, pares[i], pares[i + 1]);
+        i := i + 2;
+      end loop;
+      if g ~ '[0-9]{7,}' then return true; end if;
+    end if;
+  end loop;
 
   return false;
 end $$;

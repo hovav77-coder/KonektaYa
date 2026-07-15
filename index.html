@@ -13383,10 +13383,10 @@
         seventy: "70", eighty: "80", ninety: "90", hundred: "100"
       };
       // M\u00e1s largas primero (dieciseis antes que seis) para que no se corten mal.
-      const NUMWORDS_RE = new RegExp(
-        "\\b(" + Object.keys(NUMWORDS).sort((a, b) => b.length - a.length).join("|") + ")\\b",
-        "g"
-      );
+      const NUMWORDS_ALT = Object.keys(NUMWORDS).sort((a, b) => b.length - a.length).join("|");
+      const NUMWORDS_RE = new RegExp("\\b(" + NUMWORDS_ALT + ")\\b", "g");
+      // Sin l\u00edmites de palabra: caza n\u00fameros pegados a letras ("615019nuevenueve").
+      const NUMWORDS_RE_GLOBAL = new RegExp("(" + NUMWORDS_ALT + ")", "g");
 
       function detectContactInText(value, fieldName) {
         const text = String(value || "").trim();
@@ -13399,6 +13399,13 @@
         // Tira de \u22657 n\u00fameros casi seguidos (d\u00edgitos y/o palabras-n\u00famero) = tel\u00e9fono.
         if (/\b\d{7,}\b/.test(digitized) || /\d(?:[\s().-]?\d){6,}/.test(digitized)) {
           return "n\u00famero de tel\u00e9fono (disimulado)";
+        }
+        // N\u00fameros pegados a letras sin espacios ("615019nuevenueve"): revisamos
+        // PALABRA POR PALABRA (para no pegar n\u00fameros leg\u00edtimos separados por espacio).
+        // Si un solo token, ya convertido, llega a 7+ d\u00edgitos = tel\u00e9fono.
+        for (const tok of plain.split(/\s+/)) {
+          const td = tok.replace(/[^a-z0-9]/g, "").replace(NUMWORDS_RE_GLOBAL, (m) => NUMWORDS[m]);
+          if (/\d{7,}/.test(td)) return "n\u00famero de tel\u00e9fono (disimulado)";
         }
         // En campos de IDENTIDAD (marca, modelo, color, PH, calle) casi nunca hay
         // n\u00fameros; \u22654 grupos de n\u00fameros = intento de colar un tel\u00e9fono troceado
@@ -14730,8 +14737,12 @@
         document.querySelectorAll(wordFields).forEach((el) => {
           if (el.dataset.guardReady) return;
           el.addEventListener("input", () => {
-            const words = el.value.replace(/^\s+/, "").split(/\s+/).filter(Boolean);
-            if (words.length > 3) el.value = words.slice(0, 3).join(" ");
+            // Máx 3 palabras y máx 13 letras por palabra (un token larguísimo como
+            // "615019nuevenueve" no es un color/marca/modelo real → se recorta).
+            let words = el.value.replace(/^\s+/, "").split(/\s+/).filter(Boolean).map((w) => w.slice(0, 13));
+            if (words.length > 3) words = words.slice(0, 3);
+            const capped = words.join(" ") + (/\s$/.test(el.value) ? " " : "");
+            if (el.value !== capped) el.value = capped;
           });
           el.dataset.guardReady = "1";
         });
