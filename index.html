@@ -10185,7 +10185,7 @@
                   </select>
                 </label>
                 <label class="field" data-vehicle-status-other hidden>En cuántos días estará disponible<input name="vehicleStatusOther" type="number" min="1" max="365" /></label>
-                <label class="field">Kilometraje<input name="mileage" type="text" inputmode="numeric" data-thousands required /></label>
+                <label class="field">Kilometraje<input name="mileage" type="text" inputmode="numeric" data-thousands data-max="999999" required /></label>
                 <label class="field">
                   Precio
                   <select name="salePrice" data-price-select="vehicleOffer" required></select>
@@ -10285,7 +10285,7 @@
                   <select name="minYear" data-year-select="vehicleSearch" required></select>
                 </label>
                 <label class="field" data-year-other-field="vehicleSearch" hidden>Especifica el año mínimo<input name="minYearOther" type="number" min="1950" max="2026" /></label>
-                <label class="field">Kilometraje máximo<input name="maxMileage" type="text" inputmode="numeric" data-thousands required /></label>
+                <label class="field">Kilometraje máximo<input name="maxMileage" type="text" inputmode="numeric" data-thousands data-max="999999" required /></label>
                 <label class="field">
                   Presupuesto máximo
                   <select name="maxBudget" data-price-select="vehicleSearch" required></select>
@@ -13366,28 +13366,47 @@
         vehicleSearchComments: "Comentarios de búsqueda de vehículo"
       };
 
-      function detectContactInText(value) {
+      // Palabras-n\u00famero (ES/EN) \u2192 d\u00edgitos, incl. teens y decenas, para cazar
+      // tel\u00e9fonos disimulados ("6 uno cincuenta 19 nueve 9", "seis uno cinco...").
+      const NUMWORDS = {
+        cero: "0", uno: "1", una: "1", dos: "2", tres: "3", cuatro: "4", cinco: "5",
+        seis: "6", siete: "7", ocho: "8", nueve: "9",
+        diez: "10", once: "11", doce: "12", trece: "13", catorce: "14", quince: "15",
+        dieciseis: "16", diecisiete: "17", dieciocho: "18", diecinueve: "19",
+        veinte: "20", treinta: "30", cuarenta: "40", cincuenta: "50", sesenta: "60",
+        setenta: "70", ochenta: "80", noventa: "90", cien: "100",
+        zero: "0", oh: "0", one: "1", two: "2", three: "3", four: "4", five: "5",
+        six: "6", seven: "7", eight: "8", nine: "9",
+        ten: "10", eleven: "11", twelve: "12", thirteen: "13", fourteen: "14", fifteen: "15",
+        sixteen: "16", seventeen: "17", eighteen: "18", nineteen: "19",
+        twenty: "20", thirty: "30", forty: "40", fifty: "50", sixty: "60",
+        seventy: "70", eighty: "80", ninety: "90", hundred: "100"
+      };
+      // M\u00e1s largas primero (dieciseis antes que seis) para que no se corten mal.
+      const NUMWORDS_RE = new RegExp(
+        "\\b(" + Object.keys(NUMWORDS).sort((a, b) => b.length - a.length).join("|") + ")\\b",
+        "g"
+      );
+
+      function detectContactInText(value, fieldName) {
         const text = String(value || "").trim();
         if (!text) return null;
         const lowered = text.toLowerCase();
         const plain = lowered.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const compact = plain.replace(/[^a-z0-9@]/g, "");
         const spacedEmailLike = plain.replace(/\s+/g, "");
-        // Anti-evasi\u00f3n: convertir n\u00fameros escritos en letras (ES/EN) a d\u00edgitos, para
-        // cazar tel\u00e9fonos disimulados como "6150-19 nueve nueve" o "seis uno cinco...".
-        const NUMWORDS = {
-          cero: "0", uno: "1", una: "1", dos: "2", tres: "3", cuatro: "4", cinco: "5",
-          seis: "6", siete: "7", ocho: "8", nueve: "9",
-          zero: "0", oh: "0", one: "1", two: "2", three: "3", four: "4", five: "5",
-          six: "6", seven: "7", eight: "8", nine: "9"
-        };
-        const digitized = plain.replace(
-          /\b(cero|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|zero|oh|one|two|three|four|five|six|seven|eight|nine)\b/g,
-          (m) => NUMWORDS[m]
-        );
-        // Tira de \u22657 n\u00fameros seguidos (d\u00edgitos y/o palabras-n\u00famero convertidas) = tel\u00e9fono.
+        const digitized = plain.replace(NUMWORDS_RE, (m) => NUMWORDS[m]);
+        // Tira de \u22657 n\u00fameros casi seguidos (d\u00edgitos y/o palabras-n\u00famero) = tel\u00e9fono.
         if (/\b\d{7,}\b/.test(digitized) || /\d(?:[\s().-]?\d){6,}/.test(digitized)) {
           return "n\u00famero de tel\u00e9fono (disimulado)";
+        }
+        // En campos de IDENTIDAD (marca, modelo, color, PH, calle) casi nunca hay
+        // n\u00fameros; \u22654 grupos de n\u00fameros = intento de colar un tel\u00e9fono troceado
+        // aunque metan palabras entre medio ("6 uno cincuenta casa 19 nueve 9").
+        const esComentario = /comment/i.test(fieldName || "");
+        if (fieldName && !esComentario) {
+          const grupos = (digitized.match(/\d+/g) || []).length;
+          if (grupos >= 4) return "n\u00famero de tel\u00e9fono (disimulado)";
         }
         // Arroba de red social suelta (@usuario) sin necesidad de dominio.
         if (/(?:^|[\s.,;:])@[a-z0-9._]{2,}/i.test(plain)) {
@@ -13508,7 +13527,7 @@
       function updateProtectedFieldWarning(field) {
         const fieldLabel = protectedFreeTextFields[field.name];
         if (!fieldLabel) return true;
-        const reason = detectContactInText(field.value);
+        const reason = detectContactInText(field.value, field.name);
         const warning = getFieldWarning(field);
         field.classList.toggle("field-invalid", Boolean(reason));
         if (warning) {
@@ -13519,7 +13538,7 @@
           const form = field.closest("form");
           const formError = form?.querySelector("[data-form-error]");
           const hasInvalidProtectedField = form
-            ? Object.keys(protectedFreeTextFields).some((name) => detectContactInText(form.querySelector(`[name="${name}"]`)?.value))
+            ? Object.keys(protectedFreeTextFields).some((name) => detectContactInText(form.querySelector(`[name="${name}"]`)?.value, name))
             : false;
           if (formError && !hasInvalidProtectedField) {
             formError.textContent = "";
@@ -13545,7 +13564,7 @@
         const invalid = Object.entries(protectedFreeTextFields)
           .map(([field, fieldLabel]) => {
             if (!(field in data)) return null;
-            const reason = detectContactInText(data[field]);
+            const reason = detectContactInText(data[field], field);
             return reason ? { field, fieldLabel, reason } : null;
           })
           .filter(Boolean)[0];
@@ -14684,8 +14703,37 @@
           if (input.dataset.thousandsReady) return;
           input.addEventListener("input", () => {
             input.value = formatThousandsValue(input.value);
+            // Tope opcional (ej. kilometraje ≤ 999,999): recorta el valor si excede.
+            const max = input.dataset.max ? Number(input.dataset.max) : null;
+            if (max != null) {
+              const n = Number(String(input.value).replace(/\D/g, ""));
+              if (n > max) input.value = formatThousandsValue(String(max));
+            }
           });
           input.dataset.thousandsReady = "true";
+        });
+      }
+
+      // Límites duros de campos (adicionales al bloqueo de contacto):
+      // - Año (Otro): máximo 4 cifras.
+      // - Marca / Modelo / Color (Otro): máximo 3 palabras.
+      function setupFieldGuards() {
+        document.querySelectorAll('[name="yearOther"],[name="minYearOther"]').forEach((el) => {
+          if (el.dataset.guardReady) return;
+          el.addEventListener("input", () => {
+            const v = el.value.replace(/\D/g, "").slice(0, 4);
+            if (el.value !== v) el.value = v;
+          });
+          el.dataset.guardReady = "1";
+        });
+        const wordFields = '[name="brandOther"],[name="desiredBrandOther"],[name="modelOther"],[name="desiredModelOther"],[name="colorOther"],[name="desiredColorOther"]';
+        document.querySelectorAll(wordFields).forEach((el) => {
+          if (el.dataset.guardReady) return;
+          el.addEventListener("input", () => {
+            const words = el.value.replace(/^\s+/, "").split(/\s+/).filter(Boolean);
+            if (words.length > 3) el.value = words.slice(0, 3).join(" ");
+          });
+          el.dataset.guardReady = "1";
         });
       }
 
@@ -16798,6 +16846,7 @@
         setupPropertyTerrainRule();
         setupPropertyTypeGrids();
         setupThousandsInputs();
+        setupFieldGuards();
         setupFriendlyValidation("propertyForm");
         setupFriendlyValidation("searchForm");
         setupFriendlyValidation("brokerForm");
