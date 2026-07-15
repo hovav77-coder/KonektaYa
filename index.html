@@ -229,6 +229,12 @@
         width: 100%;
       }
 
+      /* El display:flex de arriba pisa el atributo [hidden]; sin esto, ADMIN se
+         mostraba a usuarios NO admin aunque el JS lo marcara hidden. */
+      .session-menu .sm-item[hidden] {
+        display: none;
+      }
+
       .session-menu .sm-item:last-child {
         border-bottom: none;
       }
