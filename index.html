@@ -15800,6 +15800,18 @@
       document.getElementById("vehicleOfferForm").addEventListener("submit", saveVehicleOfferFromForm);
       document.getElementById("vehicleSearchForm").addEventListener("submit", saveVehicleSearchFromForm);
 
+      // Traduce los errores crudos (en inglés) de Supabase a mensajes claros.
+      function traduceAuthError(msg) {
+        const m = String(msg || "").toLowerCase();
+        if (/already registered|already exists|user already/.test(m)) return "Este email ya tiene una cuenta. Toca \"Iniciar sesión\".";
+        if (/rate limit|security purposes|only request this after|too many/.test(m)) return "Hiciste esto hace poco. Espera un minuto e intenta de nuevo.";
+        if (/at least 6|should be at least|weak password/.test(m)) return "La contraseña necesita al menos 6 caracteres.";
+        if (/invalid login|invalid credentials|invalid email or password/.test(m)) return "Email o contraseña incorrectos.";
+        if (/not confirmed|confirm your email/.test(m)) return "Aún no confirmaste tu correo. Revisa tu email (y spam) para activar la cuenta.";
+        if (/network|fetch|failed to send a request/.test(m)) return "Problema de conexión. Revisa tu internet e intenta de nuevo.";
+        return "No se pudo completar. Intenta de nuevo en un momento.";
+      }
+
       document.getElementById("loginForm").addEventListener("submit", async (event) => {
         event.preventDefault();
         const data = formToObject(event.currentTarget);
@@ -15836,13 +15848,29 @@
             }, 500);
             return;
           }
+          const sBtn = document.getElementById("loginSubmitBtn");
+          const sBtnTxt = sBtn ? sBtn.textContent : "";
           if (authMode === "register") {
+            // Feedback: sin esto la pantalla parecía congelada y permitía doble toque.
+            if (sBtn) { sBtn.disabled = true; sBtn.textContent = "Creando tu cuenta…"; }
+            showLoginStatus("Creando tu cuenta…");
             const { data: res, error } = await supabaseClient.auth.signUp({
               email,
               password,
               options: { data: { name: String(data.name || "").trim() } }
             });
-            if (error) { showLoginStatus(error.message || "No se pudo crear la cuenta."); return; }
+            if (sBtn) { sBtn.disabled = false; sBtn.textContent = sBtnTxt; }
+            if (error) {
+              showLoginStatus(traduceAuthError(error.message));
+              // Si el email ya existe, cambiamos a "Iniciar sesión" conservando el email.
+              if (/already registered|already exists|user already/i.test(error.message || "")) {
+                authMode = "login";
+                applyAuthMode();
+                const le = document.getElementById("loginEmail");
+                if (le) le.value = email;
+              }
+              return;
+            }
             if (!res.session) {
               showLoginStatus("");
               openRegisterDone(email);
@@ -15852,14 +15880,19 @@
             // Si "Confirm email" está desactivado, onAuthStateChange entra directo.
             return;
           }
+          if (sBtn) { sBtn.disabled = true; sBtn.textContent = "Entrando…"; }
+          showLoginStatus("Un momento, entrando…");
           const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
           if (error) {
-            showLoginStatus("No pudimos iniciar sesión con ese email. Si es tu primera vez, crea tu cuenta:");
+            if (sBtn) { sBtn.disabled = false; sBtn.textContent = sBtnTxt; }
+            // Mensaje neutro: el caso más común es contraseña incorrecta, no cuenta nueva.
+            showLoginStatus("Email o contraseña incorrectos. ¿La olvidaste? Tócala en \"¿Olvidaste tu contraseña?\" abajo. ¿Primera vez? Crea tu cuenta:");
             const createHint = document.getElementById("loginCreateHint");
             if (createHint) createHint.hidden = false;
             return;
           }
-          // La sesión y el redirect los maneja onAuthStateChange.
+          // Éxito: mantenemos el aviso hasta que onAuthStateChange haga el redirect.
+          showLoginStatus("✅ Entrando a tu panel…");
           return;
         }
 
@@ -15982,8 +16015,8 @@
         showLoginStatus("Enviando el enlace de restablecimiento…");
         const redirectTo = window.location.origin + window.location.pathname + "#login";
         const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
-        if (error) { showLoginStatus("No se pudo enviar el correo: " + error.message); return; }
-        showLoginStatus("Te enviamos un enlace a " + email + ". Ábrelo para crear una nueva contraseña. (Revisa spam.)");
+        if (error) { showLoginStatus(traduceAuthError(error.message)); return; }
+        showLoginStatus("Si existe una cuenta con " + email + ", te llegará un enlace en unos minutos. Revisa tu correo (y spam).");
       }
 
       // Cuando el usuario vuelve desde el enlace del correo, Supabase emite el
@@ -15998,6 +16031,9 @@
         const forgot = document.getElementById("loginForgotRow");
         const toggle = document.querySelector("#loginForm .login-toggle");
         if (emailField && emailField.closest(".field")) emailField.closest(".field").hidden = true;
+        // El email oculto NO debe seguir siendo required: si no, la validación
+        // nativa cancela el submit en silencio (el botón "no hacía nada").
+        if (emailField) emailField.required = false;
         if (forgot) forgot.hidden = true;
         if (toggle) toggle.hidden = true;
         if (pass) { pass.value = ""; pass.setAttribute("autocomplete", "new-password"); }
@@ -16012,6 +16048,7 @@
         passwordRecoveryMode = false;
         const emailField = document.getElementById("loginEmail");
         if (emailField && emailField.closest(".field")) emailField.closest(".field").hidden = false;
+        if (emailField) emailField.required = true; // restaurar validación normal del login
         const pass = document.getElementById("loginPassword");
         if (pass) pass.value = "";
         const btn = document.getElementById("loginSubmitBtn");
@@ -16357,13 +16394,17 @@
 
       let lastAuthEmail = null; // evita recargar todo dos veces (arranque, token refresh)
       function applySupabaseSession(session, redirect) {
-        currentUserEmail = session && session.user ? (session.user.email || "") : "";
+        const email = session && session.user ? (session.user.email || "") : "";
+        // ¿Cambió realmente el estado de sesión? supabase-js re-emite SIGNED_IN al
+        // recuperar el foco (ej. volver de WhatsApp en el celular); sin este guard
+        // eso re-renderizaba todo y te sacaba al panel a mitad de un formulario.
+        const changed = email !== lastAuthEmail;
+        currentUserEmail = email;
         save();
         // Diferido: el listener puede dispararse durante el arranque, antes de que
         // exista la versión final de render(). setTimeout garantiza que corra después.
         setTimeout(async () => {
-          const email = currentUserEmail;
-          if (email && email !== lastAuthEmail) {
+          if (email && changed) {
             lastAuthEmail = email;
             const warn = (n) => (e) => console.warn(n, e);
             // Cargar todo EN PARALELO (antes eran 6 llamadas en fila = lento en celular)
@@ -16378,9 +16419,13 @@
           } else if (!email) {
             lastAuthEmail = null;
           }
-          render();
-          refreshAuthUI();
-          if (redirect && currentUserEmail) {
+          // Solo re-renderizar cuando el estado de sesión cambió de verdad.
+          if (changed) {
+            render();
+            refreshAuthUI();
+          }
+          // Redirigir SOLO en un login NUEVO (no en re-fire de SIGNED_IN).
+          if (redirect && email && changed) {
             const pending = readPendingForm();
             if (pending && pending.tab && FORM_TABS[pending.tab]) {
               clearPendingForm();
@@ -20867,6 +20912,24 @@
         });
 
         activatePropertyYaTab((location.hash || "#inicio").replace("#", ""));
+
+        // Enlace de recuperación/confirmación vencido o inválido: Supabase redirige
+        // con #error=...&error_code=otp_expired. Antes caía en la portada en blanco
+        // (el usuario no entendía nada). Lo detectamos y lo llevamos a login con un
+        // mensaje claro. (Un enlace VÁLIDO trae access_token y NO entra aquí.)
+        (function checkAuthHashError() {
+          const h = location.hash || "";
+          if (!/[#&](error|error_code|error_description)=/.test(h)) return;
+          const expired = /otp_expired|expired|invalid/i.test(h);
+          const msg = expired
+            ? "El enlace expiró o ya se usó. Escribe tu email y toca \"¿Olvidaste tu contraseña?\" para recibir uno nuevo."
+            : "No se pudo completar la acción del enlace. Pide uno nuevo desde \"¿Olvidaste tu contraseña?\".";
+          try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+          try {
+            if (typeof showTab === "function") showTab("login");
+            if (typeof showLoginStatus === "function") showLoginStatus(msg);
+          } catch (e) {}
+        })();
       })();
     </script>
     <script>
