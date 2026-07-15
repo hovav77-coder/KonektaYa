@@ -13373,6 +13373,26 @@
         const plain = lowered.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         const compact = plain.replace(/[^a-z0-9@]/g, "");
         const spacedEmailLike = plain.replace(/\s+/g, "");
+        // Anti-evasi\u00f3n: convertir n\u00fameros escritos en letras (ES/EN) a d\u00edgitos, para
+        // cazar tel\u00e9fonos disimulados como "6150-19 nueve nueve" o "seis uno cinco...".
+        const NUMWORDS = {
+          cero: "0", uno: "1", una: "1", dos: "2", tres: "3", cuatro: "4", cinco: "5",
+          seis: "6", siete: "7", ocho: "8", nueve: "9",
+          zero: "0", oh: "0", one: "1", two: "2", three: "3", four: "4", five: "5",
+          six: "6", seven: "7", eight: "8", nine: "9"
+        };
+        const digitized = plain.replace(
+          /\b(cero|uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|zero|oh|one|two|three|four|five|six|seven|eight|nine)\b/g,
+          (m) => NUMWORDS[m]
+        );
+        // Tira de \u22657 n\u00fameros seguidos (d\u00edgitos y/o palabras-n\u00famero convertidas) = tel\u00e9fono.
+        if (/\b\d{7,}\b/.test(digitized) || /\d(?:[\s().-]?\d){6,}/.test(digitized)) {
+          return "n\u00famero de tel\u00e9fono (disimulado)";
+        }
+        // Arroba de red social suelta (@usuario) sin necesidad de dominio.
+        if (/(?:^|[\s.,;:])@[a-z0-9._]{2,}/i.test(plain)) {
+          return "usuario de red social";
+        }
         const contactIntentPatterns = [
           /\b(?:mi nombre|mis nombre|mi nom|mis nom|nom\s*y\s*apel|nombre y apellido|nomb(?:re)?\s*y\s*apell?(?:ido)?|me llamo|soy|buscame|busquenme|me buscan|me consiguen|encuentrame|encuentrenme)\b/i,
           /\b(?:llaman\s*me|llamen\s*me|llamarme|mandame|mandenme|manda\s*me|escribeme|escribanme|escriban|escribe\s*me|esciban|escrib|mensaje|mensajear|mensajan|chateame|chatear|hablame|hableme|habla\s*me|pon\s+mi|pongan\s+mi)\b/i,
