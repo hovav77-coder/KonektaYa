@@ -68,14 +68,48 @@
         }
       }
 
+      /* ===== Rediseño Tanda A ===== */
+      /* #17 Foco visible en cualquier control (teclado / accesibilidad). */
+      a:focus-visible, button:focus-visible, input:focus-visible,
+      select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+        outline: 3px solid color-mix(in srgb, var(--orange, #e05b2a) 55%, transparent);
+        outline-offset: 2px;
+        border-radius: 8px;
+      }
+
+      /* #14 Selects con chevron de marca, igual en todos los navegadores. */
+      select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%23607086' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        background-size: 12px 8px;
+        padding-right: 40px;
+      }
+      select::-ms-expand { display: none; }
+
+      /* #1 Áreas táctiles cómodas (≥44px) en celular. */
+      @media (max-width: 760px) {
+        .session-chip.out { min-height: 44px; padding: 12px 20px; }
+        .session-chip.in { width: 44px; height: 44px; }
+        .password-toggle { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; }
+        .button.small { min-height: 44px; }
+        .tab-link { min-height: 44px; display: inline-flex; align-items: center; }
+        .avail-seg { min-height: 42px; }
+      }
+
       body {
         margin: 0;
         background:
           linear-gradient(180deg, #f8fbff 0%, var(--bg) 45%, #eef7f2 100%);
         color: var(--ink);
+        /* Fuente del sistema a propósito: idéntica en cada dispositivo, sin descarga
+           (San Francisco en iOS/Mac, Roboto en Android, Segoe en Windows). */
         font-family:
-          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-          Arial, sans-serif;
+          system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
       }
 
       a {
@@ -476,7 +510,7 @@
       .brand-text .ya-bubble {
         background: transparent;
         border-radius: 0;
-        color: var(--orange);
+        color: var(--orange-dark);
         display: inline-flex;
         margin-left: 0;
         padding: 0;
@@ -813,7 +847,7 @@
 
       .home-choice-card[data-tab-button="vehiculoBusqueda"] .home-choice-icon {
         background: #fff0e8;
-        color: var(--orange);
+        color: var(--orange-dark);
       }
 
       /* Toggle Publicar / Buscar del panel de flujos */
@@ -941,7 +975,7 @@
       }
 
       .eyebrow {
-        color: var(--orange);
+        color: var(--orange-dark);
         display: inline-flex;
         font-size: 13px;
         font-weight: 900;
@@ -1864,7 +1898,7 @@
 
       .vehicle-type-card.vt-otro .vt-icon {
         background: #fff0e8;
-        color: var(--orange);
+        color: var(--orange-dark);
       }
 
       .vehicle-type-card.selected {
@@ -1904,7 +1938,7 @@
       }
 
       .vehicle-type-other .vto-label {
-        color: var(--orange);
+        color: var(--orange-dark);
         font-size: 13px;
         font-weight: 900;
         letter-spacing: 0.04em;
@@ -2829,7 +2863,7 @@
       }
 
       .form-notice strong {
-        color: var(--orange);
+        color: var(--orange-dark);
         font-size: 13px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
@@ -3468,6 +3502,19 @@
         text-transform: none;
       }
 
+      /* #14 Chevron de marca en los selects (va después de las reglas con
+         `background` shorthand para que no lo borren; misma especificidad, gana el orden). */
+      .field select,
+      .form.modern-form-ready .field select,
+      .admin-credit-form select,
+      .matchlab-sim-fields select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' stroke='%23607086' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        background-size: 12px 8px;
+        padding-right: 42px;
+      }
+
       .form.modern-form-ready .field textarea {
         min-height: 132px;
       }
@@ -3775,7 +3822,7 @@
       }
 
       .opportunity-cost strong {
-        color: var(--orange);
+        color: var(--orange-dark);
         font-size: 1.38rem;
         line-height: 1;
         min-width: 48px;
@@ -4061,12 +4108,12 @@
       }
 
       .results-example-action strong {
-        color: var(--orange);
+        color: var(--orange-dark);
         font-size: 1.7rem;
       }
 
       .score {
-        color: var(--orange);
+        color: var(--orange-dark);
         font-size: clamp(42px, 5vw, 62px);
         font-weight: 950;
         line-height: 1;
@@ -4140,7 +4187,7 @@
       }
 
       .unlock-panel .unlock-amount {
-        color: var(--orange);
+        color: var(--orange-dark);
         font-size: 2rem;
         line-height: 1;
       }
@@ -4529,7 +4576,7 @@
       }
 
       .result-price {
-        color: var(--orange);
+        color: var(--orange-dark);
         font-size: 15px;
         font-weight: 900;
       }
@@ -4914,7 +4961,7 @@
       .linklike {
         background: none;
         border: 0;
-        color: var(--orange);
+        color: var(--orange-dark);
         cursor: pointer;
         font: inherit;
         font-weight: 900;
@@ -9148,7 +9195,7 @@
         display: none;
       }
       .faq-item summary::after {
-        color: var(--orange);
+        color: var(--orange-dark);
         content: "+";
         font-size: 20px;
         position: absolute;
@@ -14920,6 +14967,16 @@
           });
           el.dataset.guardReady = "1";
         });
+        // #16 Teclados móviles: abrir el teclado correcto en el celular.
+        document.querySelectorAll('input[name="phone"]').forEach((el) => {
+          el.setAttribute("inputmode", "tel");
+          if (!el.getAttribute("autocomplete")) el.setAttribute("autocomplete", "tel");
+        });
+        document.querySelectorAll("input[data-thousands]").forEach((el) => el.setAttribute("inputmode", "numeric"));
+        document.querySelectorAll('input[name="email"]').forEach((el) => {
+          el.setAttribute("inputmode", "email");
+          if (!el.getAttribute("autocomplete")) el.setAttribute("autocomplete", "email");
+        });
       }
 
       function syncAvailabilitySelect(select) {
@@ -17119,6 +17176,11 @@
         setupDashboardViews();
         setupUserDashboardTabs();
         setupAdminPanelTabs();
+        // #17 Accesibilidad: anunciar avisos/errores a lectores de pantalla.
+        document.querySelectorAll('.toast, [data-form-error], [data-account-error], #loginStatus, #mdStatus, #mdPassStatus, .md-status').forEach((el) => {
+          if (!el.getAttribute("role")) el.setAttribute("role", "status");
+          el.setAttribute("aria-live", "polite");
+        });
         const startTab = location.hash.replace("#", "") || "inicio";
         showTab(startTab);
         // Si el arranque cae directo en un formulario (deep-link a #propietario, etc.)
