@@ -14389,6 +14389,7 @@
       }
 
       function editProperty(id) {
+        if (window.initFormsOnce) window.initFormsOnce(); // por si se edita antes de abrir un form
         id = coerceId(id);
         const property = properties.find((item) => item.id === id);
         const form = document.getElementById("propertyForm");
@@ -14444,6 +14445,7 @@
       }
 
       function editSearch(id) {
+        if (window.initFormsOnce) window.initFormsOnce();
         id = coerceId(id);
         const search = searches.find((item) => item.id === id);
         const isBrokerSearch = classifyInterested(search) === "broker_declarado" || search.role === "broker";
@@ -15272,6 +15274,7 @@
         vehiculoOferta: "vehicleOfferForm",
         vehiculoBusqueda: "vehicleSearchForm"
       };
+      window.FORM_TABS = FORM_TABS; // para el lazy-init desde la navegación (otro <script>)
       const PENDING_FORM_KEY = "konektaya_pending_form";
 
       function savePendingForm(tab) {
@@ -15412,6 +15415,7 @@
       }
 
       function prefillFormForTab(tab) {
+        if (window.initFormsOnce) window.initFormsOnce(); // lazy-init al abrir el form
         const formId = FORM_TABS[tab];
         if (formId) {
           const form = document.getElementById(formId);
@@ -15717,6 +15721,8 @@
           tabId = "admin";
         }
         const target = document.getElementById(tabId) ? tabId : "inicio";
+        // Lazy-init (Fase B #2): si el destino es un formulario, prepara sus setups.
+        if (window.FORM_TABS && window.FORM_TABS[target] && window.initFormsOnce) window.initFormsOnce();
 
         document.querySelectorAll(".tab-panel").forEach((panel) => {
           const isHomeExtra = panel.dataset.homeExtra === "true";
@@ -17012,43 +17018,64 @@
         });
       }
 
+      // --- Lazy-init (Fase B #2) ---
+      // Los ~19 setups de FORMULARIOS no se necesitan para pintar la portada, y en
+      // celular de gama baja retrasan la interactividad al arranque. Los agrupamos en
+      // initFormsOnce() (guarda idempotente) y los corremos al ABRIR el primer
+      // formulario, o en idle como prewarm. Al arranque quedan SOLO los de navegación
+      // del dashboard (que sí se necesitan para que las pestañas funcionen ya).
+      let formsInited = false;
+      function initFormsOnce() {
+        if (formsInited) return;
+        formsInited = true;
+        try {
+          setupLocationSelects("property", "Panamá", "Costa del Este");
+          setupLocationSelects("search", "Panamá", "Costa del Este");
+          setupLocationSelects("broker", "Panamá", "Costa del Este");
+          setupLocationSelects("vehicleOffer", "Panamá", "San Francisco");
+          setupLocationSelects("vehicleSearch", "Panamá", "San Francisco");
+          setupBrokerAcceptanceRule();
+          setupPropertyPricingRule();
+          setupSearchBrokerClientRule();
+          setupAllBrokerCredentials();
+          setupBrokerFormPrivacy();
+          setupAccountCreation("propertyForm");
+          setupAccountCreation("searchForm");
+          setupAccountCreation("brokerForm");
+          setupAccountCreation("vehicleOfferForm");
+          setupAccountCreation("vehicleSearchForm");
+          setupPlacesAutocomplete();
+          setupParkingSelects();
+          setupAvailabilitySelects();
+          setupUrgencySelects();
+          setupVehicleStatusSelects();
+          setupPropertyTerrainRule();
+          setupPropertyTypeGrids();
+          setupThousandsInputs();
+          setupFieldGuards();
+          setupFriendlyValidation("propertyForm");
+          setupFriendlyValidation("searchForm");
+          setupFriendlyValidation("brokerForm");
+          setupFriendlyValidation("vehicleOfferForm");
+          setupFriendlyValidation("vehicleSearchForm");
+          setupVehicleOptionLists();
+          setupProtectedFreeTextValidation();
+        } catch (error) {
+          console.warn("initFormsOnce parcial:", error);
+        }
+      }
+      window.initFormsOnce = initFormsOnce;
+
       try {
-        setupLocationSelects("property", "Panamá", "Costa del Este");
-        setupLocationSelects("search", "Panamá", "Costa del Este");
-        setupLocationSelects("broker", "Panamá", "Costa del Este");
-        setupLocationSelects("vehicleOffer", "Panamá", "San Francisco");
-        setupLocationSelects("vehicleSearch", "Panamá", "San Francisco");
-        setupBrokerAcceptanceRule();
-        setupPropertyPricingRule();
-        setupSearchBrokerClientRule();
-        setupAllBrokerCredentials();
-        setupBrokerFormPrivacy();
-        setupAccountCreation("propertyForm");
-        setupAccountCreation("searchForm");
-        setupAccountCreation("brokerForm");
-        setupAccountCreation("vehicleOfferForm");
-        setupAccountCreation("vehicleSearchForm");
-        setupPlacesAutocomplete();
-        setupParkingSelects();
-        setupAvailabilitySelects();
-        setupUrgencySelects();
-        setupVehicleStatusSelects();
-        setupAllBrokerCredentials();
-        setupPropertyTerrainRule();
-        setupPropertyTypeGrids();
-        setupThousandsInputs();
-        setupFieldGuards();
-        setupFriendlyValidation("propertyForm");
-        setupFriendlyValidation("searchForm");
-        setupFriendlyValidation("brokerForm");
-        setupFriendlyValidation("vehicleOfferForm");
-        setupFriendlyValidation("vehicleSearchForm");
-        setupVehicleOptionLists();
-        setupProtectedFreeTextValidation();
         setupDashboardViews();
         setupUserDashboardTabs();
         setupAdminPanelTabs();
-        showTab(location.hash.replace("#", "") || "inicio");
+        const startTab = location.hash.replace("#", "") || "inicio";
+        showTab(startTab);
+        // Si el arranque cae directo en un formulario (deep-link a #propietario, etc.)
+        // inicializa ya; si no, prewarm en idle para que la 1ª apertura sea instantánea.
+        if (FORM_TABS[startTab]) initFormsOnce();
+        else (window.requestIdleCallback || ((cb) => setTimeout(cb, 200)))(initFormsOnce);
       } catch (error) {
         console.warn("Init parcial; el render definitivo lo hace el modelo de créditos.", error);
       }
@@ -20981,6 +21008,7 @@
       }
 
       function editVehicleOffer(id) {
+        if (window.initFormsOnce) window.initFormsOnce();
         id = coerceId(id);
         const offer = vehicleOffers.find((item) => item.id === id);
         const form = document.getElementById("vehicleOfferForm");
@@ -21026,6 +21054,7 @@
       }
 
       function editVehicleSearch(id) {
+        if (window.initFormsOnce) window.initFormsOnce();
         id = coerceId(id);
         const search = vehicleSearches.find((item) => item.id === id);
         const form = document.getElementById("vehicleSearchForm");
@@ -21328,6 +21357,10 @@
 
         function activatePropertyYaTab(tabId) {
           const target = normalizeTab(tabId);
+
+          // Lazy-init (Fase B #2): si navegamos a un formulario por hash/enlace
+          // [data-tab] (no solo por el botón), asegura que sus setups ya corrieron.
+          if (window.FORM_TABS && window.FORM_TABS[target] && window.initFormsOnce) window.initFormsOnce();
 
           document.querySelectorAll(".tab-panel").forEach((panel) => {
             const isHomeExtra = panel.dataset.homeExtra === "true";
