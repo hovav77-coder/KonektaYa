@@ -57,6 +57,17 @@
         scroll-behavior: smooth;
       }
 
+      /* Respeta a quien pide menos movimiento (sistema): baja el costo de repintado
+         y evita mareos. Desactiva animaciones/transiciones y el scroll suave. */
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        *, *::before, *::after {
+          animation-duration: 0.001ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.001ms !important;
+        }
+      }
+
       body {
         margin: 0;
         background:
@@ -2660,6 +2671,22 @@
       .history-list-rows {
         display: grid;
         gap: 10px;
+      }
+      .history-more {
+        margin-top: 12px;
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: var(--navy);
+        border-radius: 12px;
+        padding: 11px;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .history-more:hover {
+        border-color: var(--orange, #e05b2a);
+        background: #fff;
       }
       .history-row {
         align-items: center;
@@ -7195,7 +7222,9 @@
         min-height: 138px;
         padding: 14px;
         text-align: left;
-        transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+        /* No animamos box-shadow (repinta cada frame); solo transform/border, que
+           el navegador compone en GPU. La sombra del hover aparece al instante. */
+        transition: border-color .18s ease, transform .18s ease;
         width: 100%;
       }
 
@@ -8652,7 +8681,7 @@
         font-size: 15px;
         font-weight: 800;
         padding: 11px 12px;
-        transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+        transition: background 150ms ease, color 150ms ease;
       }
 
       .auth-switch-btn.active {
@@ -21041,9 +21070,13 @@
         }
         const total = items.reduce((sum, it) => sum + Number(it.price || 0), 0);
         const rankColors = { AAA: "#0a2f55", AA: "#0f5e91", A: "#2e78ad", BBB: "#5f7186", BB: "#5f7186", B: "#8a97a8" };
-        const rows = items
+        // Paginado: crece sin límite con el uso, así que mostramos de a 20.
+        const sorted = items
           .slice()
-          .sort((a, b) => new Date(b.unlockedAt || 0) - new Date(a.unlockedAt || 0))
+          .sort((a, b) => new Date(b.unlockedAt || 0) - new Date(a.unlockedAt || 0));
+        const visible = sorted.slice(0, historyLimit);
+        const remaining = sorted.length - visible.length;
+        const rows = visible
           .map((item) => {
             const dt = String(item.displayType || publicMachLabel(item.machType) || "Contacto desbloqueado");
             const rank = dt.includes(" · ") ? dt.split(" · ")[0] : "";
@@ -21066,11 +21099,19 @@
             `;
           })
           .join("");
+        const moreBtn = remaining > 0
+          ? `<button type="button" class="history-more" onclick="showMoreHistory()">Ver más (${remaining} restante${remaining === 1 ? "" : "s"})</button>`
+          : "";
         target.innerHTML = `
           <div class="history-summary">${items.length} contacto${items.length === 1 ? "" : "s"} · Total gastado <strong>${money.format(total)}</strong></div>
           <div class="history-list-rows">${rows}</div>
+          ${moreBtn}
         `;
       }
+      // Cuántos desbloqueos se muestran en el historial (de a 20).
+      let historyLimit = 20;
+      function showMoreHistory() { historyLimit += 20; renderHistory(); }
+      window.showMoreHistory = showMoreHistory;
 
       setupUserDashboardVerticalFilter();
       setupResultsFilter();
