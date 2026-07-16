@@ -96,7 +96,9 @@
         .session-chip.in { width: 44px; height: 44px; }
         .password-toggle { width: 44px; height: 44px; padding: 0; display: flex; align-items: center; justify-content: center; }
         .button.small { min-height: 44px; }
-        .tab-link { min-height: 44px; display: inline-flex; align-items: center; }
+        /* :not([hidden]) para no reactivar los links de sesión que refreshAuthUI oculta
+           (LOGIN/ADMIN/Salir viven en el menú del avatar). display pisaría a [hidden]. */
+        .tab-link:not([hidden]) { min-height: 44px; display: inline-flex; align-items: center; }
         .avail-seg { min-height: 42px; }
       }
 
