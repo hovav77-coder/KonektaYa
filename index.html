@@ -926,25 +926,31 @@
         display: none;
       }
 
-      /* #7 Etiquetas "Paso 1 / Paso 2" para que el flujo se lea de un vistazo. */
-      .home-step-eyebrow {
-        font-size: 11.5px;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: var(--muted, #607086);
-        margin: 0 0 9px;
+      /* #7 Pasos 1/2: número en círculo + etiqueta navy legible (Opción A). */
+      .home-step {
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 10px;
+        margin: 0 0 9px;
       }
-      .home-step-eyebrow b {
+      .home-step-n {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--navy, #0a2f55);
         color: #fff;
-        background: var(--orange-dark, #c2410c);
-        border-radius: 999px;
-        padding: 2px 9px;
         font-weight: 800;
-        letter-spacing: 0.02em;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+      }
+      .home-step-l {
+        color: var(--navy, #0a2f55);
+        font-weight: 800;
+        font-size: 14.5px;
+        line-height: 1.25;
       }
 
       .home-benefit-grid {
@@ -9908,7 +9914,7 @@
         <aside class="home-actions-panel" aria-label="Flujos disponibles">
           <span class="eyebrow">Flujos disponibles</span>
           <h2>¿Qué quieres hacer hoy?</h2>
-          <p class="home-step-eyebrow"><b>Paso 1</b> Elige una acción</p>
+          <div class="home-step"><span class="home-step-n" aria-hidden="true">1</span><span class="home-step-l">Elige una acción</span></div>
           <div class="flow-seg" role="tablist" aria-label="Publicar o buscar">
             <button class="flow-seg-btn active" type="button" data-flow="publicar" onclick="setHomeFlow('publicar')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
@@ -9919,7 +9925,7 @@
               Buscar
             </button>
           </div>
-          <p class="home-step-eyebrow"><b>Paso 2</b> ¿Inmueble o vehículo?</p>
+          <div class="home-step"><span class="home-step-n" aria-hidden="true">2</span><span class="home-step-l">¿Inmueble o vehículo?</span></div>
           <div class="home-choice-grid" data-flow-pane="publicar">
             <button class="home-choice-card" type="button" data-tab-button="propietario">
               <span class="home-choice-icon" aria-hidden="true">
