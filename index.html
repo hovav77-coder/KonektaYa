@@ -11727,10 +11727,19 @@
         const property = match.property;
         const search = match.search;
         const rows = [];
-        const zoneOk = normalize(property.zone) === normalize(search.desiredZone);
-        rows.push(
-          compRowP("Ubicación", `${property.zone}, ${property.province}`, `${search.desiredZone}, ${search.province}`, zoneOk ? "ok" : "diff")
-        );
+        // Mostrar lo MÁS específico (PH o calle) + la zona/provincia, no solo la
+        // zona: si el aviso tiene "PH Vista del Sol" debe verse, no "Panamá".
+        const offerLoc = [
+          property.phName ? phDisplayName(property.phName) : (property.streetOrNeighborhood || ""),
+          [property.zone, property.province].filter(Boolean).join(", ")
+        ].filter(Boolean).join(" · ") || "No especificada";
+        const searchLoc = [
+          search.desiredPh ? phDisplayName(search.desiredPh) : (search.desiredStreetOrNeighborhood || ""),
+          [search.desiredZone, search.province].filter(Boolean).join(", ")
+        ].filter(Boolean).join(" · ") || "No especificada";
+        // Estado según el motor real (mismo PH = coincide; misma zona/cercano = parcial).
+        const locStatus = isSamePh(property, search) ? "ok" : locationWithinZone(property, search) ? "warn" : "diff";
+        rows.push(compRowP("Ubicación", offerLoc, searchLoc, locStatus));
         rows.push(
           compRowP(
             "Operación y tipo",
