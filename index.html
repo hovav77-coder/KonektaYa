@@ -15102,6 +15102,18 @@
       }
 
       function ensureAccountForForm(form, data) {
+        // El teléfono es OBLIGATORIO para publicar: es el contacto que verá quien
+        // pague por desbloquear. Chokepoint único de los 5 formularios. Así el
+        // perfil siempre queda con teléfono (supaUpsertProfile lo guarda al publicar).
+        const phone = String(data.phone || "").trim();
+        if (!phone) {
+          alert("El teléfono es obligatorio para publicar. Es el contacto que verá quien desbloquee tu publicación.");
+          const el = form && form.querySelector('[name="phone"]');
+          if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+          return false;
+        }
+        data.phone = phone;
+        rememberContactPhone(phone);
         if (supabaseEnabled) {
           if (!currentUserEmail) {
             const tab = Object.keys(FORM_TABS).find((t) => FORM_TABS[t] === form.id);
@@ -16748,6 +16760,15 @@
         const uid = await supaCurrentUid();
         const { data, error } = await supabaseClient.from("profiles").select("*").eq("id", uid).maybeSingle();
         if (!error) myProfile = data || null;
+        // Red de seguridad: si el perfil no tiene teléfono pero recordamos uno en
+        // este dispositivo, lo rellenamos (cubre cuentas creadas antes de exigirlo).
+        try {
+          const remembered = (typeof rememberedPhone === "function" ? rememberedPhone() : "") || "";
+          if (uid && myProfile && !String(myProfile.phone || "").trim() && remembered) {
+            const { error: upErr } = await supabaseClient.from("profiles").update({ phone: remembered }).eq("id", uid);
+            if (!upErr) myProfile.phone = remembered;
+          }
+        } catch (e) {}
       }
 
       // Carga los desbloqueos ya pagados del usuario (para marcar estado + revelar contacto)
