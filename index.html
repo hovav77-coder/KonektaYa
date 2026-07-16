@@ -102,6 +102,37 @@
         .avail-seg { min-height: 42px; }
       }
 
+      /* ===== Rediseño Tanda C-1 ===== */
+      /* #10 Skeletons de carga (placeholder mientras llegan los datos del servidor). */
+      .skel-card { background: #fff; border: 1px solid var(--line, #dce5ef); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
+      .skel { background: linear-gradient(90deg, #e9eff6, #f4f8fc, #e9eff6); background-size: 200% 100%; border-radius: 7px; animation: skelSh 1.3s linear infinite; }
+      .skel-line { height: 12px; margin-bottom: 9px; }
+      .skel-line.lg { height: 16px; width: 55%; }
+      .skel-line.sm { width: 35%; margin-bottom: 0; }
+      @keyframes skelSh { to { background-position: -200% 0; } }
+
+      /* #4 Barra de acción inferior (solo celular): accesos al alcance del pulgar. */
+      .bottombar { display: none; }
+      @media (max-width: 760px) {
+        .bottombar {
+          display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+          background: #fff; border-top: 1px solid var(--line, #dce5ef);
+          padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+          box-shadow: 0 -6px 20px rgba(10, 47, 85, 0.07);
+        }
+        .bottombar button {
+          flex: 1; background: none; border: none; cursor: pointer;
+          display: flex; flex-direction: column; align-items: center; gap: 3px;
+          min-height: 52px; padding: 4px; font-size: 11px; font-weight: 800; color: var(--muted, #607086);
+        }
+        .bottombar button .bn-ic { font-size: 20px; line-height: 1; }
+        .bottombar button.on { color: var(--orange-dark, #c2410c); }
+        body { padding-bottom: 66px; }
+        /* body .wa-float: sube el flotante por encima de la barra. Mayor
+           especificidad que la regla base `.wa-float{bottom:22px}` (que va después). */
+        body .wa-float { bottom: 80px; }
+      }
+
       body {
         margin: 0;
         background:
@@ -11305,6 +11336,14 @@
       <div class="footer-bottom">© 2026 KonektaYa · Panamá · Plataforma de matching inteligente</div>
     </footer>
 
+    <!-- #4 Barra de acción inferior (solo celular) -->
+    <nav class="bottombar" id="bottomBar" aria-label="Acciones rápidas">
+      <button type="button" data-bn="inicio" onclick="bottomNavGo('inicio')"><span class="bn-ic" aria-hidden="true">🏠</span>Inicio</button>
+      <button type="button" data-bn="publicar" onclick="bottomNavGo('publicar')"><span class="bn-ic" aria-hidden="true">➕</span>Publicar</button>
+      <button type="button" data-bn="buscar" onclick="bottomNavGo('buscar')"><span class="bn-ic" aria-hidden="true">🔎</span>Buscar</button>
+      <button type="button" data-bn="panel" onclick="bottomNavGo('panel')"><span class="bn-ic" aria-hidden="true">👤</span>Mi panel</button>
+    </nav>
+
     <a
       class="wa-float"
       href="https://wa.me/50764905233?text=Hola%20KonektaYa%2C%20necesito%20ayuda."
@@ -15541,6 +15580,27 @@
       }
       window.setHomeFlow = setHomeFlow;
 
+      // #4 Barra inferior (móvil): navega reutilizando las funciones existentes.
+      function bottomNavGo(what) {
+        if (what === "inicio") { if (window.activatePropertyYaTab) activatePropertyYaTab("inicio"); else showTab("inicio"); }
+        else if (what === "publicar") { goPublishOrSearch(); if (window.setHomeFlow) setHomeFlow("publicar"); }
+        else if (what === "buscar") { goPublishOrSearch(); if (window.setHomeFlow) setHomeFlow("buscar"); }
+        else if (what === "panel") { if (window.showDashboardView) window.showDashboardView("user"); showTab("admin"); }
+        const bar = document.getElementById("bottomBar");
+        if (bar) bar.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.bn === what));
+      }
+      window.bottomNavGo = bottomNavGo;
+
+      // #10 Skeletons de carga: placeholder en las listas mientras llegan los datos.
+      function skelCard() { return '<div class="skel-card"><div class="skel skel-line lg"></div><div class="skel skel-line"></div><div class="skel skel-line sm"></div></div>'; }
+      function showLoadingSkeletons() {
+        ["userProperties", "userSearches", "unlockHistory"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = skelCard() + skelCard() + skelCard();
+        });
+      }
+      window.showLoadingSkeletons = showLoadingSkeletons;
+
       // Tras publicar/registrar con éxito: mensaje + llevar a "Mi panel" (no a inicio).
       function afterPublishSuccess() {
         openPublishDone();
@@ -16833,6 +16893,7 @@
         setTimeout(async () => {
           if (email && changed) {
             lastAuthEmail = email;
+            if (typeof showLoadingSkeletons === "function") showLoadingSkeletons(); // #10 placeholder mientras carga
             const warn = (n) => (e) => console.warn(n, e);
             // Cargar todo EN PARALELO (antes eran 6 llamadas en fila = lento en celular)
             await Promise.all([
