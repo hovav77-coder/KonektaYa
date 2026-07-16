@@ -11932,7 +11932,7 @@
               <span class="oc2-avail ${status === "cerrado" ? "off" : "on"}">${status === "cerrado" ? "" : `<span class="oc2-dot"></span>`}${statusText}</span>
             </div>
             <div class="rc2-body">
-              <p class="contact-line">Tel: ${cPhone} · Email: ${cEmail}${finalClientLine(match.search) ? ` · Cliente final: ${finalClientName(match.search)}` : ""}</p>
+              <p class="contact-line">Tel: ${cPhone || "No indicado"} · Email: ${cEmail || "No indicado"}${finalClientLine(match.search) ? ` · Cliente final: ${finalClientName(match.search)}` : ""}</p>
               ${whatsappButton(cPhone, cName)}
               <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price != null ? unlockInfo.price : match.mach.price)}</p>
             </div>
@@ -16630,12 +16630,15 @@
       async function supaUpsertProfile(record) {
         const uid = await supaCurrentUid();
         if (!uid) return;
-        const role = record ? record.role || record.registeredBy || null : undefined;
+        // OJO: solo escribir campos que el registro TRAE. Usar `|| null` aquí
+        // sobrescribía el teléfono/rol del perfil con vacío cada vez que se
+        // publicaba/editaba algo sin ese dato (así se "borraba" el teléfono).
+        const role = record ? record.role || record.registeredBy || undefined : undefined;
         const prof = {
           id: uid,
           email: currentUserEmail,
           name: (record && (record.name || fullName(record))) || undefined,
-          phone: record ? record.phone || null : undefined,
+          phone: (record && record.phone) ? String(record.phone).trim() : undefined,
           role
         };
         if (role === "broker" && record && record._broker) {
@@ -17892,6 +17895,15 @@
         localStorage.setItem("propertyYaMatchConfig", JSON.stringify(matchConfig));
       };
 
+      // Un usuario NO debe hacer match consigo mismo (misma cuenta ofreciendo y
+      // buscando). Comparamos por owner_id del servidor; en demo, por email.
+      function sameOwner(a, b) {
+        if (!a || !b) return false;
+        if (a.ownerId != null && b.ownerId != null) return String(a.ownerId) === String(b.ownerId);
+        const ea = normalize(a.email || ""), eb = normalize(b.email || "");
+        return !!ea && ea === eb;
+      }
+
       recalculateMatches = function () {
         matches = [];
         vehicleMatches = [];
@@ -17901,6 +17913,7 @@
           if (isPublicationExpired(property)) return; // publicacion vencida: no hace match hasta renovar
           searches.forEach((search) => {
             if (!isSearchActive(search)) return;
+            if (sameOwner(property, search)) return; // no auto-match (misma cuenta)
             if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
             if (search.owner_blocked) return; // broker no aprobado (estado del servidor)
             const score = calculateScore(property, search);
@@ -17925,6 +17938,7 @@
           if (isPublicationExpired(offer)) return; // publicacion vencida: no hace match hasta renovar
           vehicleSearches.forEach((search) => {
             if (!isSearchActive(search)) return;
+            if (sameOwner(offer, search)) return; // no auto-match (misma cuenta)
             if (search.role === "broker" && isBrokerBlockedFromMatching(search.email)) return;
             if (search.owner_blocked) return; // broker no aprobado (estado del servidor)
             const result = vehicleMatchEngineV1(offer, search);
@@ -19081,7 +19095,7 @@
               <span class="oc2-avail on"><span class="oc2-dot"></span>Desbloqueado</span>
             </div>
             <div class="rc2-body">
-              <p class="contact-line">Tel: ${cPhone} · Email: ${cEmail}</p>
+              <p class="contact-line">Tel: ${cPhone || "No indicado"} · Email: ${cEmail || "No indicado"}</p>
               ${whatsappButton(cPhone, cName)}
               <p class="rc2-unlock-meta">Desbloqueado ${formatDate(unlockInfo.unlockedAt)} · Pagado ${money.format(unlockInfo.price != null ? unlockInfo.price : match.mach.price)}</p>
             </div>

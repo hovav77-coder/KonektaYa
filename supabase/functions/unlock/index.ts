@@ -237,6 +237,9 @@ Deno.serve(async (req) => {
     ]);
     if (!offer || !search) return json({ error: "Publicación no encontrada" }, 404);
     if (offer.owner_id !== user.id) return json({ error: "Solo el dueño de la publicación puede desbloquear" }, 403);
+    // No auto-desbloqueo: no tiene sentido pagar por tu propio contacto (y el
+    // motor del cliente ya no muestra auto-matches; esto es defensa en profundidad).
+    if (offer.owner_id === search.owner_id) return json({ error: "No puedes desbloquear tu propia publicación." }, 400);
 
     // Config global (fallback a defaults)
     let config: any = DEFAULT_CONFIG;
