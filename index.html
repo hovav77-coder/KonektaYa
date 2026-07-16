@@ -1525,6 +1525,30 @@
         flex-wrap: wrap;
       }
 
+      /* Botón "Eliminar" en tarjetas de publicación: discreto, con tono peligro al pasar. */
+      .oc2-del {
+        color: #b91c1c;
+      }
+      .oc2-del:hover {
+        border-color: #fca5a5;
+        background: #fef2f2;
+        color: #991b1b;
+      }
+
+      /* Tarjeta archivada + nota del pie. */
+      .arch-card .rc2-title {
+        color: #475569;
+      }
+      .arch-note {
+        font-size: 12.5px;
+        color: #94a3b8;
+      }
+
+      /* La pestaña "Archivadas" se oculta si no hay nada (evita que display:flex pise [hidden]). */
+      .user-dashboard-tab-buttons button[hidden] {
+        display: none !important;
+      }
+
       @media (max-width: 640px) {
         .rc2-meta {
           grid-template-columns: repeat(2, 1fr);
@@ -9600,6 +9624,23 @@
       </div>
     </div>
 
+    <!-- Popup: resultado de eliminar/archivar una publicación -->
+    <div class="rd-modal" id="removeResultModal" hidden>
+      <div class="rd-scrim" onclick="closeRemoveResult()"></div>
+      <div class="rd-card" role="dialog" aria-modal="true" aria-labelledby="rrTitle">
+        <div class="rd-head">
+          <div class="rd-ico" id="rrIco" aria-hidden="true">🗑️</div>
+          <h3 id="rrTitle">Publicación eliminada</h3>
+        </div>
+        <div class="rd-body">
+          <p id="rrMsg">—</p>
+          <div class="rd-actions">
+            <button type="button" class="rd-btn rd-btn-primary" onclick="closeRemoveResult()">Entendido</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <main>
       <section class="hero tab-panel active" id="inicio">
         <div class="hero-copy">
@@ -10668,6 +10709,7 @@
                   <button class="active" type="button" data-user-dashboard-button="properties">Ofertas <span class="tab-count" id="offersTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="searches">Solicitudes <span class="tab-count" id="searchesTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="history">Historial</button>
+                  <button type="button" data-user-dashboard-button="archived" id="archivedTabBtn" hidden>Archivadas <span class="tab-count" id="archivedTabCount">0</span></button>
                 </div>
               </div>
               <div class="user-dashboard-pane active" data-user-dashboard-pane="properties">
@@ -10690,6 +10732,13 @@
                   <span class="pane-heading-note">Contactos desbloqueados con su costo</span>
                 </div>
                 <div class="history-list" id="unlockHistory"></div>
+              </div>
+              <div class="user-dashboard-pane" data-user-dashboard-pane="archived">
+                <div class="pane-heading">
+                  <h2>Publicaciones archivadas</h2>
+                  <span class="pane-heading-note">Se ocultaron porque ya tuvieron una interacción. No aparecen ni generan resultados; puedes restaurarlas cuando quieras.</span>
+                </div>
+                <div class="data-list" id="userArchived"></div>
               </div>
             </div>
           </div>
@@ -16657,6 +16706,21 @@
         if (error) console.warn("supaDeletePublication", cfg.table, error.message);
       }
 
+      // El SERVIDOR decide: si nunca hubo un desbloqueo pagado, BORRA la
+      // publicación; si ya hubo interacción, la ARCHIVA (conserva el registro).
+      // Devuelve 'deleted' | 'archived' | 'not_found' o null si falla.
+      async function supaRemovePublication(entityKey, id) {
+        if (!supabaseEnabled || !id) return null;
+        const cfg = SUPA_ENTITIES[entityKey];
+        if (!cfg) return null;
+        const { data, error } = await supabaseClient.rpc("konektaya_remove_publication", {
+          p_table: cfg.table,
+          p_id: id
+        });
+        if (error) { console.warn("supaRemovePublication", cfg.table, error.message); return null; }
+        return data;
+      }
+
       async function supaLoadConfig() {
         if (!supabaseEnabled) return;
         const { data, error } = await supabaseClient.from("match_config").select("config").eq("id", 1).maybeSingle();
@@ -18724,20 +18788,38 @@
         return currentUserEmail && normalize(item.email) === normalize(currentUserEmail);
       }
 
+      // Una publicación "archivada" (tuvo interacción y el dueño la eliminó) se
+      // oculta de todas las listas/contadores/stats, pero se conserva en la BD.
+      const isArchivedRecord = (r) => !!(r && r.archived);
+      const isActiveOwnerRecord = (r) => isCurrentUserRecord(r) && !isArchivedRecord(r);
+
       function currentUserProperties() {
-        return properties.filter(isCurrentUserRecord);
+        return properties.filter(isActiveOwnerRecord);
       }
 
       function currentUserSearches() {
-        return searches.filter(isCurrentUserRecord);
+        return searches.filter(isActiveOwnerRecord);
       }
 
       function currentUserVehicleOffers() {
-        return vehicleOffers.filter(isCurrentUserRecord);
+        return vehicleOffers.filter(isActiveOwnerRecord);
       }
 
       function currentUserVehicleSearches() {
-        return vehicleSearches.filter(isCurrentUserRecord);
+        return vehicleSearches.filter(isActiveOwnerRecord);
+      }
+
+      // Publicaciones archivadas del usuario (para la sección "Archivadas").
+      // Devuelve [{entityKey, record}] a través de las 4 verticales.
+      function currentUserArchived() {
+        const out = [];
+        const push = (arr, entityKey) =>
+          arr.filter((r) => isCurrentUserRecord(r) && isArchivedRecord(r)).forEach((record) => out.push({ entityKey, record }));
+        push(properties, "properties");
+        push(searches, "searches");
+        push(vehicleOffers, "vehicleOffers");
+        push(vehicleSearches, "vehicleSearches");
+        return out;
       }
 
       function currentUserMatches() {
@@ -19157,6 +19239,7 @@
                             ${availabilitySwitch(property.id, isOfferAvailable(property), "setPropertyAvailable")}
                             <div class="oc2-foot-actions">
                               <button class="button small ghost" type="button" onclick="editProperty('${property.id}')">Modificar</button>
+                              <button class="button small ghost oc2-del" type="button" onclick="removePublication('properties', '${property.id}')">Eliminar</button>
                               ${
                                 propertyMatches.length
                                   ? `<button class="button small primary" type="button" onclick="openResultsModal('propertyOffer', '${property.id}')">Ver resultados <span class="btn-badge">${propertyMatches.length}</span>${
@@ -19236,6 +19319,7 @@
                           ${availabilitySwitch(offer.id, isOfferAvailable(offer), "setVehicleAvailable")}
                           <div class="oc2-foot-actions">
                             <button class="button small ghost" type="button" onclick="editVehicleOffer('${offer.id}')">Modificar</button>
+                            <button class="button small ghost oc2-del" type="button" onclick="removePublication('vehicleOffers', '${offer.id}')">Eliminar</button>
                             ${
                               offerMatches.length
                                 ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleOffer', '${offer.id}')">Ver resultados <span class="btn-badge">${offerMatches.length}</span>${
@@ -19330,6 +19414,7 @@
                             ${searchActiveSwitch(search.id, searchActive, "setSearchActive")}
                             <div class="oc2-foot-actions">
                               <button class="button small ghost" type="button" onclick="editSearch('${search.id}')">Modificar</button>
+                              <button class="button small ghost oc2-del" type="button" onclick="removePublication('searches', '${search.id}')">Eliminar</button>
                               ${
                                 searchMatches.length
                                   ? `<button class="button small primary" type="button" onclick="openResultsModal('propertySearch', '${search.id}')">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
@@ -19404,6 +19489,7 @@
                           ${searchActiveSwitch(search.id, searchActive, "setVehicleSearchActive")}
                           <div class="oc2-foot-actions">
                             <button class="button small ghost" type="button" onclick="editVehicleSearch('${search.id}')">Modificar</button>
+                            <button class="button small ghost oc2-del" type="button" onclick="removePublication('vehicleSearches', '${search.id}')">Eliminar</button>
                             ${
                               searchMatches.length
                                 ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleSearch', '${search.id}')">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
@@ -19434,7 +19520,55 @@
           }
         }
 
+        renderArchivedPublications();
         renderAdminRecords();
+      }
+
+      // Sección "Archivadas": publicaciones que el usuario intentó eliminar pero
+      // ya tenían interacción; se conservan y se pueden restaurar.
+      const ARCHIVED_META = {
+        properties: { type: "Oferta de inmueble", title: (r) => `${label(r.propertyType) || "Inmueble"}${r.zone ? " · " + r.zone : ""}${r.phName ? " · " + phDisplayName(r.phName) : ""}` },
+        searches: { type: "Solicitud de inmueble", title: (r) => `Busca ${label(r.propertyType) || "inmueble"}${r.zone || r.desiredZone ? " · " + (r.zone || r.desiredZone) : ""}` },
+        vehicleOffers: { type: "Oferta de vehículo", title: (r) => `${vehicleOfferTitle(r)}${r.year ? " " + r.year : ""}` },
+        vehicleSearches: { type: "Solicitud de vehículo", title: (r) => `Busca vehículo${r.desiredBrand || r.brand ? " · " + label(r.desiredBrand || r.brand) : ""}` }
+      };
+
+      function renderArchivedPublications() {
+        const target = document.getElementById("userArchived");
+        const tabBtn = document.getElementById("archivedTabBtn");
+        const tabCount = document.getElementById("archivedTabCount");
+        const list = currentUserArchived();
+        if (tabCount) tabCount.textContent = list.length;
+        if (tabBtn) tabBtn.hidden = list.length === 0;
+        if (!target) return;
+        if (!list.length) {
+          target.innerHTML = `<article class="card empty"><h3>Sin publicaciones archivadas</h3><p>Cuando elimines una publicación que ya tuvo interacción, la guardaremos aquí.</p></article>`;
+          return;
+        }
+        target.innerHTML = `<div class="offer-list">${list
+          .map(({ entityKey, record }) => {
+            const meta = ARCHIVED_META[entityKey] || { type: "Publicación", title: () => "Publicación" };
+            let title = "Publicación";
+            try { title = meta.title(record) || title; } catch (e) {}
+            return `
+              <div class="offer-card2 oc2-unavailable arch-card">
+                <div class="rc2-head">
+                  <span class="oc2-num" aria-hidden="true">📦</span>
+                  <div class="rc2-head-main">
+                    <p class="rc2-title">${title}</p>
+                    <p class="rc2-subtitle">Archivada · ${meta.type} · ${publicationLabel(record.publishedAt)}</p>
+                  </div>
+                  <span class="oc2-avail off">Archivada</span>
+                </div>
+                <div class="oc2-foot">
+                  <span class="arch-note">Se conserva por una interacción previa.</span>
+                  <div class="oc2-foot-actions">
+                    <button class="button small primary" type="button" onclick="unarchivePublication('${entityKey}', '${record.id}')">Restaurar</button>
+                  </div>
+                </div>
+              </div>`;
+          })
+          .join("")}</div>`;
       }
 
       let adminRecordFilter = "todos";
@@ -19898,6 +20032,102 @@
         delete archivedItems[archiveKey(matchId)];
         save();
         render();
+      }
+
+      // ---- Eliminar / archivar una PUBLICACIÓN (no un match) ----
+      // Modo demo (sin Supabase): decidir archivar vs borrar mirando si algún
+      // resultado de esta publicación ya fue desbloqueado o tiene interés.
+      function publicationHasInteractionLocal(entityKey, id) {
+        if (entityKey === "properties")
+          return matches.some((m) => m.property.id === id && (isMatchUnlocked(m, "property") || isContactRequested(m)));
+        if (entityKey === "searches")
+          return matches.some((m) => m.search.id === id && (isMatchUnlocked(m, "search") || isContactRequested(m)));
+        if (entityKey === "vehicleOffers")
+          return vehicleMatches.some((m) => m.offer.id === id && (isVehicleMatchUnlocked(m, "vehicleOffer") || isContactRequested(m)));
+        if (entityKey === "vehicleSearches")
+          return vehicleMatches.some((m) => m.search.id === id && (isVehicleMatchUnlocked(m, "vehicleSearch") || isContactRequested(m)));
+        return false;
+      }
+
+      async function removePublication(entityKey, id) {
+        id = coerceId(id);
+        const cfg = SUPA_ENTITIES[entityKey];
+        if (!cfg) return;
+        const record = cfg.get().find((r) => r.id === id);
+        if (!record) return;
+        if (
+          !confirm(
+            "¿Eliminar esta publicación?\n\nSi alguien ya pagó por tu contacto (hubo interacción), se archivará para conservar el registro. Si no, se borrará por completo."
+          )
+        )
+          return;
+
+        let outcome;
+        if (supabaseEnabled) {
+          outcome = await supaRemovePublication(entityKey, id);
+          if (!outcome || outcome === "not_found") { openRemoveResult("error"); return; }
+        } else {
+          outcome = publicationHasInteractionLocal(entityKey, id) ? "archived" : "deleted";
+        }
+
+        if (outcome === "deleted") {
+          cfg.set(cfg.get().filter((r) => r.id !== id));
+        } else if (outcome === "archived") {
+          cfg.set(
+            cfg.get().map((r) => (r.id === id ? { ...r, archived: true, available: false, active: false } : r))
+          );
+        } else {
+          openRemoveResult("error");
+          return;
+        }
+        save();
+        render();
+        openRemoveResult(outcome);
+      }
+
+      // Restaurar una publicación archivada: vuelve al panel como "No disponible"
+      // (dada de baja) para que el usuario decida si la reactiva.
+      function unarchivePublication(entityKey, id) {
+        id = coerceId(id);
+        const cfg = SUPA_ENTITIES[entityKey];
+        if (!cfg) return;
+        cfg.set(
+          cfg.get().map((r) => {
+            if (r.id !== id) return r;
+            const { archived, ...rest } = r;
+            return { ...rest, available: false, active: false };
+          })
+        );
+        save();
+        if (supabaseEnabled) supaSetActive(entityKey, cfg.get().find((r) => r.id === id));
+        render();
+      }
+
+      function openRemoveResult(outcome) {
+        const modal = document.getElementById("removeResultModal");
+        const ico = document.getElementById("rrIco");
+        const title = document.getElementById("rrTitle");
+        const msg = document.getElementById("rrMsg");
+        if (!modal || !ico || !title || !msg) return;
+        if (outcome === "archived") {
+          ico.textContent = "📦";
+          title.textContent = "Publicación archivada";
+          msg.innerHTML =
+            "Como ya hubo una interacción (alguien pagó por tu contacto), no se borra por completo: la <strong>archivamos</strong>. Deja de aparecer y no genera nuevos resultados, pero queda guardada en <strong>Archivadas</strong> por si necesitas el historial. Puedes restaurarla cuando quieras.";
+        } else if (outcome === "deleted") {
+          ico.textContent = "🗑️";
+          title.textContent = "Publicación eliminada";
+          msg.textContent = "Se eliminó por completo. No tenía interacciones, así que no queda ningún registro.";
+        } else {
+          ico.textContent = "⚠️";
+          title.textContent = "No se pudo eliminar";
+          msg.textContent = "Hubo un problema al eliminar la publicación. Intenta de nuevo en unos segundos.";
+        }
+        modal.hidden = false;
+      }
+      function closeRemoveResult() {
+        const modal = document.getElementById("removeResultModal");
+        if (modal) modal.hidden = true;
       }
 
       function isOfferAvailable(offer) {
