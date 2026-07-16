@@ -8958,6 +8958,40 @@
         width: 100%;
       }
 
+      /* Login Opción A: botón Google, badge "pronto", Face ID discreto. */
+      .google-btn {
+        width: 100%;
+        background: #fff;
+        border: 1px solid #dbe2ec;
+        color: #1f2d3f;
+        border-radius: 12px;
+        min-height: 50px;
+        font-weight: 700;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        margin-bottom: 4px;
+      }
+      .google-btn:hover { border-color: #b9c6d6; background: #fbfdff; }
+      .google-g { width: 18px; height: 18px; flex: 0 0 auto; }
+      .soon-badge {
+        font-size: 10px; font-weight: 800; letter-spacing: .02em;
+        color: var(--orange-dark, #c2410c); background: #fbe9e0;
+        border-radius: 999px; padding: 1px 7px;
+      }
+      .soon-badge[hidden] { display: none; }
+      .login-or-email { margin: 12px 0 4px; }
+      #loginPasskeyRow { text-align: center; margin-top: 12px; }
+      .passkey-link {
+        background: none; border: none; cursor: pointer;
+        color: var(--muted, #607086); font-size: 13px; font-weight: 700;
+        display: inline-flex; align-items: center; gap: 6px;
+      }
+      .passkey-link:hover { color: var(--navy, #0a2f55); }
+
       .admin-topup {
         background: #f7fafc;
         border: 1px solid #e2e8f0;
@@ -9904,7 +9938,7 @@
       <section class="hero tab-panel active" id="inicio">
         <div class="hero-copy">
           <span class="eyebrow">KonektaYa · Panamá <svg viewBox="0 0 600 400" width="26" height="17" role="img" aria-label="Panamá" style="vertical-align:-3px;margin-left:6px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.35)"><rect width="600" height="400" fill="#ffffff"/><rect x="300" width="300" height="200" fill="#d21034"/><rect y="200" width="300" height="200" fill="#0049a5"/><path fill="#0049a5" d="M150 38 L164.1 80.6 L208.97 80.84 L172.83 107.42 L186.44 150.16 L150 124 L113.56 150.16 L127.17 107.42 L91.03 80.84 L135.9 80.6 Z"/><path fill="#d21034" d="M450 238 L464.1 280.6 L508.97 280.84 L472.83 307.42 L486.44 350.16 L450 324 L413.56 350.16 L427.17 307.42 L391.03 280.84 L435.9 280.6 Z"/></svg></span>
-          <h1>Compra, vende o alquila <span class="hero-accent">propiedades y vehículos</span> mediante el matching de IA.</h1>
+          <h1>Compra, vende o alquila <span class="hero-accent">propiedades y vehículos</span> con el matching de IA.</h1>
           <p class="hero-free">Publicar y buscar es <span class="hero-free-tag">GRATIS</span></p>
           <div class="home-proof-pills" aria-label="Beneficios principales">
             <span>✓ Registro rápido</span>
@@ -10830,15 +10864,21 @@
         <section class="section">
           <article class="card login-card">
             <span class="eyebrow" id="loginEyebrow">Acceso a KonektaYa</span>
-            <h2 id="loginHeading">Ingresar a mi dashboard</h2>
+            <h2 id="loginHeading">Entra a tu cuenta</h2>
             <p class="intro" id="loginIntro">
-              Usa el email y la contraseña que creaste al registrar tu propiedad o búsqueda.
+              Con Google en un toque, o con tu email.
             </p>
             <form class="form" id="loginForm">
               <div class="auth-switch" role="tablist" aria-label="Iniciar sesión o crear cuenta">
                 <button type="button" class="auth-switch-btn active" id="authTabLogin" onclick="setAuthMode('login')">Iniciar sesión</button>
                 <button type="button" class="auth-switch-btn" id="authTabRegister" onclick="setAuthMode('register')">Crear cuenta</button>
               </div>
+              <button class="button google-btn" type="button" id="googleBtn" onclick="loginWithGoogle()">
+                <svg class="google-g" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.3-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 16 3 9.1 7.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36 26.7 37 24 37c-5.3 0-9.7-2.6-11.3-6.9l-6.5 5C9.1 42.3 16 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2C41.9 35.9 45 30.4 45 24c0-1.3-.1-2.5-.4-3.5z"/></svg>
+                <span>Continuar con Google</span>
+                <span class="soon-badge" id="googleSoon">pronto</span>
+              </button>
+              <div class="login-or login-or-email"><span>o con tu email</span></div>
               <div class="login-status" id="loginStatus"></div>
               <div class="field-grid">
                 <label class="field full" data-register-only hidden>Nombre completo<input name="name" type="text" autocomplete="name" /></label>
@@ -10862,8 +10902,7 @@
               <button class="button primary" type="submit" id="loginSubmitBtn">Entrar</button>
               <button class="button ghost" type="button" id="loginCreateHint" hidden onclick="switchToRegisterWithEmail()">Crear cuenta con este email →</button>
               <div class="login-passkey" id="loginPasskeyRow" hidden>
-                <div class="login-or"><span>o</span></div>
-                <button class="button ghost passkey-btn" type="button" id="loginPasskeyBtn" onclick="signInWithPasskeyFlow()">
+                <button class="passkey-link" type="button" id="loginPasskeyBtn" onclick="signInWithPasskeyFlow()">
                   <span aria-hidden="true">🔒</span> Entrar con Face ID / huella
                 </button>
               </div>
@@ -16443,9 +16482,26 @@
         showLoginStatus("Completa tu nombre y crea tu contraseña para registrarte.");
       }
 
+      // Login con Google. Ponlo en true cuando actives el proveedor Google en
+      // Supabase (Authentication → Providers → Google) con el Client ID/Secret de
+      // Google Cloud. Hasta entonces el botón muestra "pronto" y avisa amablemente.
+      window.GOOGLE_LOGIN_ENABLED = false;
+      function loginWithGoogle() {
+        if (!window.GOOGLE_LOGIN_ENABLED || !supabaseEnabled || !supabaseClient) {
+          if (typeof showLoginStatus === "function") showLoginStatus("Entrar con Google estará disponible muy pronto. Por ahora usa tu email. 🙌");
+          return;
+        }
+        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin } })
+          .then((r) => { if (r && r.error && typeof showLoginStatus === "function") showLoginStatus(typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
+          .catch(() => {});
+      }
+      window.loginWithGoogle = loginWithGoogle;
+
       function applyAuthMode() {
         const isReg = authMode === "register";
         document.querySelectorAll("#loginForm [data-register-only]").forEach((el) => { el.hidden = !isReg; });
+        const gSoon = document.getElementById("googleSoon");
+        if (gSoon) gSoon.hidden = !!window.GOOGLE_LOGIN_ENABLED; // oculta "pronto" cuando Google esté activo
         const btn = document.getElementById("loginSubmitBtn");
         if (btn) btn.textContent = isReg ? "Crear mi cuenta" : "Entrar";
         const link = document.getElementById("authToggleLink");
@@ -16462,10 +16518,10 @@
         const heading = document.getElementById("loginHeading");
         const intro = document.getElementById("loginIntro");
         if (eyebrow) eyebrow.textContent = isReg ? "Nuevo en KonektaYa" : "Acceso a KonektaYa";
-        if (heading) heading.textContent = isReg ? "Crear mi cuenta" : "Ingresar a mi dashboard";
+        if (heading) heading.textContent = isReg ? "Crea tu cuenta" : "Entra a tu cuenta";
         if (intro) intro.textContent = isReg
           ? "Crea tu cuenta con tu nombre, email y una contraseña. Con ella entrarás a tu panel y podrás publicar y buscar."
-          : "Usa el email y la contraseña que creaste. ¿Primera vez? Toca \"Crear cuenta\".";
+          : "Con Google en un toque, o con tu email.";
         // El navegador guarda mejor si distingue contraseña nueva vs existente.
         const pass = document.getElementById("loginPassword");
         if (pass) pass.setAttribute("autocomplete", isReg ? "new-password" : "current-password");
@@ -17274,8 +17330,10 @@
 
       if (supabaseEnabled) {
         currentUserEmail = ""; // la sesión real la define Supabase, no localStorage
+        // Opción A: "Crear cuenta" vive solo en la pestaña de arriba; ocultamos el
+        // enlace "Regístrate" de abajo para no tener 2 caminos al mismo lugar.
         const toggleRow = document.querySelector(".login-toggle");
-        if (toggleRow) toggleRow.hidden = false;
+        if (toggleRow) toggleRow.hidden = true;
         const toggleLink = document.getElementById("authToggleLink");
         if (toggleLink) {
           toggleLink.addEventListener("click", (e) => {
