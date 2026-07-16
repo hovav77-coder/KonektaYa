@@ -15509,7 +15509,9 @@
         "icloud.com": "https://www.icloud.com/mail/",
         "me.com": "https://www.icloud.com/mail/",
         "proton.me": "https://mail.proton.me/",
-        "protonmail.com": "https://mail.proton.me/"
+        "protonmail.com": "https://mail.proton.me/",
+        // Dominios propios sobre Google Workspace (buzón vía Gmail del dominio).
+        "imrsa.com": "https://mail.google.com/a/imrsa.com/"
       };
       function webmailUrlFor(email) {
         const dom = (String(email || "").split("@")[1] || "").toLowerCase();
