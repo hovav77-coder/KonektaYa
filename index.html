@@ -1468,6 +1468,50 @@
         color: #15803d;
       }
 
+      /* #5/#6 Vista previa del contacto bloqueado + qué recibes al desbloquear. */
+      .reveal-preview {
+        margin-top: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .reveal-locked {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #f2f6fb;
+        border: 1px dashed #cdd9e8;
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      .reveal-lock {
+        font-size: 20px;
+        flex: 0 0 auto;
+      }
+      .reveal-blur {
+        display: grid;
+        gap: 3px;
+        font-weight: 800;
+        color: var(--navy, #0a2f55);
+        font-size: 14px;
+        filter: blur(4px);
+        user-select: none;
+        letter-spacing: 0.06em;
+      }
+      .reveal-what {
+        display: grid;
+        gap: 3px;
+        font-size: 13px;
+        color: var(--muted, #607086);
+      }
+      .reveal-what strong {
+        color: var(--ink, #0b2f55);
+        font-size: 13.5px;
+      }
+      .reveal-wa {
+        color: #128c4b;
+        font-weight: 700;
+      }
+
       .rc2-cap.muted {
         color: #64748b;
       }
@@ -9031,6 +9075,15 @@
         text-align: center;
       }
 
+      /* #8 Fila de acción en estados vacíos. */
+      .empty-cta-row {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 14px;
+      }
+
       .site-footer {
         background: var(--navy);
         color: #ffffff;
@@ -9910,7 +9963,7 @@
             <h2>Formulario propietario</h2>
             <p class="intro">Registra una propiedad disponible para venta o alquiler.</p>
             <form class="form" id="propertyForm">
-              <div class="toast" id="propertyToast">Propiedad registrada. Resultados recalculados.</div>
+              <div class="toast" id="propertyToast">✓ Inmueble publicado. Recalculamos tus resultados.</div>
               <div class="field-grid">
                 <label class="field">Nombre<input name="firstName" required /></label>
                 <label class="field">Apellido<input name="lastName" required /></label>
@@ -10034,7 +10087,7 @@
             <h2>Formulario cliente</h2>
             <p class="intro">Registra lo que buscas para ti o para tu empresa. El cliente final no paga.</p>
             <form class="form" id="searchForm">
-              <div class="toast" id="searchToast">Búsqueda registrada. Resultados recalculados.</div>
+              <div class="toast" id="searchToast">✓ Búsqueda publicada. Recalculamos tus resultados.</div>
               <div class="field-grid">
                 <label class="field">Nombre<input name="firstName" required /></label>
                 <label class="field">Apellido<input name="lastName" required /></label>
@@ -10168,7 +10221,7 @@
             <h2>Formulario broker</h2>
             <p class="intro">Registra una búsqueda para tu cliente y recibe propiedades compatibles cuando la IA encuentre resultados.</p>
             <form class="form" id="brokerForm">
-              <div class="toast" id="brokerToast">Búsqueda broker registrada. Resultados recalculados.</div>
+              <div class="toast" id="brokerToast">✓ Búsqueda publicada. Recalculamos tus resultados.</div>
               <div class="form-notice">
                 <strong>Flujo broker</strong>
                 <span>
@@ -10301,7 +10354,7 @@
             <h2>Publicar vehículo</h2>
             <p class="intro">Registra un vehículo disponible y deja que la IA encuentre interesados compatibles.</p>
             <form class="form" id="vehicleOfferForm">
-              <div class="toast" id="vehicleOfferToast">Vehículo registrado. Resultados recalculados.</div>
+              <div class="toast" id="vehicleOfferToast">✓ Vehículo publicado. Recalculamos tus resultados.</div>
               <div class="field-grid">
                 <label class="field">Nombre<input name="firstName" required /></label>
                 <label class="field">Apellido<input name="lastName" required /></label>
@@ -10417,7 +10470,7 @@
             <h2>Buscar vehículo</h2>
             <p class="intro">Registra el vehículo que buscas y recibe oportunidades compatibles.</p>
             <form class="form" id="vehicleSearchForm">
-              <div class="toast" id="vehicleSearchToast">Búsqueda de vehículo registrada. Resultados recalculados.</div>
+              <div class="toast" id="vehicleSearchToast">✓ Búsqueda publicada. Recalculamos tus resultados.</div>
               <div class="field-grid">
                 <label class="field">Nombre<input name="firstName" required /></label>
                 <label class="field">Apellido<input name="lastName" required /></label>
@@ -12410,6 +12463,25 @@
         `;
       }
 
+      // #5/#6: bloque reutilizable para la tarjeta ANTES de desbloquear.
+      // Muestra el contacto oculto (candado + difuminado) y qué se recibe al pagar.
+      function revealPreviewHtml() {
+        return `
+          <div class="reveal-preview">
+            <div class="reveal-locked" aria-hidden="true">
+              <span class="reveal-lock">🔒</span>
+              <div class="reveal-blur">
+                <span>Tel: 6•••-••••</span>
+                <span>Email: ••••••@•••••</span>
+              </div>
+            </div>
+            <div class="reveal-what">
+              <strong>Al desbloquear recibes:</strong>
+              <span>📞 Teléfono directo · <span class="reveal-wa">📱 WhatsApp</span> · ✉️ Email</span>
+            </div>
+          </div>`;
+      }
+
       function lockedResultCard(match, source) {
         const model = matchCommercialModel(match);
         const classification = classifyInterested(match.search);
@@ -12486,6 +12558,8 @@
             : effectiveCharge < fullUnlockPrice
               ? `<p class="rc2-cap">Solo te cobra <strong>${money.format(effectiveCharge)}</strong> para tu tope</p>`
               : `<p class="rc2-cap muted">Garantía: saldo devuelto si los datos son inválidos</p>`;
+        // #5/#6: contacto oculto (candado + difuminado) + qué recibe al desbloquear.
+        const revealBlock = canUnlockHere ? revealPreviewHtml() : "";
         return `
           <div class="result-card2 ${requested ? "hot" : ""}">
             ${interestBanner}
@@ -12507,6 +12581,7 @@
                 <div class="rc2-meta-cell"><span>Uso</span><strong>${label(search.useCase)}</strong></div>
               </div>
               <div class="factor-chips">${chips}</div>
+              ${revealBlock}
             </div>
             <div class="rc2-foot">
               <div class="rc2-price">
@@ -19291,6 +19366,7 @@
                 <div class="rc2-meta-cell"><span>Urgencia</span><strong>${vehicleLabel(search.urgency)}</strong></div>
               </div>
               <div class="factor-chips">${chips}</div>
+              ${revealPreviewHtml()}
             </div>
             <div class="rc2-foot">
               <div class="rc2-price">
@@ -19358,6 +19434,20 @@
             </details>
           </div>
         `;
+      }
+
+      // #8 Estados vacíos con acción: convierte el "no hay nada" en el siguiente paso.
+      // Con sesión → botón a publicar/buscar (patrón data-tab-button que sí llega a
+      // elementos inyectados); sin sesión → iniciar sesión.
+      function emptyPublishCta(kind) {
+        if (!currentUserEmail) return `<a class="button primary" href="#login" data-tab="login">Inicia sesión</a>`;
+        const labels = {
+          propietario: "Publica tu primer inmueble",
+          busqueda: "Crea tu primera búsqueda",
+          vehiculoOferta: "Publica tu primer vehículo",
+          vehiculoBusqueda: "Busca tu primer vehículo"
+        };
+        return `<button class="button primary" type="button" data-tab-button="${kind}">${labels[kind] || "Empezar"}</button>`;
       }
 
       function renderDashboardLists() {
@@ -19524,9 +19614,9 @@
               `
             : `<article class="card empty"><h3>Sin propiedades</h3><p>${
                 currentUserEmail
-                  ? "Este usuario no tiene propiedades registradas."
-                  : "Inicia sesión con un email registrado para ver tus propiedades."
-              }</p></article>`;
+                  ? "Aún no has publicado ningún inmueble."
+                  : "Inicia sesión para ver tus propiedades."
+              }</p><div class="empty-cta-row">${emptyPublishCta("propietario")}</div></article>`;
           }
 
           const userVehicleOffers = currentUserVehicleOffers();
@@ -19613,9 +19703,10 @@
                   : "Sin ofertas";
             const emptyText =
               currentUserEmail
-                ? "No hay registros para este filtro."
-                : "Inicia sesión con un email registrado para ver tus ofertas.";
-            userPropertiesTarget.innerHTML = `<article class="card empty"><h3>${emptyTitle}</h3><p>${emptyText}</p></article>`;
+                ? "Aún no tienes ofertas para este filtro."
+                : "Inicia sesión para ver tus ofertas.";
+            const emptyCta = emptyPublishCta(userDashboardVerticalFilter === "vehicle" ? "vehiculoOferta" : "propietario");
+            userPropertiesTarget.innerHTML = `<article class="card empty"><h3>${emptyTitle}</h3><p>${emptyText}</p><div class="empty-cta-row">${emptyCta}</div></article>`;
           }
         }
 
@@ -19695,9 +19786,9 @@
               `
             : `<article class="card empty"><h3>Sin solicitudes</h3><p>${
                 currentUserEmail
-                  ? "Este usuario no tiene solicitudes registradas."
-                  : "Inicia sesión con un email registrado para ver tus solicitudes."
-              }</p></article>`;
+                  ? "Aún no has creado ninguna búsqueda."
+                  : "Inicia sesión para ver tus solicitudes."
+              }</p><div class="empty-cta-row">${emptyPublishCta("busqueda")}</div></article>`;
           }
 
           const userVehicleSearches = currentUserVehicleSearches();
@@ -19779,9 +19870,10 @@
                   : "Sin solicitudes";
             const emptyText =
               currentUserEmail
-                ? "No hay solicitudes para este filtro."
-                : "Inicia sesión con un email registrado para ver tus solicitudes.";
-            userSearchesTarget.innerHTML = `<article class="card empty"><h3>${emptyTitle}</h3><p>${emptyText}</p></article>`;
+                ? "Aún no tienes solicitudes para este filtro."
+                : "Inicia sesión para ver tus solicitudes.";
+            const emptyCta = emptyPublishCta(userDashboardVerticalFilter === "vehicle" ? "vehiculoBusqueda" : "busqueda");
+            userSearchesTarget.innerHTML = `<article class="card empty"><h3>${emptyTitle}</h3><p>${emptyText}</p><div class="empty-cta-row">${emptyCta}</div></article>`;
           }
         }
 
