@@ -360,6 +360,39 @@
         padding: 12px;
       }
 
+      /* Accesos rápidos a webmail cuando el correo es de dominio propio. */
+      .rd-mail-alt {
+        margin-top: 12px;
+      }
+      .rd-mail-alt-note {
+        display: block;
+        color: #64748b;
+        font-size: 12.5px;
+        margin-bottom: 8px;
+      }
+      .rd-mail-alt-links {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .rd-mail-alt-links button {
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        color: #0a2f55;
+        border-radius: 10px;
+        padding: 10px 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .rd-mail-alt-links button:hover {
+        border-color: var(--orange, #e05b2a);
+        background: #fff;
+      }
+      @media (max-width: 420px) {
+        .rd-mail-alt-links { grid-template-columns: 1fr; }
+      }
+
       .rd-resend {
         color: #64748b;
         font-size: 12.5px;
@@ -9601,6 +9634,17 @@
             <button type="button" class="rd-btn rd-btn-primary" id="rdOpenMailBtn" onclick="openMailProvider()">Abrir mi correo</button>
             <button type="button" class="rd-btn rd-btn-ghost" onclick="closeRegisterDone()">Entendido</button>
           </div>
+          <!-- Correo de dominio propio (imrsa.com, etc.): no sabemos el buzón, así que
+               ofrecemos los webmails más usados (sirve para Google Workspace / Microsoft 365). -->
+          <div class="rd-mail-alt" id="rdMailAlt" hidden>
+            <span class="rd-mail-alt-note">Abre tu correo donde lo revisas:</span>
+            <div class="rd-mail-alt-links">
+              <button type="button" onclick="openWebmail('https://mail.google.com/')">Gmail / Google Workspace</button>
+              <button type="button" onclick="openWebmail('https://outlook.office.com/mail/')">Outlook / Microsoft 365</button>
+              <button type="button" onclick="openWebmail('https://mail.yahoo.com/')">Yahoo</button>
+              <button type="button" onclick="openWebmail('https://www.icloud.com/mail/')">iCloud</button>
+            </div>
+          </div>
           <p class="rd-resend">¿No llegó? Revisa spam o <a href="#" onclick="event.preventDefault(); resendConfirmation()">reenviar correo</a></p>
         </div>
       </div>
@@ -15478,11 +15522,19 @@
         if (em) em.textContent = registerDoneEmail || "tu correo";
         // "Abrir mi correo" solo si es un proveedor de webmail conocido; para
         // correos corporativos se oculta (no sabemos su buzón).
+        const known = webmailUrlFor(registerDoneEmail);
         const openBtn = document.getElementById("rdOpenMailBtn");
-        if (openBtn) openBtn.hidden = !webmailUrlFor(registerDoneEmail);
+        if (openBtn) openBtn.hidden = !known;
+        // Dominio propio (sin webmail conocido): mostrar accesos rápidos a los
+        // proveedores más usados en vez de esconder toda opción.
+        const alt = document.getElementById("rdMailAlt");
+        if (alt) alt.hidden = Boolean(known);
         const m = document.getElementById("registerDoneModal");
         if (m) m.hidden = false;
       }
+      // Abre un webmail en pestaña nueva (usado por los accesos rápidos).
+      function openWebmail(url) { if (url) window.open(url, "_blank", "noopener"); }
+      window.openWebmail = openWebmail;
       function closeRegisterDone() {
         const m = document.getElementById("registerDoneModal");
         if (m) m.hidden = true;
