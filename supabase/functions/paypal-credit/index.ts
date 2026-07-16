@@ -110,9 +110,14 @@ Deno.serve(async (req) => {
         const { data: w } = await admin.from("wallets").select("balance").eq("user_id", user.id).maybeSingle();
         return json({ ok: true, alreadyCredited: true, credited: 0, balance: Number(w?.balance || 0) });
       }
-      // Crédito ATÓMICO en Postgres.
+      // Crédito ATÓMICO en Postgres. Si falla, REVERTIMOS el estado a 'created'
+      // para poder reintentar: si no, la orden quedaría marcada 'credited' pero
+      // sin sumar el saldo (dinero cobrado y no acreditado, sin reintento posible).
       const { data: newBal, error: credErr } = await admin.rpc("wallet_credit", { p_user: user.id, p_amount: amount });
-      if (credErr) return json({ error: "No se pudo acreditar", detail: credErr.message }, 500);
+      if (credErr) {
+        await admin.from("paypal_orders").update({ status: "created" }).eq("order_id", orderID).eq("status", "credited");
+        return json({ error: "No se pudo acreditar. Intenta de nuevo.", detail: credErr.message }, 500);
+      }
       return json({ ok: true, credited: amount, balance: Number(newBal || 0) });
     }
 

@@ -8671,6 +8671,31 @@
         padding: 5px;
       }
 
+      /* Consentimiento obligatorio en el registro (Términos + Privacidad). */
+      .auth-consent {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        margin: 0 0 14px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: #475569;
+      }
+      .auth-consent[hidden] { display: none; }
+      .auth-consent input[type="checkbox"] {
+        margin-top: 2px;
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+        accent-color: var(--orange, #e05b2a);
+        cursor: pointer;
+      }
+      .auth-consent a {
+        color: #c2410c;
+        font-weight: 700;
+        text-decoration: underline;
+      }
+
       .auth-switch-btn {
         background: transparent;
         border: none;
@@ -10667,6 +10692,10 @@
                   <small class="password-hint" id="loginPasswordHint" hidden>Usa al menos 8 caracteres, con una mayúscula, una minúscula y un número.</small>
                 </label>
               </div>
+              <label class="auth-consent" data-register-only hidden>
+                <input type="checkbox" id="loginConsent" name="consent" />
+                <span>He leído y acepto los <a href="#terminos" target="_blank" rel="noopener">Términos y Condiciones</a> y la <a href="#privacidad" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+              </label>
               <button class="button primary" type="submit" id="loginSubmitBtn">Entrar</button>
               <button class="button ghost" type="button" id="loginCreateHint" hidden onclick="switchToRegisterWithEmail()">Crear cuenta con este email →</button>
               <div class="login-passkey" id="loginPasskeyRow" hidden>
@@ -16095,6 +16124,14 @@
           const sBtn = document.getElementById("loginSubmitBtn");
           const sBtnTxt = sBtn ? sBtn.textContent : "";
           if (authMode === "register") {
+            // Consentimiento obligatorio (Ley 81/2019 PA): sin aceptar Términos y
+            // Privacidad no se crea la cuenta.
+            const consent = document.getElementById("loginConsent");
+            if (consent && !consent.checked) {
+              showLoginStatus("Para crear tu cuenta debes aceptar los Términos y Condiciones y la Política de Privacidad.");
+              try { consent.focus(); } catch (e) {}
+              return;
+            }
             // Feedback: sin esto la pantalla parecía congelada y permitía doble toque.
             if (sBtn) { sBtn.disabled = true; sBtn.textContent = "Creando tu cuenta…"; }
             showLoginStatus("Creando tu cuenta…");
