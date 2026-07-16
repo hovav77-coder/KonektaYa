@@ -9938,7 +9938,7 @@
                     <option value="otro">Otro</option>
                   </select>
                 </label>
-                <label class="field" data-availability-other hidden>Especifica en cuántos días<input name="availabilityNeedOther" type="number" min="1" max="365" /></label>
+                <label class="field" data-availability-other hidden>Especifica en cuántos días<input name="availabilityNeedOther" type="number" min="1" max="999" inputmode="numeric" /></label>
                 <label class="field">
                   Provincia
                   <select name="province" data-location-province="property"></select>
@@ -10082,7 +10082,7 @@
                     <option value="otro">Otro</option>
                   </select>
                 </label>
-                <label class="field" data-urgency-other hidden>Especifica en cuántos días<input name="urgencyOther" type="number" min="1" max="365" /></label>
+                <label class="field" data-urgency-other hidden>Especifica en cuántos días<input name="urgencyOther" type="number" min="1" max="999" inputmode="numeric" /></label>
                 <label class="field">
                   Uso
                   <select name="useCase">
@@ -10215,7 +10215,7 @@
                     <option value="otro">Otro</option>
                   </select>
                 </label>
-                <label class="field" data-urgency-other hidden>Especifica en cuántos días<input name="urgencyOther" type="number" min="1" max="365" /></label>
+                <label class="field" data-urgency-other hidden>Especifica en cuántos días<input name="urgencyOther" type="number" min="1" max="999" inputmode="numeric" /></label>
                 <label class="field">
                   Uso
                   <select name="useCase">
@@ -10323,7 +10323,7 @@
                     <option value="disponible_proximamente">Disponible próximamente</option>
                   </select>
                 </label>
-                <label class="field" data-vehicle-status-other hidden>En cuántos días estará disponible<input name="vehicleStatusOther" type="number" min="1" max="365" /></label>
+                <label class="field" data-vehicle-status-other hidden>En cuántos días estará disponible<input name="vehicleStatusOther" type="number" min="1" max="999" inputmode="numeric" /></label>
                 <label class="field">Kilometraje<input name="mileage" type="text" inputmode="numeric" data-thousands data-max="999999" required /></label>
                 <label class="field">
                   Precio
@@ -14908,6 +14908,18 @@
           });
           el.dataset.guardReady = "1";
         });
+        // Campos de "en cuántos días" (disponibilidad/urgencia): son números de
+        // días, no teléfonos. Tope DURO de 3 dígitos (máx 999) para que nadie
+        // meta su celular ahí. type=number ignora maxlength, así que lo forzamos.
+        const dayFields = '[name="vehicleStatusOther"],[name="availabilityNeedOther"],[name="urgencyOther"]';
+        document.querySelectorAll(dayFields).forEach((el) => {
+          if (el.dataset.guardReady) return;
+          el.addEventListener("input", () => {
+            const v = el.value.replace(/\D/g, "").slice(0, 3);
+            if (el.value !== v) el.value = v;
+          });
+          el.dataset.guardReady = "1";
+        });
       }
 
       function syncAvailabilitySelect(select) {
@@ -15815,7 +15827,7 @@
           equipment: "equipment" in data ? data.equipment : undefined,
           availabilityNeed:
             data.availabilityNeed === "otro"
-              ? `${Math.max(1, Number(data.availabilityNeedOther || 90))}_dias`
+              ? `${Math.min(999, Math.max(1, Number(data.availabilityNeedOther || 90)))}_dias`
               : data.availabilityNeed
         };
         delete propertyPayload.parkingSpacesOther;
@@ -15884,7 +15896,7 @@
           desiredParkingSpaces: resolveParkingValue(data.desiredParkingSpaces, data.desiredParkingSpacesOther),
           desiredStorage: data.desiredStorage || "indiferente",
           urgency:
-            data.urgency === "otro" ? `${Math.max(1, Number(data.urgencyOther || 90))}_dias` : data.urgency
+            data.urgency === "otro" ? `${Math.min(999, Math.max(1, Number(data.urgencyOther || 90)))}_dias` : data.urgency
         };
         delete searchPayload.desiredParkingSpacesOther;
         delete searchPayload.urgencyOther;
@@ -15974,7 +15986,7 @@
           color: selectedColor || "",
           status:
             data.status === "disponible_proximamente"
-              ? `proximamente_${Math.max(1, Number(data.vehicleStatusOther || 30))}_dias`
+              ? `proximamente_${Math.min(999, Math.max(1, Number(data.vehicleStatusOther || 30)))}_dias`
               : data.status
         };
         delete payload.vehicleStatusOther;
