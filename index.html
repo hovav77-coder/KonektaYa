@@ -9516,11 +9516,13 @@
           flex-direction: row;
         }
 
+        /* En celular la navegación vive en la barra inferior (Inicio/Publicar/Buscar/
+           Mi panel) + el avatar (sesión); el ☰ y su acordeón son redundantes. */
         .nav-toggle {
-          display: inline-flex;
+          display: none;
         }
 
-        /* En celular el avatar/Entrar va afuera, pegado al ☰ (a la derecha). */
+        /* El avatar/Entrar va a la derecha del header. */
         .session-wrap {
           margin-left: auto;
           order: 0;
@@ -9546,7 +9548,7 @@
         }
 
         .topbar.nav-open .nav {
-          display: flex;
+          display: none; /* nav oculto en celular: se usa la barra inferior */
         }
 
         /* Menú tipo lista limpio (no botones de colores apilados) */
