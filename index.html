@@ -15882,7 +15882,12 @@
         renderMyData();
         toggleMyDataEdit(true); // siempre abre en modo lectura
         const m = document.getElementById("myDataModal");
-        if (m) m.hidden = false;
+        if (m) {
+          // El modal vive dentro del panel #admin (display:none fuera de él), así que
+          // sin esto no abría desde la portada. Lo movemos al body = overlay global.
+          if (m.parentElement !== document.body) document.body.appendChild(m);
+          m.hidden = false;
+        }
       }
       function closeMyData() {
         const m = document.getElementById("myDataModal");
