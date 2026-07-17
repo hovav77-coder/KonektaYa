@@ -17286,6 +17286,8 @@
             unlockedAt: r.created_at,
             source,
             price: Number(r.price || 0),
+            // Mismo formato que pubCapId(pub) = "${vertical}:${id}" para el tope por publicacion.
+            publicationId: `${r.vertical === "vehiculo" ? "vehiculos" : "inmuebles"}:${r.offer_id}`,
             fromServer: true,
             contactName: r.name || "",
             contactPhone: r.phone || "",
@@ -17317,6 +17319,8 @@
           source,
           vertical: vertical === "vehiculo" ? "vehicle" : undefined,
           price: Number(res.data.charge || 0),
+          // Necesario para el tope por publicacion (paidForPublication lo filtra por esto).
+          publicationId: pubCapId(vertical === "vehiculo" ? match.offer : match.property),
           fromServer: true,
           contactName: c.name || "",
           contactPhone: c.phone || "",
