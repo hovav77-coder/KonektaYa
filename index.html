@@ -5841,7 +5841,19 @@
         display: grid;
         gap: 10px;
         overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
         padding: 16px 20px;
+      }
+
+      /* Bloqueo del scroll de fondo cuando hay un modal abierto (fix iOS Safari:
+         overflow:hidden no basta, hay que fijar el body y restaurar la posicion). */
+      body.modal-locked {
+        position: fixed;
+        left: 0;
+        right: 0;
+        width: 100%;
+        overflow: hidden;
       }
 
       .dashboard-nav-bar {
@@ -15890,10 +15902,12 @@
           if (m.parentElement !== document.body) document.body.appendChild(m);
           m.hidden = false;
         }
+        if (typeof syncBodyScrollLock === "function") syncBodyScrollLock();
       }
       function closeMyData() {
         const m = document.getElementById("myDataModal");
         if (m) m.hidden = true;
+        if (typeof syncBodyScrollLock === "function") syncBodyScrollLock();
       }
       window.openMyData = openMyData;
       window.closeMyData = closeMyData;
@@ -20897,15 +20911,47 @@
           data.body || '<article class="card empty"><h3>Sin resultados todavía</h3><p>La IA sigue buscando coincidencias.</p></article>';
       }
 
+      // ===== Bloqueo de scroll del fondo con cualquier modal abierto (fix iOS) =====
+      // Idempotente: mira el DOM para saber si hay algun modal visible y fija/libera
+      // el body en consecuencia. Se puede llamar tantas veces como haga falta.
+      let __bodyLockY = 0;
+      function anyModalOpen() {
+        return !!document.querySelector(
+          ".results-modal-overlay:not(.hidden), .mydata-modal:not([hidden])"
+        );
+      }
+      function syncBodyScrollLock() {
+        const open = anyModalOpen();
+        const locked = document.body.classList.contains("modal-locked");
+        if (open && !locked) {
+          __bodyLockY = window.scrollY || window.pageYOffset || 0;
+          document.body.style.top = `-${__bodyLockY}px`;
+          document.body.classList.add("modal-locked");
+        } else if (!open && locked) {
+          document.body.classList.remove("modal-locked");
+          document.body.style.top = "";
+          // Restaurar la posicion sin animacion (el html tiene scroll-behavior:smooth,
+          // que si no forzamos "auto" haria un salto arriba-y-abajo al cerrar el modal).
+          const root = document.documentElement;
+          const prevBehavior = root.style.scrollBehavior;
+          root.style.scrollBehavior = "auto";
+          window.scrollTo(0, __bodyLockY);
+          root.style.scrollBehavior = prevBehavior;
+        }
+      }
+      window.syncBodyScrollLock = syncBodyScrollLock;
+
       function openResultsModal(kind, id) {
         activeResultsModal = { kind, id: coerceId(id) };
         refreshResultsModal();
         document.getElementById("resultsModal")?.classList.remove("hidden");
+        syncBodyScrollLock();
       }
 
       function closeResultsModal() {
         activeResultsModal = null;
         document.getElementById("resultsModal")?.classList.add("hidden");
+        syncBodyScrollLock();
       }
 
       document.getElementById("resultsModal")?.addEventListener("click", (event) => {
@@ -21046,11 +21092,13 @@
         overlay.querySelectorAll(".pay-pane").forEach((p) => p.classList.toggle("hidden", p.dataset.payPane !== "paypal"));
         updatePayButtons();
         overlay.classList.remove("hidden");
+        syncBodyScrollLock();
         renderPaypalButtons();
       }
 
       function closePayModal() {
         document.getElementById("payModal")?.classList.add("hidden");
+        if (typeof syncBodyScrollLock === "function") syncBodyScrollLock();
       }
 
       function submitPaypalPayment() {
