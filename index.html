@@ -19209,8 +19209,9 @@
         // Fuente de verdad: los registros REALES de desbloqueo (machUnlocks). El
         // conteo derivado de matches sub-contaba (exigía interés previo). Con esto
         // "Contactos obtenidos" y "Total gastado" cuadran siempre.
-        const allUnlockedCount = unlockedRecordsForStats.length;
-        const allSpent = unlockedRecordsForStats.reduce((s, it) => s + Number(it.price || 0), 0);
+        const myUnlocksArr = myUnlockRecords();
+        const allUnlockedCount = myUnlocksArr.length;
+        const allSpent = myUnlocksArr.reduce((s, it) => s + Number(it.price || 0), 0);
         const capOfferTitle = (o) => o.propertyType
           ? `${label(o.propertyType)}${o.zone ? " · " + o.zone : ""}${o.phName ? " · " + phDisplayName(o.phName) : ""}`
           : `${vehicleOfferTitle(o)}${o.year ? " " + o.year : ""}`;
@@ -21517,15 +21518,21 @@
         showTab("vehiculoBusqueda");
       }
 
+      // Fuente ÚNICA de los desbloqueos del usuario. El resumen, el embudo y el
+      // historial usan ESTO para que siempre cuadren. En Supabase los reales traen
+      // fromServer; en demo, unlockedBy. Se excluyen entradas huérfanas sin atribución
+      // (stale en localStorage) que antes inflaban el resumen.
+      function myUnlockRecords() {
+        return Object.values(machUnlocks || {}).filter(
+          (it) => it && it.price !== undefined &&
+            (it.fromServer === true || (currentUserEmail && normalize(it.unlockedBy || "") === normalize(currentUserEmail)))
+        );
+      }
+
       function renderHistory() {
         const target = document.getElementById("unlockHistory");
         if (!target) return;
-        // Incluye los desbloqueos del servidor (fromServer, sin unlockedBy) además de
-        // los locales (demo, con unlockedBy). Antes solo miraba unlockedBy → el
-        // historial salía vacío aunque hubiera desbloqueos reales de Supabase.
-        const items = Object.values(machUnlocks).filter(
-          (it) => it && (it.fromServer === true || (currentUserEmail && normalize(it.unlockedBy || "") === normalize(currentUserEmail)))
-        );
+        const items = myUnlockRecords(); // misma fuente que el resumen/embudo → cuadran
         if (!items.length) {
           target.innerHTML =
             '<article class="card empty"><h3>Sin historial</h3><p>Aún no hay Contactos desbloqueados.</p></article>';
