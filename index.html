@@ -12330,7 +12330,6 @@
                 <label for="${noteId}">Nota privada del contacto</label>
                 <textarea id="${noteId}" placeholder="Ejemplo: llamó, pide visita el viernes, quiere negociar precio...">${escapeHtml(savedNote)}</textarea>
                 <button class="button secondary small" type="button" onclick="saveContactNote('${match.id}', '${source}')">Guardar nota</button>
-                <button class="button small reject" type="button" onclick="reportUndeclaredBroker('${match.id}')">Reportar problema</button>
               </div>
               ${
                   savedNote
