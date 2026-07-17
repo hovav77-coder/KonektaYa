@@ -16545,7 +16545,7 @@
       // Login con Google. Ponlo en true cuando actives el proveedor Google en
       // Supabase (Authentication → Providers → Google) con el Client ID/Secret de
       // Google Cloud. Hasta entonces el botón muestra "pronto" y avisa amablemente.
-      window.GOOGLE_LOGIN_ENABLED = false;
+      window.GOOGLE_LOGIN_ENABLED = true;
       function loginWithGoogle() {
         if (!window.GOOGLE_LOGIN_ENABLED || !supabaseEnabled || !supabaseClient) {
           if (typeof showLoginStatus === "function") showLoginStatus("Entrar con Google estará disponible muy pronto. Por ahora usa tu email. 🙌");
