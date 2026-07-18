@@ -125,22 +125,40 @@ begin
   return false;
 end $$;
 
--- 2) Trigger: revisa los campos de texto libre del JSONB 'data' antes de guardar.
+-- 2) Trigger: revisa TODOS los valores del JSONB 'data' antes de guardar
+--    (no una lista fija de claves). Así, aunque por la API metan el teléfono en
+--    una clave inventada/no listada, se detecta. Se SALTAN solo las claves
+--    numéricas/estructurales legítimas (precios, medidas, años, conteos,
+--    coordenadas, place_id, fechas, ids) para no bloquear publicaciones válidas.
 create or replace function public.konektaya_block_contact_info()
 returns trigger
 language plpgsql
 set search_path = public
 as $$
-declare k text; v text; es_comentario boolean;
+declare
+  k text; v text; es_comentario boolean;
+  -- Claves numéricas / de sistema que NO se escanean (su valor es un número,
+  -- coordenada, place_id o fecha; un teléfono de 7-8 dígitos y un precio de
+  -- 7-8 dígitos son indistinguibles por forma, así que se separan por clave).
+  skip text[] := array[
+    'saleprice','rentalprice','maxbudget','price',
+    'sizem2','minsizem2','desiredsizem2','landsizem2','hectares','hectareas',
+    'parkingspaces','desiredparkingspaces','bedrooms','bathrooms','desiredbedrooms','desiredbathrooms',
+    'year','minyear','desiredyear','mileage','maxmileage',
+    'streetlat','streetlng','desiredstreetlat','desiredstreetlng',
+    'streetplaceid','desiredstreetplaceid',
+    'publishedat','renewedat','createdat','updatedat','unlockedat',
+    'id','ownerid','active','archived','cappedfree','fullprice'
+  ];
 begin
-  foreach k in array array[
-    'streetOrNeighborhood','phName','desiredStreetOrNeighborhood','desiredPh',
-    'brandOther','desiredBrandOther','modelOther','desiredModelOther',
-    'colorOther','desiredColorOther','comments','vehicleComments','vehicleSearchComments'
-  ] loop
-    v := NEW.data ->> k;
+  if NEW.data is null then return NEW; end if;
+  for k, v in select key, value from jsonb_each_text(NEW.data) loop
+    if v is null or btrim(v) = '' then continue; end if;
+    if lower(k) = any(skip) then continue; end if;
+    -- Timestamps ISO (2026-07-18T...) : seguros, se saltan.
+    if v ~ '^[0-9]{4}-[0-9]{2}-[0-9]{2}[t ]' then continue; end if;
     es_comentario := (lower(k) like '%comment%');
-    if v is not null and public.konektaya_has_contact_info(v, not es_comentario) then
+    if public.konektaya_has_contact_info(v, not es_comentario) then
       raise exception 'CONTACTO_NO_PERMITIDO: el campo "%" no puede incluir datos de contacto (teléfono, email, redes o links).', k
         using errcode = 'check_violation';
     end if;
