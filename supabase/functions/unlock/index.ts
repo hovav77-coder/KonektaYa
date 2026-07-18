@@ -232,7 +232,7 @@ Deno.serve(async (req) => {
     const searchTable = vertical === "vehiculo" ? "vehicle_searches" : "searches";
 
     const [{ data: offer }, { data: search }] = await Promise.all([
-      admin.from(offerTable).select("id,owner_id,data").eq("id", offerId).maybeSingle(),
+      admin.from(offerTable).select("id,owner_id,data,cycle_start,active").eq("id", offerId).maybeSingle(),
       admin.from(searchTable).select("id,owner_id,data").eq("id", searchId).maybeSingle(),
     ]);
     if (!offer || !search) return json({ error: "Publicación no encontrada" }, 404);
@@ -257,13 +257,31 @@ Deno.serve(async (req) => {
     const { data: existing } = await admin.from("unlocks").select("id,price")
       .eq("unlocker_id", user.id).eq("offer_id", offerId).eq("search_id", searchId).maybeSingle();
 
-    // Tope por publicación en el ciclo actual
+    // Publicación dada de baja o archivada: no se puede desbloquear (defensa en
+    // servidor; antes esto solo lo validaba el cliente). Se revisa la columna
+    // active Y data.archived (una publicación archivada por 2m conserva el flag).
+    if (offer.active === false || (offer.data && offer.data.archived === true)) {
+      return json({ error: "Esta publicación no está activa." }, 400);
+    }
+    // Tope por publicación en el ciclo actual. El inicio de ciclo sale de la
+    // COLUMNA cycle_start (controlada por el servidor), NO de offer.data (editable
+    // por el dueño → antes podía congelarse para desbloquear gratis para siempre).
+    // Falla CERRADO: sin cycle_start no se desbloquea (la columna es NOT NULL + hay
+    // trigger, pero si por cualquier motivo faltara, NO dejamos pasar gratis).
+    if (!offer.cycle_start) {
+      return json({ error: "Publicación sin ciclo válido; el dueño debe renovarla." }, 400);
+    }
     const cap = Number(c.topePublicacion) || 0;
-    const cycleStart = offer.data.renewedAt || offer.data.publishedAt || null;
+    let cicloDias = Number(c.cicloDias);
+    if (!Number.isFinite(cicloDias) || cicloDias <= 0) cicloDias = 60;
+    const cycleStart = offer.cycle_start;
+    if (Date.now() > new Date(cycleStart).getTime() + cicloDias * 86400000) {
+      return json({ error: "La publicación venció. El dueño debe renovarla para volver a recibir contactos." }, 400);
+    }
     let alreadyPaid = 0;
     const { data: priors } = await admin.from("unlocks").select("price,created_at").eq("unlocker_id", user.id).eq("offer_id", offerId);
     (priors || []).forEach((p: any) => {
-      if (!cycleStart || new Date(p.created_at) >= new Date(cycleStart)) alreadyPaid += Number(p.price || 0);
+      if (new Date(p.created_at) >= new Date(cycleStart)) alreadyPaid += Number(p.price || 0);
     });
     let charge = cap ? Math.max(0, Math.min(fullPrice, cap - alreadyPaid)) : fullPrice;
     if (existing) charge = 0;

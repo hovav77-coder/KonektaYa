@@ -17391,7 +17391,7 @@
         const uid = await supaCurrentUid();
         for (const key of Object.keys(SUPA_ENTITIES)) {
           const cfg = SUPA_ENTITIES[key];
-          const { data: rows, error } = await supabaseClient.from(cfg.table).select("id,owner_id,data,active,owner_blocked");
+          const { data: rows, error } = await supabaseClient.from(cfg.table).select("id,owner_id,data,active,owner_blocked,cycle_start");
           if (error) { console.warn("supaLoadAll", cfg.table, error.message); continue; }
           const arr = (rows || []).map((r) => {
             const mine = r.owner_id === uid;
@@ -17400,6 +17400,7 @@
               id: r.id,
               _sbId: r.id,
               _mine: mine,
+              _cycleStart: r.cycle_start, // ciclo del tope: fuente = columna de servidor, no data
               ownerId: r.owner_id,
               owner_blocked: r.owner_blocked === true,
               email: mine ? currentUserEmail : r.data && r.data.email,
@@ -17903,14 +17904,15 @@
       }
 
       function publicationCycleStart(pub) {
-        return pub ? (pub.renewedAt || pub.publishedAt || "") : "";
+        return pub ? (pub._cycleStart || pub.renewedAt || pub.publishedAt || "") : "";
       }
 
       function publicationCycleEndMs(pub) {
         const start = publicationCycleStart(pub);
         const startMs = start ? Date.parse(start) : NaN;
         if (!isFinite(startMs)) return Infinity; // sin fecha -> no vence
-        const dias = Number(publicationConfig(pub).cicloDias) || 60;
+        let dias = Number(publicationConfig(pub).cicloDias);
+        if (!isFinite(dias) || dias <= 0) dias = 60;
         return startMs + dias * DAY_MS;
       }
 
@@ -17961,14 +17963,24 @@
         return cap > 0 && paidForPublication(pub) >= cap;
       }
 
-      function renovarPublicacion(vertical, id) {
+      async function renovarPublicacion(vertical, id) {
         const list = vertical === "vehiculos" ? vehicleOffers : properties;
         const pub = list.find((item) => String(item.id) === String(id));
         if (!pub) return;
-        pub.renewedAt = new Date().toISOString(); // reinicia ciclo y tope (el acumulado solo cuenta desde aqui)
+        if (supabaseEnabled) {
+          // El ciclo se resetea EN EL SERVIDOR (cycle_start es columna protegida,
+          // el cliente no puede moverla). RPC valida que seas el dueño.
+          const table = vertical === "vehiculos" ? "vehicle_offers" : "properties";
+          const { data, error } = await supabaseClient.rpc("konektaya_renew_publication", {
+            p_table: table, p_id: pub._sbId || pub.id
+          });
+          if (error) { alert("No se pudo renovar: " + (error.message || "intenta de nuevo.")); return; }
+          const ts = data || new Date().toISOString();
+          pub._cycleStart = ts; pub.renewedAt = ts; pub.active = true;
+        } else {
+          pub.renewedAt = new Date().toISOString(); // demo local (sin servidor)
+        }
         save();
-        // Persistir el nuevo ciclo en el servidor (el tope del unlock lo lee de data.renewedAt)
-        if (supabaseEnabled) supaSetActive(vertical === "vehiculos" ? "vehicleOffers" : "properties", pub);
         render();
       }
 
@@ -17987,7 +17999,7 @@
           return `
             <div class="pub-status expired">
               <div class="pub-status-line"><strong>Publicación vencida</strong><span>Dejó de aparecer en resultados. Renueva para volver a recibir contactos.</span></div>
-              <button class="button small primary" type="button" onclick="renovarPublicacion('${vertical}', ${JSON.stringify(pub.id)})">Renovar ${cfg.cicloDias} días</button>
+              <button class="button small primary" type="button" onclick="renovarPublicacion('${vertical}', '${pub.id}')">Renovar ${cfg.cicloDias} días</button>
             </div>`;
         }
 
