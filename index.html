@@ -12552,6 +12552,7 @@
         const ownerClosed = ownerStatus === "cerrado";
         const property = match.property;
         const search = match.search;
+        const connected = matchConnectedHtml(property.id, search.id); // dueño ya pagó por tu contacto
         const samePh = isSamePh(property, search);
         const propertyStreet = normalize(property.streetOrNeighborhood || "");
         // Mismo PH implica misma calle (un edificio no puede estar en dos calles):
@@ -12590,7 +12591,7 @@
             : ""
         ].filter(Boolean).join("");
         const offerAvailable = isOfferAvailable(property);
-        const sideAction = !offerAvailable || ownerClosed || ownerContacted
+        const sideAction = connected || !offerAvailable || ownerClosed || ownerContacted
           ? ""
           : `<button class="button ${ownerHasContact || requested ? "dark" : "primary"}" type="button" onclick="requestOwnerContact('${match.id}')">${
               ownerHasContact || requested ? "Enviar recordatorio" : "Quiero que me contacten"
@@ -12602,7 +12603,7 @@
           : ownerContacted
             ? `<div class="status-banner contacted"><span class="status-banner-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><div class="status-banner-text"><strong>Contacto iniciado</strong><span>${propertyContactActionLabel(match)} ya está en contacto contigo.</span></div></div>`
             : "";
-        const sideNotes = [
+        const sideNotes = connected ? "" : [
           ownerHasContact && !ownerClosed && !ownerContacted
             ? `<p class="result-note ok">Tus datos ya fueron compartidos.</p>`
             : "",
@@ -12634,6 +12635,7 @@
                 <span class="oc2-loc"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> ${property.zone}, ${property.province} · ${property.sizeM2} m²</span>
               </div>
               <div class="factor-chips">${chips}</div>
+              ${connected}
             </div>
             ${footInner ? `<div class="rc2-foot rc2-foot-end"><div class="rc2-actions">${sideAction}${sideNotes}</div></div>` : ""}
             <details class="result-analysis">
@@ -19548,6 +19550,7 @@
         if (source === "vehicleSearch") {
           const f = match.factors || {};
           const offer = match.offer;
+          const connected = matchConnectedHtml(offer.id, match.search.id); // dueño ya pagó por tu contacto
           const extrasOk = f.transmission && f.fuel;
           const chips = [
             f.model === "exact" ? factorChip("ok", "Marca y modelo") : factorChip("warn", "Modelo similar"),
@@ -19560,7 +19563,7 @@
               : factorChip("warn", !f.transmission && !f.fuel ? "Transmisión y combustible distintos" : !f.transmission ? "Transmisión distinta" : "Combustible distinto")
           ].join("");
           const offerAvailable = isOfferAvailable(offer);
-          const vsAction = offerAvailable
+          const vsAction = offerAvailable && !connected
             ? `<button class="button ${requested ? "dark" : "primary"}" type="button" onclick="requestVehicleOwnerContact('${match.id}')">${requested ? "Enviar recordatorio" : "Quiero que me contacten"}</button>${
                 requested
                   ? `<p class="result-note ok">Solicitud enviada${reminderCount ? ` · ${reminderCount} recordatorio${reminderCount === 1 ? "" : "s"}` : ""}</p>`
@@ -19591,8 +19594,9 @@
                   <span class="oc2-loc"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6-5.686-6-10a6 6 0 0 1 12 0c0 4.314-6 10-6 10z"></path><circle cx="12" cy="11" r="2"></circle></svg> ${offer.zone}, ${offer.province} · ${Number(offer.mileage || 0).toLocaleString("es-PA")} km</span>
                 </div>
                 <div class="factor-chips">${chips}</div>
+                ${connected}
               </div>
-              ${offerAvailable ? `<div class="rc2-foot rc2-foot-end"><div class="rc2-actions">${vsAction}</div></div>` : ""}
+              ${vsAction ? `<div class="rc2-foot rc2-foot-end"><div class="rc2-actions">${vsAction}</div></div>` : ""}
               <details class="result-analysis">
                 <summary>Ver análisis completo</summary>
                 ${vehicleExplainPanel(match, source)}
@@ -20046,7 +20050,6 @@
                               ${search.desiredStorage === "si" ? `<span class="criteria-chip">Depósito necesario</span>` : ""}
                               <span class="criteria-chip muted">${label(search.useCase)} · ${urgencyLabel(search.urgency)}</span>
                             </div>
-                            ${whoUnlockedSearchHtml(search.id)}
                           </div>
                           <div class="oc2-foot">
                             ${searchActiveSwitch(search.id, searchActive, "setSearchActive")}
@@ -20122,7 +20125,6 @@
                             <span class="criteria-chip">${vehicleLabel(search.fuel)}</span>
                             <span class="criteria-chip muted">${vehicleLabel(search.useCase)} · ${vehicleLabel(search.urgency)}</span>
                           </div>
-                          ${whoUnlockedSearchHtml(search.id)}
                         </div>
                         <div class="oc2-foot">
                           ${searchActiveSwitch(search.id, searchActive, "setVehicleSearchActive")}
@@ -20809,37 +20811,41 @@
       }
       window.reportarContactoFalso = reportarContactoFalso;
 
-      // Aviso "quién te desbloqueó" (revelado mutuo) para UNA búsqueda específica:
-      // solo los desbloqueos cuyo search_id coincide, así el bloque vive DENTRO de
-      // la tarjeta de esa búsqueda (no suelto arriba) y solo en su vertical.
-      function whoUnlockedSearchHtml(searchId) {
+      // Estado "Ya conectados" para UN match: si el dueño de esta oferta ya pagó por
+      // desbloquear el contacto del buscador (revelado mutuo), se muestra su contacto
+      // aquí mismo — atado por offer_id + search_id — en vez de "Quiero que me contacten".
+      function matchConnectedHtml(offerId, searchId) {
         if (!supabaseEnabled || !currentUserEmail || !Array.isArray(whoUnlockedMe) || !whoUnlockedMe.length) return "";
-        const sid = String(searchId);
-        const recs = whoUnlockedMe.filter((r) => String(r.search_id) === sid);
-        if (!recs.length) return "";
+        const r = whoUnlockedMe.find((x) => String(x.offer_id) === String(offerId) && String(x.search_id) === String(searchId));
+        if (!r) return "";
         const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-        const rows = recs.map((r) => {
-          const raw = (r.name || "Un interesado").trim();
-          const nm = esc(raw);
-          const initials = esc((raw.split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("") || "?").toUpperCase());
-          const tel = r.phone ? `<div style="font-size:12.5px;color:#33465c;margin-top:2px">Tel: ${esc(r.phone)}</div>` : "";
-          const mail = r.email ? `<div style="font-size:12.5px;color:#33465c;margin-top:2px">Email: ${esc(r.email)}</div>` : "";
-          return `<div style="display:flex;gap:11px;align-items:flex-start;background:#fff;border:1px solid #e6edf5;border-radius:12px;padding:11px;margin-top:8px">
-            <div style="width:38px;height:38px;border-radius:50%;background:#0a2f55;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:0 0 auto">${initials}</div>
+        const raw = (r.name || "Un interesado").trim();
+        const nm = esc(raw);
+        const initials = esc((raw.split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("") || "?").toUpperCase());
+        const phone = String(r.phone || "");
+        const waNum = phone.replace(/[^0-9]/g, "");
+        const tel = phone ? `<div style="font-size:12.5px;color:#33465c;margin-top:2px">Tel: ${esc(phone)}</div>` : "";
+        const mail = r.email ? `<div style="font-size:12.5px;color:#33465c;margin-top:2px">Email: ${esc(r.email)}</div>` : "";
+        const wa = waNum
+          ? `<a href="https://wa.me/${waNum}" target="_blank" rel="noopener" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#25d366;color:#08331a;text-decoration:none;border-radius:11px;padding:11px;font-size:14px;font-weight:800"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.4A10 10 0 1012 2zm0 2a8 8 0 11-4.2 14.8l-.3-.2-2.8.8.8-2.7-.2-.3A8 8 0 0112 4z"/></svg>Escribir por WhatsApp</a>`
+          : "";
+        return `<div style="margin-top:12px;border:1px solid #cfe8d6;background:#f2fbf5;border-radius:14px;padding:12px 13px">
+          <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:900;color:#166534">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M20 6L9 17l-5-5" stroke="#166534" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Ya conectados · este interesado te contactó
+          </div>
+          <div style="display:flex;gap:11px;align-items:flex-start;background:#fff;border:1px solid #e6edf5;border-radius:11px;padding:11px;margin-top:8px">
+            <div style="width:36px;height:36px;border-radius:50%;background:#0a2f55;color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto">${initials}</div>
             <div style="min-width:0">
               <div style="font-size:14px;font-weight:800;color:#0a2f55">${nm}</div>
-              <div style="font-size:12px;color:#5b6b82">Desbloqueó tu contacto · ${formatDate(r.created_at)}</div>
+              <div style="font-size:11.5px;color:#5b6b82">Pagó por ver tus datos · ${formatDate(r.created_at)}</div>
               ${tel}${mail}
-              <button type="button" onclick="reportarContactoFalso()" style="margin-top:7px;background:none;border:none;padding:0;color:#5b6b82;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer">Reportar contacto falso</button>
             </div>
-          </div>`;
-        }).join("");
-        return `<div style="margin-top:13px;border:1px solid #cfe8d6;background:#f2fbf5;border-radius:14px;padding:12px 13px">
-          <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:900;color:#166534">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M4 5c0 8 7 15 15 15v-3l-4-2-2 2a12 12 0 01-6-6l2-2-2-4H4z" fill="#166534"/></svg>
-            Te contactaron (${recs.length}) · pagaron por ver tus datos
           </div>
-          ${rows}
+          <div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;align-items:center">
+            ${wa}
+            <button type="button" onclick="reportarContactoFalso()" style="background:none;border:none;color:#5b6b82;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer;padding:0">Reportar</button>
+          </div>
         </div>`;
       }
 
