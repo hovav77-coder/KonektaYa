@@ -20940,10 +20940,29 @@
         <p style="font-size:11.5px;color:#5b6b82;margin:5px 0 0">Si la pausas, dejas de aparecer y nadie podrá contactarte.</p>`;
       }
 
-      // Reporte simple de contacto/desbloqueo falso: abre el WhatsApp de soporte.
-      function reportarContactoFalso() {
-        const msg = encodeURIComponent("Hola KonektaYa, quiero reportar un contacto o desbloqueo falso/sospechoso en mi búsqueda.");
-        window.open("https://wa.me/50764905233?text=" + msg, "_blank", "noopener");
+      // Reporte de contacto/desbloqueo sospechoso: abre el WhatsApp de soporte con
+      // los datos del interesado + referencia del match, para que soporte lo ubique
+      // rápido. Recibe un JSON codificado (encodeURIComponent); sin datos manda el
+      // mensaje genérico.
+      function reportarContactoFalso(info) {
+        let m = "Hola KonektaYa, quiero reportar un contacto o desbloqueo falso/sospechoso en mi búsqueda.";
+        try {
+          const d = info ? JSON.parse(decodeURIComponent(info)) : null;
+          if (d) {
+            const L = ["", "— Datos para ubicar el reporte —"];
+            if (d.name) L.push("Interesado reportado: " + d.name);
+            if (d.phone) L.push("Tel: " + d.phone);
+            if (d.email) L.push("Email: " + d.email);
+            if (d.tipo) L.push("Tipo: " + d.tipo);
+            if (d.when) L.push("Desbloqueó mis datos: " + d.when);
+            if (d.offer_id) L.push("Ref. oferta: " + d.offer_id);
+            if (d.search_id) L.push("Ref. búsqueda: " + d.search_id);
+            if (d.reporter) L.push("Mi correo (quien reporta): " + d.reporter);
+            L.push("", "Motivo: ");
+            m += "\n" + L.join("\n");
+          }
+        } catch (e) {}
+        window.open("https://wa.me/50764905233?text=" + encodeURIComponent(m), "_blank", "noopener");
       }
       window.reportarContactoFalso = reportarContactoFalso;
 
@@ -20965,6 +20984,19 @@
         const wa = waNum
           ? `<a href="https://wa.me/${waNum}" target="_blank" rel="noopener" style="flex:1;min-width:150px;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#25d366;color:#08331a;text-decoration:none;border-radius:11px;padding:11px;font-size:14px;font-weight:800"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor"><path d="M12 2a10 10 0 00-8.5 15.3L2 22l4.8-1.4A10 10 0 1012 2zm0 2a8 8 0 11-4.2 14.8l-.3-.2-2.8.8.8-2.7-.2-.3A8 8 0 0112 4z"/></svg>Escribir por WhatsApp</a>`
           : "";
+        // Datos para el reporte (codificados para caber seguro en el onclick).
+        const reportPayload = encodeURIComponent(
+          JSON.stringify({
+            name: raw,
+            phone: phone,
+            email: r.email || "",
+            tipo: r.vertical === "vehiculo" ? "Vehículo" : "Inmueble",
+            when: formatDate(r.created_at),
+            offer_id: String(r.offer_id || ""),
+            search_id: String(r.search_id || ""),
+            reporter: currentUserEmail || "",
+          })
+        ).replace(/'/g, "%27");
         return `<div style="margin-top:12px;border:1px solid #cfe8d6;background:#f2fbf5;border-radius:14px;padding:12px 13px">
           <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:900;color:#166534">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M20 6L9 17l-5-5" stroke="#166534" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -20980,7 +21012,7 @@
           </div>
           <div style="display:flex;gap:8px;margin-top:11px;flex-wrap:wrap;align-items:center">
             ${wa}
-            <button type="button" onclick="reportarContactoFalso()" style="background:none;border:none;color:#5b6b82;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer;padding:0">Reportar</button>
+            <button type="button" onclick="reportarContactoFalso('${reportPayload}')" style="background:none;border:none;color:#5b6b82;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer;padding:0">Reportar</button>
           </div>
         </div>`;
       }
