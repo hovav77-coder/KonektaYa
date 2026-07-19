@@ -204,6 +204,56 @@ function priceFromScore(score: number, c: any) {
   return 0;
 }
 
+// -------- Aviso por email al buscador (revelado mutuo) via Resend --------
+function unlockNoticeHtml(searcherName: string, ownerName: string, ownerPhone: string, ownerEmail: string, vertical: string) {
+  // Escapar TODO dato de usuario: el dueño controla su nombre/teléfono sin sanear
+  // y este correo sale desde el dominio de confianza → sin esto podría inyectar
+  // HTML/enlaces de phishing en el cuerpo del email al buscador.
+  const esc = (s: string) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+  const cosa = vertical === "vehiculo" ? "vehículo" : "inmueble";
+  const hola = searcherName ? `Hola ${esc(searcherName)},` : "Hola,";
+  const oName = esc(ownerName) || "Un interesado";
+  const tel = ownerPhone ? `<div style="font-size:14px;margin:3px 0"><strong>Tel:</strong> ${esc(ownerPhone)}</div>` : "";
+  const mail = ownerEmail ? `<div style="font-size:14px;margin:3px 0"><strong>Email:</strong> ${esc(ownerEmail)}</div>` : "";
+  return `<!doctype html><html><body style="margin:0;background:#eef3fa;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f2a4a">
+  <div style="max-width:520px;margin:0 auto;padding:24px">
+    <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,42,74,.08)">
+      <div style="background:linear-gradient(135deg,#0a2f55,#0f2a4a);color:#fff;padding:26px 24px">
+        <div style="font-size:21px;font-weight:800">Un interesado desbloqueó tu contacto</div>
+        <div style="color:#bcd4ee;font-size:14px;margin-top:4px">KonektaYa · Panamá</div>
+      </div>
+      <div style="padding:24px">
+        <p style="font-size:15px;line-height:1.6;margin:0 0 12px">${hola}</p>
+        <p style="font-size:15px;line-height:1.6;margin:0 0 16px">Alguien interesado en tu búsqueda de <strong>${cosa}</strong> pagó por ver tus datos y ya puede escribirte. Para que también lo contactes tú, aquí están sus datos:</p>
+        <div style="background:#f8fbff;border:1px solid #e6edf5;border-radius:12px;padding:14px 16px;margin:0 0 18px">
+          <div style="font-size:16px;font-weight:800;color:#0a2f55">${oName}</div>
+          ${tel}${mail}
+        </div>
+        <a href="https://konektaya.com" style="display:inline-block;background:#e05b2a;color:#fff;text-decoration:none;font-weight:800;padding:13px 22px;border-radius:12px;font-size:15px">Ver en Mi panel</a>
+        <p style="font-size:13px;color:#64748b;line-height:1.6;margin:18px 0 0">¿No quieres más contactos? Entra a tu panel y <strong>pausa tu búsqueda</strong>: dejarás de aparecer y nadie podrá desbloquear tu contacto.</p>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#94a3b8;text-align:center;margin:16px 0 0">Recibiste este correo porque tienes una búsqueda activa en KonektaYa.</p>
+  </div></body></html>`;
+}
+
+async function sendUnlockNotice(to: string, searcherName: string, ownerName: string, ownerPhone: string, ownerEmail: string, vertical: string) {
+  const key = (Deno.env.get("RESEND_API_KEY") || "").replace(/[^\x21-\x7E]/g, "");
+  if (!key) throw new Error("RESEND_API_KEY no configurado");
+  const from = (Deno.env.get("NOTIFY_FROM") || "KonektaYa <avisos@konektaya.com>").replace(/[^\x20-\x7E]/g, "");
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: [to],
+      subject: "Un interesado desbloqueó tu contacto en KonektaYa",
+      html: unlockNoticeHtml(searcherName, ownerName, ownerPhone, ownerEmail, vertical),
+    }),
+  });
+  if (!res.ok) throw new Error("Resend " + res.status + ": " + (await res.text()));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
@@ -315,7 +365,21 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: prof } = await admin.from("profiles").select("name,phone,email").eq("id", search.owner_id).maybeSingle();
+    const { data: prof } = await admin.from("profiles").select("name,phone,email,notify_matches").eq("id", search.owner_id).maybeSingle();
+
+    // Aviso al BUSCADOR (transparencia + revelado mutuo): SOLO en desbloqueos nuevos
+    // (no re-avisa si ya estaba desbloqueado), no bloquea la respuesta si el email
+    // falla, y respeta la preferencia notify_matches del buscador.
+    if (!existing && prof?.email && prof.notify_matches !== false) {
+      try {
+        const { data: ownerProf } = await admin.from("profiles").select("name,phone,email").eq("id", user.id).maybeSingle();
+        await sendUnlockNotice(
+          prof.email, String(prof.name || "").split(/\s+/)[0] || "",
+          ownerProf?.name || "", ownerProf?.phone || "", ownerProf?.email || "", vertical
+        );
+      } catch (e) { console.warn("sendUnlockNotice", String((e as Error)?.message || e)); }
+    }
+
     return json({ ok: true, alreadyUnlocked: Boolean(existing), score, charge: existing ? 0 : charge, balance: newBalance, contact: prof || null });
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500);
