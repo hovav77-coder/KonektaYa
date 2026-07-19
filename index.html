@@ -20046,6 +20046,7 @@
                               ${search.desiredStorage === "si" ? `<span class="criteria-chip">Depósito necesario</span>` : ""}
                               <span class="criteria-chip muted">${label(search.useCase)} · ${urgencyLabel(search.urgency)}</span>
                             </div>
+                            ${whoUnlockedSearchHtml(search.id)}
                           </div>
                           <div class="oc2-foot">
                             ${searchActiveSwitch(search.id, searchActive, "setSearchActive")}
@@ -20121,6 +20122,7 @@
                             <span class="criteria-chip">${vehicleLabel(search.fuel)}</span>
                             <span class="criteria-chip muted">${vehicleLabel(search.useCase)} · ${vehicleLabel(search.urgency)}</span>
                           </div>
+                          ${whoUnlockedSearchHtml(search.id)}
                         </div>
                         <div class="oc2-foot">
                           ${searchActiveSwitch(search.id, searchActive, "setVehicleSearchActive")}
@@ -20156,9 +20158,6 @@
             const emptyCta = emptyPublishCta(userDashboardVerticalFilter === "vehicle" ? "vehiculoBusqueda" : "busqueda");
             userSearchesTarget.innerHTML = `<article class="card empty"><h3>${emptyTitle}</h3><p>${emptyText}</p><div class="empty-cta-row">${emptyCta}</div></article>`;
           }
-          // Revelado mutuo: arriba de las búsquedas, quién desbloqueó mi contacto.
-          const wuHtml = whoUnlockedMeHtml();
-          if (wuHtml) userSearchesTarget.innerHTML = wuHtml + userSearchesTarget.innerHTML;
         }
 
         renderArchivedPublications();
@@ -20810,31 +20809,37 @@
       }
       window.reportarContactoFalso = reportarContactoFalso;
 
-      // Aviso "quién te desbloqueó" (revelado mutuo) para el panel del buscador.
-      function whoUnlockedMeHtml() {
+      // Aviso "quién te desbloqueó" (revelado mutuo) para UNA búsqueda específica:
+      // solo los desbloqueos cuyo search_id coincide, así el bloque vive DENTRO de
+      // la tarjeta de esa búsqueda (no suelto arriba) y solo en su vertical.
+      function whoUnlockedSearchHtml(searchId) {
         if (!supabaseEnabled || !currentUserEmail || !Array.isArray(whoUnlockedMe) || !whoUnlockedMe.length) return "";
+        const sid = String(searchId);
+        const recs = whoUnlockedMe.filter((r) => String(r.search_id) === sid);
+        if (!recs.length) return "";
         const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-        const cards = whoUnlockedMe.map((r) => {
+        const rows = recs.map((r) => {
           const raw = (r.name || "Un interesado").trim();
           const nm = esc(raw);
           const initials = esc((raw.split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("") || "?").toUpperCase());
-          const cosa = (r.vertical === "vehiculo" || r.vertical === "vehicle") ? "vehículo" : "inmueble";
           const tel = r.phone ? `<div style="font-size:12.5px;color:#33465c;margin-top:2px">Tel: ${esc(r.phone)}</div>` : "";
           const mail = r.email ? `<div style="font-size:12.5px;color:#33465c;margin-top:2px">Email: ${esc(r.email)}</div>` : "";
-          return `<div style="display:flex;gap:11px;align-items:flex-start;background:#f8fbff;border:1px solid #e6edf5;border-radius:13px;padding:11px;margin-top:8px">
+          return `<div style="display:flex;gap:11px;align-items:flex-start;background:#fff;border:1px solid #e6edf5;border-radius:12px;padding:11px;margin-top:8px">
             <div style="width:38px;height:38px;border-radius:50%;background:#0a2f55;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:0 0 auto">${initials}</div>
             <div style="min-width:0">
               <div style="font-size:14px;font-weight:800;color:#0a2f55">${nm}</div>
-              <div style="font-size:12px;color:#5b6b82">Desbloqueó tu contacto (${cosa}) · ${formatDate(r.created_at)}</div>
+              <div style="font-size:12px;color:#5b6b82">Desbloqueó tu contacto · ${formatDate(r.created_at)}</div>
               ${tel}${mail}
               <button type="button" onclick="reportarContactoFalso()" style="margin-top:7px;background:none;border:none;padding:0;color:#5b6b82;font-size:12px;font-weight:700;text-decoration:underline;cursor:pointer">Reportar contacto falso</button>
             </div>
           </div>`;
         }).join("");
-        return `<div style="background:#fff;border:1px solid #e6edf5;border-radius:16px;padding:14px;margin-bottom:14px">
-          <p style="font-size:14px;font-weight:900;color:#0a2f55;margin:0">Interesados que te contactaron (${whoUnlockedMe.length})</p>
-          <p style="font-size:12.5px;color:#5b6b82;margin:4px 0 2px">Pagaron por ver tus datos y ya pueden escribirte; aquí tienes los suyos para responder. ¿No quieres más contactos? Pausa tu búsqueda más abajo.</p>
-          ${cards}
+        return `<div style="margin-top:13px;border:1px solid #cfe8d6;background:#f2fbf5;border-radius:14px;padding:12px 13px">
+          <div style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:900;color:#166534">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M4 5c0 8 7 15 15 15v-3l-4-2-2 2a12 12 0 01-6-6l2-2-2-4H4z" fill="#166534"/></svg>
+            Te contactaron (${recs.length}) · pagaron por ver tus datos
+          </div>
+          ${rows}
         </div>`;
       }
 
