@@ -2871,6 +2871,93 @@
         font-weight: 950;
       }
 
+      /* Pagos y recibos (comprobantes de recarga de crédito) */
+      .pay-rows {
+        display: grid;
+        gap: 10px;
+      }
+      .pay-row {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #eef2f7;
+        border-radius: 12px;
+        display: flex;
+        gap: 12px;
+        padding: 12px 14px;
+      }
+      .pay-ic {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #eaf2fb;
+        color: var(--navy);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+      }
+      .pay-ic svg {
+        width: 20px;
+        height: 20px;
+      }
+      .pay-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .pay-t {
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 800;
+      }
+      .pay-d {
+        color: var(--muted);
+        font-size: 12.5px;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+      .pay-amt {
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+      .pill-paid {
+        background: #eaf7ee;
+        color: #166534;
+        border: 1px solid #cce8cc;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: 11.5px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .pay-btn {
+        background: #fff;
+        border: 1.5px solid var(--navy);
+        color: var(--navy);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 12.5px;
+        font-weight: 800;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .pay-btn:hover {
+        border-color: var(--orange, #e05b2a);
+        color: var(--orange, #e05b2a);
+      }
+      @media (max-width: 560px) {
+        .pay-row {
+          flex-wrap: wrap;
+        }
+        .pay-main {
+          flex-basis: 55%;
+        }
+        .pay-btn {
+          margin-left: auto;
+        }
+      }
+
       .field.full {
         grid-column: 1 / -1;
       }
@@ -11081,6 +11168,7 @@
                   <button class="active" type="button" data-user-dashboard-button="properties">Ofertas <span class="tab-count" id="offersTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="searches">Solicitudes <span class="tab-count" id="searchesTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="history">Historial</button>
+                  <button type="button" data-user-dashboard-button="payments">Pagos</button>
                   <button type="button" data-user-dashboard-button="archived" id="archivedTabBtn" hidden>Archivadas <span class="tab-count" id="archivedTabCount">0</span></button>
                 </div>
               </div>
@@ -11104,6 +11192,13 @@
                   <span class="pane-heading-note">Contactos desbloqueados con su costo</span>
                 </div>
                 <div class="history-list" id="unlockHistory"></div>
+              </div>
+              <div class="user-dashboard-pane" data-user-dashboard-pane="payments">
+                <div class="pane-heading">
+                  <h2>Pagos y recibos</h2>
+                  <span class="pane-heading-note">Tus recargas de crédito. Descarga el comprobante de cada pago.</span>
+                </div>
+                <div class="pay-list" id="userPayments"></div>
               </div>
               <div class="user-dashboard-pane" data-user-dashboard-pane="archived">
                 <div class="pane-heading">
@@ -17075,6 +17170,7 @@
               refreshBalance().catch(warn("refreshBalance")),
               supaLoadUnlocks().catch(warn("supaLoadUnlocks")),
               supaLoadWhoUnlockedMe().catch(warn("supaLoadWhoUnlockedMe")),
+              supaLoadOrders().catch(warn("supaLoadOrders")),
               supaLoadRequests().catch(warn("supaLoadRequests"))
             ]);
           } else if (!email) {
@@ -17295,6 +17391,39 @@
         if (!supabaseEnabled || !currentUserEmail) return;
         const { data, error } = await supabaseClient.rpc("get_who_unlocked_me");
         if (!error && Array.isArray(data)) whoUnlockedMe = data;
+      }
+
+      // Datos del emisor para el comprobante de pago (empresa operadora de KonektaYa).
+      const KY_EMISOR = {
+        razon: "GREEN ASSET REAL ESTATE, S.A.",
+        ruc: "RUC 155757055-2-2024 DV 88",
+        dir1: "Plaza Edison, Calle Ricardo J. Alfaro",
+        dir2: "Ciudad de Panamá, Rep. de Panamá",
+        contacto: "pagos@konektaya.com · +507 6490-5233",
+      };
+
+      // Compras de crédito por PayPal del usuario = fuente de los comprobantes de pago.
+      // RLS (paypal_orders_select_own) garantiza que cada quien solo ve las suyas.
+      let myOrders = [];
+      async function supaLoadOrders() {
+        myOrders = [];
+        if (!supabaseEnabled || !currentUserEmail) return;
+        // select("*") para no romper si aún no corre la migración de receipt_seq.
+        const { data, error } = await supabaseClient
+          .from("paypal_orders")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!error && Array.isArray(data)) myOrders = data;
+      }
+
+      // Número de recibo estable. Usa la secuencia del servidor (receipt_seq) si existe;
+      // si no, cae al id de la orden de PayPal (también único y estable).
+      function receiptNo(o) {
+        if (o && o.receipt_seq != null && o.receipt_seq !== "") {
+          return "KYA-" + String(o.receipt_seq).padStart(6, "0");
+        }
+        const id = String((o && o.order_id) || "").replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+        return "KYA-" + (id.slice(-8) || "000000");
       }
 
       // Carga los desbloqueos ya pagados del usuario (para marcar estado + revelar contacto)
@@ -18561,6 +18690,7 @@
         renderValidationAdmin();
         renderDashboardLists();
         renderHistory();
+        renderPayments();
         renderBrokerB2B();
         refreshResultsModal();
         if (typeof refreshAuthUI === "function") refreshAuthUI();
@@ -21724,6 +21854,121 @@
       let historyLimit = 20;
       function showMoreHistory() { historyLimit += 20; renderHistory(); }
       window.showMoreHistory = showMoreHistory;
+
+      // ---- Pagos y recibos: lista de recargas de crédito + comprobante descargable ----
+      function renderPayments() {
+        const target = document.getElementById("userPayments");
+        if (!target) return;
+        if (!myOrders.length) {
+          target.innerHTML =
+            '<article class="card empty"><h3>Sin pagos todavía</h3><p>Cuando recargues crédito con PayPal, aquí aparecerán tus comprobantes descargables.</p></article>';
+          return;
+        }
+        const total = myOrders.reduce((s, o) => s + Number(o.amount || 0), 0);
+        const cardIcon =
+          '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 10h18" stroke="currentColor" stroke-width="2"/></svg>';
+        const rows = myOrders
+          .map((o) => {
+            const oid = String(o.order_id || "").replace(/'/g, "");
+            return `
+              <div class="pay-row">
+                <span class="pay-ic">${cardIcon}</span>
+                <div class="pay-main">
+                  <div class="pay-t">Recarga de crédito</div>
+                  <div class="pay-d">${formatDate(o.created_at)} · PayPal · Recibo ${receiptNo(o)}</div>
+                </div>
+                <span class="pill-paid">Pagado</span>
+                <span class="pay-amt">${money.format(o.amount || 0)}</span>
+                <button type="button" class="pay-btn" onclick="verRecibo('${oid}')">Ver recibo</button>
+              </div>`;
+          })
+          .join("");
+        target.innerHTML = `
+          <div class="history-summary">${myOrders.length} pago${myOrders.length === 1 ? "" : "s"} · Total recargado <strong>${money.format(total)}</strong></div>
+          <div class="pay-rows">${rows}</div>
+        `;
+      }
+      window.renderPayments = renderPayments;
+
+      // Abre el comprobante de pago en una ventana lista para imprimir / guardar como PDF.
+      function verRecibo(orderId) {
+        const o = myOrders.find((x) => String(x.order_id) === String(orderId));
+        if (!o) return;
+        const esc = (s) =>
+          String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+        const prof = typeof myProfile !== "undefined" && myProfile ? myProfile : {};
+        const cliente = esc(prof.name || "Cliente KonektaYa");
+        const correo = esc(currentUserEmail || prof.email || "");
+        const num = esc(receiptNo(o));
+        const _d = new Date(o.created_at);
+        const fecha = esc(
+          isNaN(_d.getTime())
+            ? String(o.created_at || "")
+            : String(_d.getDate()).padStart(2, "0") + "/" + String(_d.getMonth() + 1).padStart(2, "0") + "/" + _d.getFullYear()
+        );
+        const monto = esc(money.format(o.amount || 0));
+        const cero = esc(money.format(0));
+        const tx = esc(String(o.order_id || "").slice(0, 16));
+        const e = KY_EMISOR;
+        const html =
+          '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
+          "<title>Comprobante " + num + " · KonektaYa</title><style>" +
+          "*{box-sizing:border-box;margin:0;padding:0;}" +
+          'body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:#0a2f55;background:#eef3f9;padding:24px;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+          ".sheet{max-width:720px;margin:0 auto;background:#fff;border:1px solid #e6edf5;border-radius:16px;padding:28px;box-shadow:0 14px 36px rgba(10,25,45,.12);}" +
+          ".top{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-bottom:2px solid #eef2f7;padding-bottom:16px;}" +
+          ".brand{display:flex;align-items:center;gap:10px;}.brand svg{width:42px;height:42px;}" +
+          ".bn{font-size:21px;font-weight:900;letter-spacing:-.02em;color:#0a2f55;}.bn span{color:#e05b2a;}" +
+          ".doc{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#5b6b82;margin-top:3px;}" +
+          ".emisor{text-align:right;font-size:12px;color:#33465c;line-height:1.55;max-width:320px;}.emisor b{color:#0a2f55;font-size:13px;}" +
+          ".band{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:center;background:#f6f9fd;border-radius:12px;padding:14px 16px;margin:16px 0;}" +
+          ".meta{font-size:13px;color:#33465c;line-height:1.7;}.meta b{color:#0a2f55;}" +
+          ".right{text-align:right;}.tl{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#5b6b82;}" +
+          ".tot{font-size:24px;font-weight:900;color:#0a2f55;}" +
+          ".paid{display:inline-block;background:#eaf7ee;color:#166534;border:1px solid #cce8cc;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:800;margin-bottom:4px;}" +
+          ".billto{margin:6px 0 14px;}.billto .l{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#5b6b82;}" +
+          ".billto .v{font-size:14px;font-weight:700;color:#0a2f55;margin-top:2px;}.billto .v small{color:#5b6b82;font-weight:600;}" +
+          "table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:6px;}" +
+          "th{text-align:left;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#5b6b82;border-bottom:1.5px solid #e6edf5;padding:8px 6px;}" +
+          "td{padding:11px 6px;border-bottom:1px solid #f0f4f9;vertical-align:top;}.num{text-align:right;}" +
+          ".idsc b{color:#0a2f55;}.idsc small{display:block;color:#5b6b82;font-size:12px;}" +
+          ".totals{margin-left:auto;width:min(280px,100%);margin-top:10px;font-size:13.5px;}" +
+          ".rowt{display:flex;justify-content:space-between;padding:6px 6px;}" +
+          ".grand{border-top:1.5px solid #e6edf5;font-weight:900;color:#0a2f55;font-size:15px;}" +
+          ".foot{margin-top:16px;border-top:1px solid #eef2f7;padding-top:12px;font-size:11.5px;color:#5b6b82;line-height:1.6;}" +
+          ".actions{max-width:720px;margin:16px auto 0;text-align:center;}" +
+          ".actions button{background:#0a2f55;color:#fff;border:none;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:800;cursor:pointer;}" +
+          "@media print{body{background:#fff;padding:0;}.sheet{box-shadow:none;border:none;border-radius:0;}.actions{display:none;}}" +
+          "</style></head><body><div class=\"sheet\">" +
+          '<div class="top"><div class="brand">' +
+          '<svg viewBox="0 0 72 72"><circle cx="16" cy="16" r="14" fill="#e05b2a"/><path d="M25 25L48 48" fill="none" stroke="#0a2f55" stroke-width="7" stroke-linecap="round"/><circle cx="53" cy="53" r="14" fill="none" stroke="#0a2f55" stroke-width="7"/></svg>' +
+          '<div><div class="bn">Konekta<span>Ya</span></div><div class="doc">Comprobante de pago</div></div></div>' +
+          '<div class="emisor"><b>' + e.razon + "</b><br>" + e.ruc + "<br>" + e.dir1 + "<br>" + e.dir2 + "<br>" + e.contacto + "</div></div>" +
+          '<div class="band"><div class="meta"><b>Recibo N.°:</b> ' + num + "<br><b>Fecha:</b> " + fecha + "<br><b>Método:</b> PayPal · ID " + tx + "</div>" +
+          '<div class="right"><div class="paid">PAGADO</div><div class="tl">Total pagado</div><div class="tot">' + monto + "</div></div></div>" +
+          '<div class="billto"><div class="l">Cliente</div><div class="v">' + cliente + " <small>· " + correo + "</small></div></div>" +
+          '<table><thead><tr><th>#</th><th>Descripción</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Total</th></tr></thead>' +
+          '<tbody><tr><td>1</td><td class="idsc"><b>Recarga de crédito KonektaYa</b><small>Crédito para desbloquear contactos calificados</small></td>' +
+          '<td class="num">1</td><td class="num">' + monto + '</td><td class="num">' + monto + "</td></tr></tbody></table>" +
+          '<div class="totals">' +
+          '<div class="rowt"><span>Subtotal</span><span>' + monto + "</span></div>" +
+          '<div class="rowt grand"><span>Total</span><span>' + monto + "</span></div>" +
+          '<div class="rowt"><span>Importe pagado</span><span>' + monto + "</span></div>" +
+          '<div class="rowt"><span>Saldo pendiente</span><span>' + cero + "</span></div></div>" +
+          '<div class="foot">Pago procesado por PayPal. Este comprobante corresponde a una recarga de crédito en KonektaYa; el crédito se usa para desbloquear contactos. <b>Es un comprobante de pago, no una factura fiscal electrónica de la DGI.</b> Documento generado automáticamente por konektaya.com · ' + e.razon + "</div>" +
+          '</div><div class="actions"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>' +
+          "<scr" + "ipt>window.addEventListener('load',function(){setTimeout(function(){try{window.print();}catch(e){}},300);});</scr" + "ipt>" +
+          "</body></html>";
+        const w = window.open("", "_blank");
+        if (!w) {
+          alert("Permite las ventanas emergentes para ver el comprobante.");
+          return;
+        }
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
+      }
+      window.verRecibo = verRecibo;
 
       setupUserDashboardVerticalFilter();
       setupResultsFilter();
