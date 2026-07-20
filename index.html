@@ -21576,8 +21576,261 @@
             <p class="b2b-foot"><svg viewBox="0 0 24 24" fill="none" stroke="#1f7a4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg> El crédito se descuenta automáticamente según el nivel de cada match. Cada desbloqueo con Garantía KonektaYa.</p>
             <p class="b2b-monthly"><strong>¿Mucho volumen?</strong> Plan mensual con desbloqueos ilimitados por vertical — pregúntanos.</p>
           </section>
+          <section class="b2b-panel" style="margin-top:14px">
+            <div class="b2b-title">Carga masiva de propiedades (Excel)</div>
+            <p class="b2b-desc">Sube muchas propiedades de una sola vez. Descarga la plantilla, complétala y súbela. Se publican a tu nombre de broker.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px">
+              <button class="button dark" type="button" onclick="downloadBulkTemplate()">⬇ Descargar plantilla Excel</button>
+              <label class="button primary" style="cursor:pointer;margin:0">⬆ Subir Excel lleno
+                <input type="file" accept=".xlsx,.xls" style="display:none" onchange="handleBulkFile(this)" />
+              </label>
+              <span id="bulkStatus" style="font-size:12.5px;color:#5b6b82"></span>
+            </div>
+            <div id="bulkPreview" style="margin-top:12px"></div>
+          </section>
         `;
       }
+
+      // ==================== Carga masiva de propiedades (Excel, solo brokers) ====================
+      // Columnas de la plantilla (encabezado visible → campo interno del inmueble).
+      const BULK_COLUMNS = [
+        { header: "Operación", field: "operation", required: true },
+        { header: "Tipo de inmueble", field: "propertyType", required: true },
+        { header: "Provincia", field: "province", required: true },
+        { header: "Zona / corregimiento", field: "zone", required: true },
+        { header: "Ubicación (calle, barriada o PH)", field: "streetOrNeighborhood" },
+        { header: "Metros cuadrados", field: "sizeM2" },
+        { header: "Precio venta (USD)", field: "salePrice" },
+        { header: "Precio alquiler (USD)", field: "rentalPrice" },
+        { header: "Equipamiento", field: "equipment" },
+        { header: "Estacionamientos", field: "parkingSpaces" },
+        { header: "Depósito/bodega", field: "storage" },
+        { header: "Disponibilidad", field: "availabilityNeed" },
+        { header: "Comentarios", field: "comments" }
+      ];
+      // Mapas de valor (claves ya normalizadas: sin acentos, minúsculas) → valor interno.
+      const BULK_ENUMS = {
+        operation: { "alquiler": "alquiler", "solo alquiler": "alquiler", "alquilar": "alquiler", "venta": "venta", "solo venta": "venta", "vender": "venta", "ambos": "ambos", "alquiler y venta": "ambos" },
+        propertyType: { "apartamento": "apartamento", "apto": "apartamento", "casa": "casa", "local": "local", "oficina": "oficina", "galera": "galera", "terreno": "terreno", "lote": "terreno" },
+        equipment: { "sin muebles": "sin_muebles", "sin_muebles": "sin_muebles", "linea blanca": "linea_blanca", "linea_blanca": "linea_blanca", "amueblado": "amueblado" },
+        storage: { "si": "si", "si incluye": "si", "incluye": "si", "no": "no", "no incluye": "no" },
+        availabilityNeed: { "inmediata": "inmediata", "inmediato": "inmediata", "disponible inmediato": "inmediata", "15 dias": "15_dias", "15_dias": "15_dias", "30 dias": "30_dias", "30_dias": "30_dias", "45 dias": "45_dias", "45_dias": "45_dias", "60 dias": "60_dias", "60_dias": "60_dias" }
+      };
+      const bulkState = { rows: [], truncated: 0 };
+      function bulkLabelFor(field) { const c = BULK_COLUMNS.find((x) => x.field === field); return c ? c.header : field; }
+
+      // Carga diferida de la librería de Excel (SheetJS): solo cuando se usa.
+      let __xlsxPromise = null;
+      function ensureXLSX() {
+        if (window.XLSX) return Promise.resolve(window.XLSX);
+        if (__xlsxPromise) return __xlsxPromise;
+        __xlsxPromise = new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+          s.onload = () => (window.XLSX ? resolve(window.XLSX) : reject(new Error("No se pudo cargar la librería de Excel.")));
+          s.onerror = () => { __xlsxPromise = null; reject(new Error("No se pudo cargar la librería de Excel (revisa tu conexión).")); };
+          document.head.appendChild(s);
+        });
+        return __xlsxPromise;
+      }
+
+      async function downloadBulkTemplate() {
+        let XLSX;
+        try { XLSX = await ensureXLSX(); } catch (e) { alert(e.message); return; }
+        const headers = BULK_COLUMNS.map((c) => c.header);
+        const wb = XLSX.utils.book_new();
+        const wsProps = XLSX.utils.aoa_to_sheet([headers]);
+        wsProps["!cols"] = headers.map((h) => ({ wch: Math.max(14, h.length + 2) }));
+        XLSX.utils.book_append_sheet(wb, wsProps, "Propiedades");
+        const inst = [
+          ["KonektaYa · Carga masiva de propiedades"],
+          ['Llena la hoja "Propiedades" (una fila por propiedad) y sube el archivo. No cambies los encabezados.'],
+          [""],
+          ["Columna", "Obligatorio", "Valores válidos / formato"],
+          ["Operación", "Sí", "Alquiler | Venta | Ambos"],
+          ["Tipo de inmueble", "Sí", "Apartamento | Casa | Local | Oficina | Galera | Terreno"],
+          ["Provincia", "Sí", "Texto (ej. Panamá)"],
+          ["Zona / corregimiento", "Sí", "Texto (ej. Costa del Este)"],
+          ["Ubicación (calle, barriada o PH)", "No", "Texto libre"],
+          ["Metros cuadrados", "No", "Número (ej. 120)"],
+          ["Precio venta (USD)", "Si es Venta o Ambos", "Número (ej. 185000)"],
+          ["Precio alquiler (USD)", "Si es Alquiler o Ambos", "Número (ej. 1200)"],
+          ["Equipamiento", "No", "Sin muebles | Línea blanca | Amueblado"],
+          ["Estacionamientos", "No", "0 | 1 | 2 | 3 | 4 | 5+ (más de 4)"],
+          ["Depósito/bodega", "No", "Sí | No"],
+          ["Disponibilidad", "No", "Inmediata | 15 días | 30 días | 45 días | 60 días"],
+          ["Comentarios", "No", "Texto libre"],
+          [""],
+          ["EJEMPLO (copia esta fila a la hoja Propiedades y ajústala):"],
+          headers,
+          ["Alquiler", "Apartamento", "Panamá", "Costa del Este", "PH Vista del Sol", "120", "", "1200", "Amueblado", "2", "Sí", "Inmediata", "2 recámaras, vista al mar"]
+        ];
+        const wsInst = XLSX.utils.aoa_to_sheet(inst);
+        wsInst["!cols"] = [{ wch: 34 }, { wch: 18 }, { wch: 52 }];
+        XLSX.utils.book_append_sheet(wb, wsInst, "Instrucciones");
+        XLSX.writeFile(wb, "KonektaYa-plantilla-propiedades.xlsx");
+      }
+      window.downloadBulkTemplate = downloadBulkTemplate;
+
+      // Convierte la hoja (matriz de filas) en objetos crudos por columna reconocida.
+      function bulkParseRows(aoa) {
+        const header = (aoa[0] || []).map((h) => normalize(h));
+        const idx = {};
+        BULK_COLUMNS.forEach((c) => { idx[c.field] = header.indexOf(normalize(c.header)); });
+        const out = [];
+        for (let i = 1; i < aoa.length; i++) {
+          const r = aoa[i] || [];
+          if (!r.some((v) => String(v == null ? "" : v).trim() !== "")) continue; // fila vacía
+          const raw = {};
+          BULK_COLUMNS.forEach((c) => { const j = idx[c.field]; raw[c.field] = j >= 0 ? r[j] : ""; });
+          out.push(raw);
+        }
+        return out;
+      }
+
+      function bulkValidateRow(raw) {
+        const errors = [];
+        const txt = (v) => String(v == null ? "" : v).trim();
+        const num = (v) => { const n = Number(String(v == null ? "" : v).replace(/[^0-9.\-]/g, "")); return isFinite(n) ? n : 0; };
+        const mapEnum = (field, v, required) => {
+          const t = txt(v);
+          if (!t) { if (required) errors.push(bulkLabelFor(field) + " vacío"); return ""; }
+          const val = BULK_ENUMS[field][normalize(t)];
+          if (!val) { errors.push(bulkLabelFor(field) + ' inválido: "' + t + '"'); return ""; }
+          return val;
+        };
+        const operation = mapEnum("operation", raw.operation, true);
+        const propertyType = mapEnum("propertyType", raw.propertyType, true);
+        const province = txt(raw.province); if (!province) errors.push("Provincia vacía");
+        const zone = txt(raw.zone); if (!zone) errors.push("Zona vacía");
+        const salePrice = num(raw.salePrice);
+        const rentalPrice = num(raw.rentalPrice);
+        if ((operation === "venta" || operation === "ambos") && salePrice <= 0) errors.push("Falta precio de venta");
+        if ((operation === "alquiler" || operation === "ambos") && rentalPrice <= 0) errors.push("Falta precio de alquiler");
+        let parkingSpaces;
+        const pk = txt(raw.parkingSpaces);
+        if (pk) { const pn = Number(pk.replace(/[^0-9]/g, "")); parkingSpaces = (pn > 4 || /mas|más|\+/i.test(pk)) ? "mas" : String(Math.max(0, pn || 0)); }
+        const equipment = txt(raw.equipment) ? mapEnum("equipment", raw.equipment, false) : "sin_muebles";
+        const storage = txt(raw.storage) ? mapEnum("storage", raw.storage, false) : "no";
+        const availabilityNeed = txt(raw.availabilityNeed) ? mapEnum("availabilityNeed", raw.availabilityNeed, false) : "inmediata";
+        const sizeM2 = num(raw.sizeM2);
+        const record = {
+          operation, propertyType, province, zone,
+          streetOrNeighborhood: txt(raw.streetOrNeighborhood),
+          sizeM2, rentalPrice, salePrice,
+          expectedPrice: operation === "venta" ? salePrice : (rentalPrice || salePrice),
+          equipment, parkingSpaces: parkingSpaces || "0", storage, availabilityNeed,
+          comments: txt(raw.comments)
+        };
+        return { record, errors };
+      }
+
+      async function handleBulkFile(input) {
+        const file = input.files && input.files[0];
+        const status = document.getElementById("bulkStatus");
+        if (!file) return;
+        if (status) status.textContent = "Leyendo archivo…";
+        let XLSX;
+        try { XLSX = await ensureXLSX(); } catch (e) { if (status) status.textContent = e.message; input.value = ""; return; }
+        try {
+          const buf = await file.arrayBuffer();
+          const wb = XLSX.read(buf, { type: "array" });
+          const sheetName = wb.SheetNames.find((n) => normalize(n) === "propiedades") || wb.SheetNames[0];
+          const aoa = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, blankrows: false, defval: "" });
+          let raws = bulkParseRows(aoa);
+          const CAP = 200;
+          bulkState.truncated = raws.length > CAP ? raws.length - CAP : 0;
+          if (bulkState.truncated) raws = raws.slice(0, CAP);
+          bulkState.rows = raws.map((raw) => { const v = bulkValidateRow(raw); return { record: v.record, errors: v.errors, raw }; });
+          if (status) status.textContent = "";
+          renderBulkPreview();
+        } catch (e) {
+          if (status) status.textContent = "No se pudo leer el archivo: " + ((e && e.message) || e);
+        }
+        input.value = "";
+      }
+      window.handleBulkFile = handleBulkFile;
+
+      function renderBulkPreview() {
+        const box = document.getElementById("bulkPreview");
+        if (!box) return;
+        const rows = bulkState.rows || [];
+        if (!rows.length) { box.innerHTML = '<p style="font-size:13px;color:#5b6b82">No se encontraron filas en la hoja "Propiedades".</p>'; return; }
+        const okCount = rows.filter((r) => r.errors.length === 0).length;
+        const badCount = rows.length - okCount;
+        const lbl = (v) => (typeof label === "function" ? label(v) : v);
+        const trs = rows.map((r, i) => {
+          const ok = r.errors.length === 0;
+          const price = r.record.operation === "venta" ? r.record.salePrice : (r.record.rentalPrice || r.record.salePrice);
+          return `<tr style="background:${ok ? "transparent" : "#fff5f5"}">
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${i + 1}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${ok ? "✅" : "⛔"}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(lbl(r.record.propertyType) || "—")} · ${escapeHtml(lbl(r.record.operation) || "—")}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml((r.record.zone || "—") + (r.record.province ? ", " + r.record.province : ""))}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${price ? money.format(price) : "—"}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;color:#b91c1c;font-size:12px">${escapeHtml(r.errors.join(" · "))}</td>
+          </tr>`;
+        }).join("");
+        box.innerHTML = `
+          <div style="font-size:13px;font-weight:800;margin-bottom:8px">${okCount} lista${okCount === 1 ? "" : "s"} para publicar · ${badCount} con error${badCount === 1 ? "" : "es"}${bulkState.truncated ? ` · ${bulkState.truncated} omitidas (límite 200)` : ""}</div>
+          <div style="overflow-x:auto;border:1px solid #eef2f7;border-radius:10px">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead><tr style="background:#f6f9fd;text-align:left">
+                <th style="padding:7px 8px">#</th><th style="padding:7px 8px">Estado</th><th style="padding:7px 8px">Tipo · Operación</th><th style="padding:7px 8px">Zona</th><th style="padding:7px 8px">Precio</th><th style="padding:7px 8px">Errores</th>
+              </tr></thead>
+              <tbody>${trs}</tbody>
+            </table>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+            <button class="button primary" type="button" onclick="confirmBulkImport()" ${okCount ? "" : "disabled"}>Publicar ${okCount} propiedad${okCount === 1 ? "" : "es"}</button>
+            <button class="button ghost" type="button" onclick="cancelBulkImport()">Cancelar</button>
+          </div>`;
+      }
+
+      function cancelBulkImport() {
+        bulkState.rows = [];
+        const box = document.getElementById("bulkPreview");
+        if (box) box.innerHTML = "";
+        const status = document.getElementById("bulkStatus");
+        if (status) status.textContent = "";
+      }
+      window.cancelBulkImport = cancelBulkImport;
+
+      async function confirmBulkImport() {
+        const rows = (bulkState.rows || []).filter((r) => r.errors.length === 0);
+        if (!rows.length) return;
+        const broker = getBrokerAccount(currentUserEmail);
+        if (!broker || broker.status !== "aprobado") { alert("Solo brokers aprobados pueden usar la carga masiva."); return; }
+        const prof = (typeof myProfile !== "undefined" && myProfile) ? myProfile : {};
+        const phone = String(prof.phone || "").trim();
+        if (!phone) { alert('Antes de la carga masiva completa tu teléfono en "Mis datos": se usa como contacto de todas las propiedades.'); return; }
+        const nm = prof.name || broker.name || "Broker";
+        const email = currentUserEmail || prof.email || "";
+        if (!confirm("¿Publicar " + rows.length + " propiedad(es) a tu nombre de broker?")) return;
+        const box = document.getElementById("bulkPreview");
+        if (box) box.innerHTML = '<p style="font-size:14px;font-weight:700">Publicando ' + rows.length + '…</p>';
+        let done = 0, failed = 0;
+        for (const r of rows) {
+          const rec = {
+            id: newRecordId(), publishedAt: new Date().toISOString(),
+            registeredBy: "broker", acceptsBroker: true, available: true,
+            name: nm, email, phone,
+            _broker: { license: broker.license, company: broker.company, independent: broker.independent },
+            ...r.record
+          };
+          try {
+            properties.push(rec);
+            if (supabaseEnabled) await supaUpsertPublication("properties", rec);
+            done++;
+          } catch (e) { failed++; }
+        }
+        save();
+        render();
+        bulkState.rows = [];
+        if (box) box.innerHTML = '<div style="background:#eaf7ee;border:1px solid #cce8cc;border-radius:10px;padding:12px;font-size:14px;font-weight:700;color:#166534">✓ ' + done + ' propiedad(es) publicada(s)' + (failed ? ' · ' + failed + ' fallaron' : '') + '. Ya aparecen en "Mis ofertas".</div>';
+      }
+      window.confirmBulkImport = confirmBulkImport;
+      // ==================== fin carga masiva ====================
 
       function interestState(matchId) {
         return interestRequests[matchId] || null;
