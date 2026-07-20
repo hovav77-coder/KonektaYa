@@ -12512,7 +12512,13 @@
         const suspiciousEmail = ["inmobiliaria", "realestate", "real-estate", "bienesraices", "bienes-raices", "broker", "realtor"];
         const byEmail = suspiciousEmail.some((word) => email.includes(word));
         const byWords = suspiciousWords.some((word) => text.includes(word));
-        const sameEmailSearches = allSearches.filter((item) => normalize(item.email) === normalize(search.email));
+        // Solo agrupar por email cuando el email está presente. Cross-cuenta el navegador
+        // del dueño no tiene el email de búsquedas ajenas (splitContact), y normalize(undefined)
+        // = "undefined" metía a TODAS en un mismo grupo → tooManySearches/manyZones falsos.
+        const hasEmail = !!String(search.email || "").trim();
+        const sameEmailSearches = hasEmail
+          ? allSearches.filter((item) => item.email && normalize(item.email) === normalize(search.email))
+          : [];
         const tooManySearches = sameEmailSearches.length > 3;
         const phoneMatches = allSearches.filter((item) => item.phone && item.phone === search.phone);
         const differentNamesSamePhone = new Set(phoneMatches.map((item) => normalize(fullName(item)))).size > 1;
@@ -12524,6 +12530,12 @@
       function classifyInterested(search) {
         if (blockedUsers[normalize(search.email)]) return "blocked";
         if (search.validationOverride) return search.validationOverride;
+        // Confiar en la clasificación calculada al PUBLICAR (con email/nombre/comentarios
+        // completos y contra las búsquedas propias). El navegador del dueño NO tiene esos
+        // datos de búsquedas ajenas —splitContact quita email/teléfono/nombre—, así que
+        // recalcular aquí generaba falsos "posible broker" (todas las ajenas caían en un
+        // mismo grupo de email vacío). interestedClassification viaja en data y se rehidrata.
+        if (search.interestedClassification) return search.interestedClassification;
         const declared = classifyDeclaredInterest(search);
         if (declared === "broker_declarado") return "broker_declarado";
         if (detectPossibleBroker(search)) return "posible_broker";
