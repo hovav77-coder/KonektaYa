@@ -17055,6 +17055,7 @@
         const first = parts[0] || "—", last = parts.slice(1).join(" ") || "—";
         const initials = ((first[0] || "") + (last[0] || "")).toUpperCase() || "?";
         const rol = u.role === "broker" ? "Broker" + (u.broker_status && u.broker_status !== "aprobado" ? " · " + escapeHtml(u.broker_status) : "") : "Cliente";
+        const isBroker = u.role === "broker";
         const act = adminUserActivity(u.id);
         const itemHtml = (it) => `<div class="au-actitem">
           <div class="au-actitem-t"><b><span class="au-chip ${it.cls}">${it.chip}</span> ${escapeHtml(it.title)}</b><span>${escapeHtml(it.sub)}${it.active ? "" : " · dado de baja"}</span></div>
@@ -17083,6 +17084,14 @@
           </div>
           <p class="au-hint">Escribe el monto: positivo suma, negativo resta. Luego “Aplicar”.</p>
           <p class="au-status" id="adminUserStatus"></p>
+          <div style="margin:2px 0 4px">
+            <span style="display:block;font-size:12px;font-weight:800;color:#5b6b82;margin-bottom:6px">Tipo de usuario</span>
+            <div style="display:inline-flex;border:1px solid #d5dee9;border-radius:10px;overflow:hidden">
+              <button type="button" onclick="adminSetUserRole('${emAttr}','cliente final')" ${isBroker ? "" : "disabled"} style="border:none;padding:8px 15px;font-size:13px;font-weight:800;cursor:${isBroker ? "pointer" : "default"};background:${isBroker ? "#fff" : "#0a2f55"};color:${isBroker ? "#0a2f55" : "#fff"}">Cliente final</button>
+              <button type="button" onclick="adminSetUserRole('${emAttr}','broker')" ${isBroker ? "disabled" : ""} style="border:none;border-left:1px solid #d5dee9;padding:8px 15px;font-size:13px;font-weight:800;cursor:${isBroker ? "default" : "pointer"};background:${isBroker ? "#0a2f55" : "#fff"};color:${isBroker ? "#fff" : "#0a2f55"}">Broker</button>
+            </div>
+            <p class="au-hint" style="margin-top:6px">Cambia el tipo de cuenta. Al pasar a Broker queda aprobado (operativo).</p>
+          </div>
           <div class="au-actions">
             <button class="button small ${u.blocked ? "primary" : "reject"}" type="button" onclick="adminToggleBlocked('${emAttr}', ${u.blocked ? "false" : "true"})">${u.blocked ? "Desbloquear usuario" : "Bloquear usuario"}</button>
             <button class="button small au-danger" type="button" onclick="adminDeleteUser('${emAttr}')">🗑️ Eliminar usuario</button>
@@ -17112,6 +17121,15 @@
         if (error) { alert("No se pudo: " + error.message); return; }
         adminLoadUsers();
       }
+      // Cambia el tipo de cuenta (Cliente final / Broker) desde el panel de admin.
+      async function adminSetUserRole(email, role) {
+        const nice = role === "broker" ? "Broker" : "Cliente final";
+        if (!confirm("¿Cambiar el tipo de " + email + " a " + nice + "?" + (role === "broker" ? "\n\nQuedará como broker aprobado (operativo)." : ""))) return;
+        const { error } = await supabaseClient.rpc("admin_set_user_role", { target_email: email, new_role: role });
+        if (error) { alert("No se pudo: " + error.message); return; }
+        await adminLoadUsers();
+      }
+      window.adminSetUserRole = adminSetUserRole;
       // Elimina por completo un usuario (auth + perfil + publicaciones + saldo).
       // Deja libre el email para volver a registrarse. Doble confirmación.
       async function adminDeleteUser(email) {
