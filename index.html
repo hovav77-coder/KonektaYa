@@ -4696,6 +4696,43 @@
         color: rgba(255, 255, 255, 0.55);
       }
 
+      /* Fila estado + chip de rol dentro de la tarjeta de cuenta */
+      .wab-row2 {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      .session-role {
+        border-radius: 999px;
+        font-size: 11.5px;
+        font-weight: 900;
+        line-height: 1;
+        padding: 3px 10px;
+        white-space: nowrap;
+      }
+      .session-role.role-ok {
+        background: #eaf7ee;
+        border: 1px solid #cce8cc;
+        color: #166534;
+      }
+      .session-role.role-wait {
+        background: #fff4e5;
+        border: 1px solid #f6d9a8;
+        color: #92600b;
+      }
+      .session-role.role-bad {
+        background: #fdeaea;
+        border: 1px solid #f3c2c2;
+        color: #b91c1c;
+      }
+      .session-role.role-neutral {
+        background: rgba(255, 255, 255, 0.14);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        color: #eaf1fb;
+      }
+
       .result-row {
         background: #ffffff;
         border: 1px solid #dce5ef;
@@ -5944,24 +5981,34 @@
       }
 
       .dashboard-nav-bar {
-        align-items: center;
         background: #ffffff;
         border: 1px solid #dce5ef;
         border-radius: 16px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 14px;
+        display: block;
         margin-bottom: 18px;
-        padding: 12px 16px;
+        padding: 13px 16px 0;
+      }
+
+      .dashboard-nav-lbl {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+        text-transform: uppercase;
       }
 
       .vertical-switch {
         background: #f6f8fb;
         border: 1px solid #dce5ef;
         border-radius: 999px;
-        display: flex;
+        display: inline-flex;
         gap: 4px;
+        margin-bottom: 12px;
         padding: 4px;
+        max-width: 100%;
+        flex-wrap: wrap;
       }
 
       .vertical-switch button {
@@ -6021,8 +6068,8 @@
       }
 
       .user-dashboard-tab-buttons button.active .tab-count {
-        background: rgba(255, 255, 255, 0.22);
-        color: #ffffff;
+        background: #fdece3;
+        color: #c2410c;
       }
 
       .pane-heading {
@@ -6857,9 +6904,37 @@
 
       .dashboard-quick-actions {
         display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        grid-template-columns: 1fr 1fr;
         margin: 0 0 22px;
+      }
+
+      .qa-group {
+        background: #ffffff;
+        border: 1px solid #e6edf5;
+        border-radius: 14px;
+        padding: 12px 13px;
+      }
+
+      .qa-lbl {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin: 0 0 8px;
+        text-transform: uppercase;
+      }
+
+      .qa-btns {
+        display: flex;
+        gap: 8px;
+      }
+
+      .qa-btns .dqa-btn {
+        flex: 1;
+        font-size: 13.5px;
+        padding: 11px 8px;
       }
 
       .my-data-card {
@@ -7063,9 +7138,9 @@
         background: #0c3b6b;
       }
 
-      @media (min-width: 720px) {
+      @media (max-width: 560px) {
         .dashboard-quick-actions {
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: 1fr;
         }
       }
 
@@ -7123,40 +7198,31 @@
       }
 
       .user-dashboard-tab-buttons {
-        align-items: center;
-        background: linear-gradient(180deg, #ffffff, #f7fbff);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        box-shadow: 0 18px 45px rgba(10, 47, 85, 0.08);
-        display: inline-flex;
+        border-top: 1px solid var(--line);
+        display: flex;
         flex-wrap: wrap;
-        gap: 6px;
-        justify-self: start;
-        padding: 7px;
+        gap: 22px;
       }
 
       .user-dashboard-tab-buttons button {
         align-items: center;
         background: transparent;
         border: 0;
-        border-radius: 12px;
+        border-bottom: 2.5px solid transparent;
+        border-radius: 0;
         color: var(--muted);
         cursor: pointer;
         display: inline-flex;
         font: inherit;
-        font-weight: 900;
-        gap: 9px;
-        min-height: 46px;
-        padding: 10px 16px;
-        transition:
-          background 160ms ease,
-          box-shadow 160ms ease,
-          color 160ms ease,
-          transform 160ms ease;
+        font-weight: 800;
+        gap: 8px;
+        margin-bottom: -1px;
+        padding: 13px 2px;
+        transition: color 150ms ease, border-color 150ms ease;
       }
 
       .user-dashboard-tab-buttons button:hover {
-        background: #f8fbff;
+        background: transparent;
         color: var(--navy);
       }
 
@@ -7174,10 +7240,11 @@
       }
 
       .user-dashboard-tab-buttons button.active {
-        background: linear-gradient(135deg, var(--navy), var(--blue));
-        box-shadow: 0 14px 28px rgba(10, 47, 85, 0.18);
-        color: #ffffff;
-        transform: translateY(-1px);
+        background: transparent;
+        border-bottom-color: var(--orange);
+        box-shadow: none;
+        color: var(--navy);
+        transform: none;
       }
 
       .user-dashboard-tab-buttons button.active .tab-number {
@@ -11083,7 +11150,10 @@
                   <span class="session-avatar" id="currentUserAvatar">PY</span>
                   <span class="wab-idmeta">
                     <span class="session-pill" id="currentUserLabel">Sesión demo no iniciada.</span>
-                    <span class="session-status off" id="sessionStatusLabel"><span class="session-status-dot"></span>Sin sesión</span>
+                    <span class="wab-row2">
+                      <span class="session-status off" id="sessionStatusLabel"><span class="session-status-dot"></span>Sin sesión</span>
+                      <span class="session-role" id="currentUserRoleChip" hidden></span>
+                    </span>
                   </span>
                 </div>
                 <div class="wallet-balance">
@@ -11151,19 +11221,29 @@
               </div>
             </div>
             <div class="dashboard-quick-actions" aria-label="Publicar o buscar">
-              <button type="button" class="dqa-btn primary" data-tab-button="propietario">+ Publicar inmueble</button>
-              <button type="button" class="dqa-btn" data-tab-button="busqueda">Buscar inmueble</button>
-              <button type="button" class="dqa-btn primary" data-tab-button="vehiculoOferta">+ Publicar vehículo</button>
-              <button type="button" class="dqa-btn" data-tab-button="vehiculoBusqueda">Buscar vehículo</button>
+              <div class="qa-group">
+                <span class="qa-lbl">Publicar</span>
+                <div class="qa-btns">
+                  <button type="button" class="dqa-btn primary" data-tab-button="propietario">+ Inmueble</button>
+                  <button type="button" class="dqa-btn primary" data-tab-button="vehiculoOferta">+ Vehículo</button>
+                </div>
+              </div>
+              <div class="qa-group">
+                <span class="qa-lbl">Buscar</span>
+                <div class="qa-btns">
+                  <button type="button" class="dqa-btn" data-tab-button="busqueda">Inmueble</button>
+                  <button type="button" class="dqa-btn" data-tab-button="vehiculoBusqueda">Vehículo</button>
+                </div>
+              </div>
             </div>
             <div class="section user-dashboard-tabs">
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
+                <span class="dashboard-nav-lbl">Filtrar por</span>
                 <div class="vertical-switch" aria-label="Vertical del dashboard">
                   <button type="button" data-user-vertical-filter="all">Todos</button>
                   <button type="button" data-user-vertical-filter="property">Inmuebles <span class="vertical-count" data-vertical-count="property">0</span></button>
                   <button type="button" data-user-vertical-filter="vehicle">Vehículos <span class="vertical-count" data-vertical-count="vehicle">0</span></button>
                 </div>
-                <div class="dashboard-nav-divider"></div>
                 <div class="user-dashboard-tab-buttons" aria-label="Secciones del dashboard del cliente">
                   <button class="active" type="button" data-user-dashboard-button="properties">Ofertas <span class="tab-count" id="offersTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="searches">Solicitudes <span class="tab-count" id="searchesTabCount">0</span></button>
@@ -19324,9 +19404,30 @@
         if (walletBalanceValue) {
           walletBalanceValue.textContent = money.format(getBalance(currentUserEmail));
         }
+        // Estado de broker: en producción manda Supabase (myProfile); en demo local, la ficha local.
+        const localBroker = getBrokerAccount(currentUserEmail);
+        const bstatus = supabaseEnabled ? myBrokerStatus() : (localBroker ? localBroker.status : null);
+        // Chip de rol junto al email (Cliente / Broker / Propietario).
+        const roleChip = document.getElementById("currentUserRoleChip");
+        if (roleChip) {
+          let txt = "", cls = "role-neutral";
+          if (currentUserEmail) {
+            if (bstatus) {
+              txt = bstatus === "aprobado" ? "Broker · Aprobado" : bstatus === "rechazado" ? "Broker · No aprobado" : "Broker · En revisión";
+              cls = bstatus === "aprobado" ? "role-ok" : bstatus === "rechazado" ? "role-bad" : "role-wait";
+            } else if (typeof myProfile !== "undefined" && myProfile && myProfile.role === "propietario") {
+              txt = "Propietario";
+            } else {
+              txt = "Cliente";
+            }
+          }
+          roleChip.textContent = txt;
+          roleChip.className = "session-role " + cls;
+          roleChip.hidden = !txt;
+        }
         const brokerBanner = document.getElementById("brokerStatusBanner");
         if (brokerBanner) {
-          const broker = getBrokerAccount(currentUserEmail);
+          const broker = bstatus ? { status: bstatus } : null;
           if (broker && broker.status === "pendiente") {
             brokerBanner.innerHTML =
               '<div class="broker-review-banner pending"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><div><strong>Cuenta de broker en revisión</strong><span>Estamos verificando tu licencia. Tus publicaciones y búsquedas quedan en pausa (no hacen match) y no puedes comprar paquetes hasta que un administrador apruebe tu cuenta.</span></div></div>';
@@ -21459,6 +21560,23 @@
         return account ? account.status === "aprobado" : false;
       }
 
+      // Refresca el perfil de Supabase al volver a la pestaña (throttle 8s): así un cambio
+      // de rol hecho desde admin se refleja (chip + panel de broker) sin recargar la página.
+      let __lastProfileRefresh = 0;
+      async function refreshMyProfileOnFocus() {
+        if (!supabaseEnabled || !currentUserEmail || typeof supaLoadMyProfile !== "function") return;
+        const now = Date.now();
+        if (now - __lastProfileRefresh < 8000) return;
+        __lastProfileRefresh = now;
+        try {
+          await supaLoadMyProfile();
+          if (typeof render === "function") render();
+          if (typeof refreshAuthUI === "function") refreshAuthUI();
+        } catch (e) {}
+      }
+      window.addEventListener("focus", refreshMyProfileOnFocus);
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshMyProfileOnFocus(); });
+
       function isBrokerPending(email) {
         if (supabaseEnabled) {
           if (email && normalize(email) !== normalize(currentUserEmail)) return false;
@@ -21535,11 +21653,20 @@
       function renderBrokerB2B() {
         const target = document.getElementById("brokerB2BPanel");
         if (!target) return;
-        const broker = getBrokerAccount(currentUserEmail);
-        if (!broker || broker.status !== "aprobado") {
+        let broker = getBrokerAccount(currentUserEmail);
+        // Reconocer también al broker aprobado por Supabase (promovido desde admin),
+        // que no tiene ficha local. myBrokerStatus() lee myProfile (fuente autoritativa).
+        const supaApproved = supabaseEnabled && myBrokerStatus() === "aprobado";
+        if (!supaApproved && (!broker || broker.status !== "aprobado")) {
           target.innerHTML = "";
           return;
         }
+        // Broker de Supabase sin ficha local: sintetizar una para el encabezado.
+        broker = broker || {
+          email: currentUserEmail,
+          license: (typeof myProfile !== "undefined" && myProfile && myProfile.broker_license) || "",
+          company: (typeof myProfile !== "undefined" && myProfile && myProfile.broker_company) || ""
+        };
         const balance = getBalance(currentUserEmail);
         const cards = brokerPackages
           .map((pkg) => {
