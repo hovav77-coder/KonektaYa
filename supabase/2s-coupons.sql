@@ -94,3 +94,18 @@ begin
   update public.coupons set active = coalesce(p_on, false) where code = upper(trim(p_code));
 end $$;
 grant execute on function public.admin_set_coupon_active(text, boolean) to authenticated;
+
+-- Detalle de canjes de un cupón: quién lo usó, cuánto y cuándo (solo admin).
+create or replace function public.admin_list_coupon_redemptions(p_code text)
+returns table (email text, name text, amount numeric, created_at timestamptz)
+language plpgsql security definer set search_path = public as $$
+begin
+  if not public.is_admin() then raise exception 'Solo administradores'; end if;
+  return query
+    select p.email, p.name, r.amount, r.created_at
+    from public.coupon_redemptions r
+    left join public.profiles p on p.id = r.user_id
+    where r.coupon_code = upper(trim(p_code))
+    order by r.created_at desc;
+end $$;
+grant execute on function public.admin_list_coupon_redemptions(text) to authenticated;

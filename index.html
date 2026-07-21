@@ -11395,14 +11395,16 @@
               </div>
 
               <div id="adminCouponsCard" style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:14px 16px;margin:0 0 16px">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer" onclick="toggleAdminCoupons()">
                   <div>
-                    <div style="font-size:14.5px;font-weight:900;color:var(--navy)">🎟️ Cupones de crédito regalo</div>
+                    <div style="font-size:14.5px;font-weight:900;color:var(--navy)">🎟️ Cupones de crédito regalo <span id="cupCount" style="font-size:11px;font-weight:900;background:#eef3f9;color:#5b6b82;border-radius:999px;padding:2px 9px;vertical-align:middle;margin-left:4px"></span></div>
                     <div style="font-size:12.5px;color:#5b6b82;margin-top:2px">Crea códigos que los usuarios canjean en su panel (1 por usuario, tope de usos, vencimiento).</div>
                   </div>
-                  <button class="button small ghost" type="button" onclick="adminLoadCoupons()">Actualizar</button>
+                  <span id="cupChevron" style="font-size:16px;font-weight:900;color:#5b6b82;user-select:none">▸</span>
                 </div>
-                <div style="display:grid;grid-template-columns:1.7fr 0.8fr 0.9fr 1.1fr auto;gap:10px;align-items:end;background:#f6f9fd;border:1px solid #e6edf5;border-radius:12px;padding:12px;margin:10px 0 12px">
+                <div id="adminCouponsBody" hidden style="margin-top:12px">
+                <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="button small ghost" type="button" onclick="adminLoadCoupons()">Actualizar</button></div>
+                <div style="display:grid;grid-template-columns:1.7fr 0.8fr 0.9fr 1.1fr auto;gap:10px;align-items:end;background:#f6f9fd;border:1px solid #e6edf5;border-radius:12px;padding:12px;margin:0 0 12px">
                   <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Código<input id="cupCode" placeholder="BIENVENIDA10" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;text-transform:uppercase;min-width:0" /></label>
                   <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Valor USD<input id="cupValue" type="number" min="1" step="1" value="10" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;min-width:0" /></label>
                   <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Usos máx.<input id="cupMaxUses" type="number" min="1" step="1" value="100" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;min-width:0" /></label>
@@ -11410,7 +11412,8 @@
                   <button class="button small primary" type="button" onclick="adminCreateCoupon()">+ Crear</button>
                 </div>
                 <p style="font-size:12px;color:#5b6b82;margin:0 0 8px" id="cupFormStatus"></p>
-                <div id="adminCouponsList"><p class="admin-users-empty">Toca “Actualizar” para cargar los cupones.</p></div>
+                <div id="adminCouponsList" style="max-height:300px;overflow-y:auto"><p class="admin-users-empty">Cargando cupones…</p></div>
+                </div>
               </div>
 
               <div class="admin-metrics">
@@ -17350,7 +17353,24 @@
       }
       window.adminLoadCoupons = adminLoadCoupons;
 
+      // Plegar/desplegar la tarjeta de cupones (para no ocupar espacio en el admin).
+      function toggleAdminCoupons() {
+        const body = document.getElementById("adminCouponsBody");
+        const chev = document.getElementById("cupChevron");
+        if (!body) return;
+        body.hidden = !body.hidden;
+        if (chev) chev.textContent = body.hidden ? "▸" : "▾";
+        if (!body.hidden && !adminCouponsLoaded) adminLoadCoupons();
+      }
+      window.toggleAdminCoupons = toggleAdminCoupons;
+
       function renderAdminCoupons() {
+        // Contador en el encabezado (visible aun con la tarjeta plegada).
+        const chip = document.getElementById("cupCount");
+        if (chip) {
+          const activos = adminCouponsData.filter((c) => c.active && Number(c.used_count) < Number(c.max_uses) && !(c.expires_at && new Date(c.expires_at) < new Date())).length;
+          chip.textContent = adminCouponsData.length ? `${adminCouponsData.length} · ${activos} activo${activos === 1 ? "" : "s"}` : "0";
+        }
         const list = document.getElementById("adminCouponsList");
         if (!list) return;
         if (!adminCouponsData.length) { list.innerHTML = '<p class="admin-users-empty">Aún no hay cupones. Crea el primero arriba.</p>'; return; }
@@ -17363,19 +17383,44 @@
             : c.active ? '<span style="font-size:10.5px;font-weight:900;background:#eaf7ee;color:#166534;border:1px solid #cce8cc;border-radius:999px;padding:3px 9px">Activo</span>'
             : '<span style="font-size:10.5px;font-weight:900;background:#fdeaea;color:#b91c1c;border-radius:999px;padding:3px 9px">Inactivo</span>';
           const codeAttr = escapeHtml(String(c.code || "")).replace(/'/g, "");
+          const rid = String(c.code || "").replace(/[^A-Za-z0-9_-]/g, "");
           const toggle = agotado ? "" : `<button type="button" onclick="adminToggleCoupon('${codeAttr}', ${c.active ? "false" : "true"})" style="background:none;border:none;color:${c.active ? "#b91c1c" : "#166534"};font-size:12px;font-weight:800;text-decoration:underline;cursor:pointer">${c.active ? "Desactivar" : "Reactivar"}</button>`;
           const vence = c.expires_at ? new Date(c.expires_at).toLocaleDateString("es-PA", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+          const usosLink = Number(c.used_count) > 0
+            ? `<button type="button" onclick="adminShowCouponUses('${codeAttr}','${rid}')" style="background:none;border:none;color:#0f5e91;font-size:12px;font-weight:800;text-decoration:underline;cursor:pointer">Ver quién lo usó (${c.used_count})</button>`
+            : '<span style="font-size:11.5px;color:#8a97a8">Sin canjes aún</span>';
           return `<div style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid #f0f4f9;flex-wrap:wrap">
             <span style="font-family:Consolas,monospace;font-weight:800;background:#eef3f9;border-radius:7px;padding:3px 10px;color:var(--navy)">${escapeHtml(c.code)}</span>
             <b style="color:var(--navy)">${money.format(Number(c.value) || 0)}</b>
             <span style="min-width:130px"><span style="display:block;background:#eef3f9;border-radius:999px;height:7px;width:110px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:var(--orange,#e05b2a);border-radius:999px"></span></span><span style="font-size:11px;color:#5b6b82;font-weight:700">${c.used_count} / ${c.max_uses} usados</span></span>
             <span style="font-size:11.5px;color:#5b6b82">Vence: ${escapeHtml(vence)}</span>
             ${estado}
+            ${usosLink}
             <span style="margin-left:auto">${toggle}</span>
-          </div>`;
+          </div>
+          <div id="cupUses-${rid}" hidden style="background:#f6f9fd;border:1px solid #e6edf5;border-radius:10px;margin:0 0 8px;padding:6px 10px"></div>`;
         }).join("");
         list.innerHTML = rows;
       }
+
+      // Detalle de canjes de un cupón: quién lo usó, cuánto y cuándo (RPC solo-admin).
+      async function adminShowCouponUses(code, rid) {
+        const box = document.getElementById("cupUses-" + rid);
+        if (!box) return;
+        if (!box.hidden) { box.hidden = true; return; }
+        box.hidden = false;
+        box.innerHTML = '<p class="admin-users-empty">Cargando…</p>';
+        const { data, error } = await supabaseClient.rpc("admin_list_coupon_redemptions", { p_code: code });
+        if (error) { box.innerHTML = '<p class="admin-users-empty">No se pudo cargar: ' + escapeHtml(error.message) + ' (¿Re-corriste supabase/2s-coupons.sql?)</p>'; return; }
+        if (!data || !data.length) { box.innerHTML = '<p class="admin-users-empty">Nadie lo ha canjeado todavía.</p>'; return; }
+        box.innerHTML = data.map((r) => `<div style="display:flex;gap:10px;align-items:center;padding:6px 2px;border-bottom:1px solid #e9eff7;font-size:12.5px;flex-wrap:wrap">
+          <b style="color:var(--navy)">${escapeHtml(r.name || "(sin nombre)")}</b>
+          <span style="color:#5b6b82">${escapeHtml(r.email || "")}</span>
+          <span style="color:#166534;font-weight:800">${money.format(Number(r.amount) || 0)}</span>
+          <span style="margin-left:auto;color:#8a97a8;font-size:11.5px">${formatDate(r.created_at)}</span>
+        </div>`).join("");
+      }
+      window.adminShowCouponUses = adminShowCouponUses;
 
       async function adminCreateCoupon() {
         const st = document.getElementById("cupFormStatus");
