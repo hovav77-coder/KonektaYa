@@ -4850,6 +4850,43 @@
         color: #ffb3a7;
       }
 
+      /* Barra "hay una versión nueva" (aparece solo cuando se detecta un deploy) */
+      #updateBanner {
+        align-items: center;
+        background: #0a2f55;
+        border-radius: 999px;
+        bottom: 18px;
+        box-shadow: 0 12px 30px rgba(10, 25, 45, 0.35);
+        color: #ffffff;
+        display: flex;
+        font-size: 13.5px;
+        font-weight: 800;
+        gap: 10px;
+        left: 50%;
+        max-width: 92vw;
+        padding: 10px 12px 10px 16px;
+        position: fixed;
+        transform: translateX(-50%);
+        width: max-content;
+        z-index: 130;
+      }
+      #updateBanner button {
+        background: linear-gradient(90deg, #e05b2a, #f1883f);
+        border: none;
+        border-radius: 999px;
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 900;
+        padding: 8px 14px;
+        white-space: nowrap;
+      }
+      @media (max-width: 760px) {
+        #updateBanner {
+          bottom: calc(78px + env(safe-area-inset-bottom, 0px)); /* sobre la bottombar */
+        }
+      }
+
       .result-row {
         background: #ffffff;
         border: 1px solid #dce5ef;
@@ -21903,6 +21940,39 @@
         const account = getBrokerAccount(email);
         return account ? account.status === "aprobado" : false;
       }
+
+      // ---- Auto-actualización: detecta si hay una versión nueva del sitio ----
+      // Compara la huella (ETag/Last-Modified) del HTML publicado con la de la página
+      // cargada. Se revisa al volver a la pestaña y cada 30 min. Si cambió, muestra la
+      // barra "Actualizar" (no recarga sola: no queremos perder un formulario a medias).
+      let __verTag = null;
+      let __verLastCheck = 0;
+      async function fetchVersionTag() {
+        try {
+          const res = await fetch(window.location.pathname || "/", { method: "HEAD", cache: "no-store" });
+          return res.headers.get("etag") || res.headers.get("last-modified") || "";
+        } catch (e) { return ""; }
+      }
+      async function checkForNewVersion() {
+        const now = Date.now();
+        if (now - __verLastCheck < 5 * 60 * 1000) return; // máx 1 chequeo cada 5 min
+        __verLastCheck = now;
+        const tag = await fetchVersionTag();
+        if (!tag) return;
+        if (__verTag === null) { __verTag = tag; return; }
+        if (tag !== __verTag) showUpdateBanner();
+      }
+      function showUpdateBanner() {
+        if (document.getElementById("updateBanner")) return;
+        const bar = document.createElement("div");
+        bar.id = "updateBanner";
+        bar.innerHTML = '<span>✨ Hay una versión nueva de KonektaYa</span><button type="button" onclick="window.location.reload()">Actualizar</button>';
+        document.body.appendChild(bar);
+      }
+      window.addEventListener("focus", checkForNewVersion);
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) checkForNewVersion(); });
+      setInterval(checkForNewVersion, 30 * 60 * 1000);
+      fetchVersionTag().then((t) => { if (t) __verTag = t; }); // huella inicial al cargar
 
       // Refresca el perfil de Supabase al volver a la pestaña (throttle 8s): así un cambio
       // de rol hecho desde admin se refleja (chip + panel de broker) sin recargar la página.
