@@ -2606,6 +2606,77 @@
         display: flex;
         gap: 8px;
       }
+      /* Resumen del pago (desglose con ITBMS) */
+      .pay-summary {
+        background: #f6f9fd;
+        border: 1px solid #e6edf5;
+        border-radius: 13px;
+        margin-top: 12px;
+        padding: 12px 15px;
+      }
+      .pay-summary .ps-row {
+        color: #33465c;
+        display: flex;
+        font-size: 13.5px;
+        justify-content: space-between;
+        padding: 3px 0;
+      }
+      .pay-summary .ps-row b {
+        color: var(--navy);
+      }
+      .pay-summary .ps-total {
+        border-top: 1.5px solid #dfe8f2;
+        color: var(--navy);
+        font-size: 15.5px;
+        font-weight: 900;
+        margin-top: 6px;
+        padding-top: 8px;
+      }
+      .pay-summary .ps-total b {
+        font-size: 18px;
+      }
+      .pay-summary .ps-note {
+        color: #5b6b82;
+        font-size: 11.5px;
+        margin-top: 6px;
+      }
+      /* Método de pago futuro (Yappy) deshabilitado */
+      .pay-method-off {
+        align-items: center;
+        border: 1.5px solid #dce5ef;
+        border-radius: 12px;
+        display: flex;
+        gap: 11px;
+        margin-top: 10px;
+        opacity: 0.7;
+        padding: 12px 14px;
+      }
+      .pay-method-off .pmo-radio {
+        border: 2px solid #b9c6d6;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        height: 18px;
+        width: 18px;
+      }
+      .pay-method-off .pmo-name {
+        color: #f60;
+        font-size: 14.5px;
+        font-weight: 900;
+      }
+      .pay-method-off .pmo-desc {
+        color: #5b6b82;
+        font-size: 11.5px;
+      }
+      .pay-method-off .pmo-soon {
+        background: #eef3f9;
+        border-radius: 999px;
+        color: #5b6b82;
+        font-size: 10.5px;
+        font-weight: 900;
+        margin-left: auto;
+        padding: 3px 9px;
+        white-space: nowrap;
+      }
       .pay-amount {
         flex: 1;
         border: 1px solid #dce5ef;
@@ -4722,6 +4793,61 @@
         background: rgba(255, 255, 255, 0.14);
         border: 1px solid rgba(255, 255, 255, 0.25);
         color: #eaf1fb;
+      }
+
+      /* Canje de cupón (crédito regalo) en Mi panel */
+      .coupon-box {
+        background: linear-gradient(150deg, #0a2f55, #143b63);
+        border-radius: 14px;
+        color: #ffffff;
+        margin-top: 12px;
+        padding: 14px 16px;
+      }
+      .coupon-box .cb-head {
+        font-size: 14px;
+        font-weight: 900;
+      }
+      .coupon-box .cb-desc {
+        color: #bcd0e6;
+        font-size: 12.5px;
+        margin: 2px 0 9px;
+      }
+      .coupon-box .cb-row {
+        display: flex;
+        gap: 8px;
+      }
+      .coupon-box .cb-row input {
+        border: none;
+        border-radius: 10px;
+        flex: 1;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        min-width: 0;
+        padding: 11px 12px;
+        text-transform: uppercase;
+      }
+      .coupon-box .cb-btn {
+        background: linear-gradient(90deg, #e05b2a, #f1883f);
+        border: none;
+        border-radius: 10px;
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 13.5px;
+        font-weight: 900;
+        padding: 11px 18px;
+        white-space: nowrap;
+      }
+      .coupon-box .cb-status {
+        font-size: 12.5px;
+        font-weight: 800;
+        margin: 8px 0 0;
+      }
+      .coupon-box .cb-status.ok {
+        color: #7ee2a6;
+      }
+      .coupon-box .cb-status.err {
+        color: #ffb3a7;
       }
 
       .result-row {
@@ -11163,6 +11289,15 @@
                 <span>ⓘ</span>
                 <span>Demo sin pago real. Solo para probar desbloqueos.</span>
               </div>
+              <div class="coupon-box" id="couponBox" hidden>
+                <div class="cb-head">🎟️ ¿Tienes un cupón?</div>
+                <div class="cb-desc">Canjéalo y el crédito entra directo a tu billetera.</div>
+                <div class="cb-row">
+                  <input id="couponInput" type="text" placeholder="CÓDIGO" autocomplete="off" />
+                  <button type="button" class="cb-btn" onclick="redeemCoupon()">Canjear</button>
+                </div>
+                <p class="cb-status" id="couponStatus"></p>
+              </div>
               <div id="brokerStatusBanner"></div>
               <div class="wallet-summary-strip" id="ownerStats"></div>
             </div>
@@ -11306,6 +11441,25 @@
                   <div style="font-size:12.5px;color:#5b6b82;margin-top:2px" id="paymentsStateDesc">Cargando estado…</div>
                 </div>
                 <button class="button small" type="button" id="paymentsToggleBtn" onclick="adminTogglePayments()" disabled>…</button>
+              </div>
+
+              <div id="adminCouponsCard" style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:14px 16px;margin:0 0 16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+                  <div>
+                    <div style="font-size:14.5px;font-weight:900;color:var(--navy)">🎟️ Cupones de crédito regalo</div>
+                    <div style="font-size:12.5px;color:#5b6b82;margin-top:2px">Crea códigos que los usuarios canjean en su panel (1 por usuario, tope de usos, vencimiento).</div>
+                  </div>
+                  <button class="button small ghost" type="button" onclick="adminLoadCoupons()">Actualizar</button>
+                </div>
+                <div style="display:grid;grid-template-columns:1.7fr 0.8fr 0.9fr 1.1fr auto;gap:10px;align-items:end;background:#f6f9fd;border:1px solid #e6edf5;border-radius:12px;padding:12px;margin:10px 0 12px">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Código<input id="cupCode" placeholder="BIENVENIDA10" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;text-transform:uppercase;min-width:0" /></label>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Valor USD<input id="cupValue" type="number" min="1" step="1" value="10" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;min-width:0" /></label>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Usos máx.<input id="cupMaxUses" type="number" min="1" step="1" value="100" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;min-width:0" /></label>
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Vence (opcional)<input id="cupExpires" type="date" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;min-width:0" /></label>
+                  <button class="button small primary" type="button" onclick="adminCreateCoupon()">+ Crear</button>
+                </div>
+                <p style="font-size:12px;color:#5b6b82;margin:0 0 8px" id="cupFormStatus"></p>
+                <div id="adminCouponsList"><p class="admin-users-empty">Toca “Actualizar” para cargar los cupones.</p></div>
               </div>
 
               <div class="admin-metrics">
@@ -11605,6 +11759,7 @@
               <button type="button" class="pay-amount" data-pay-amount="otro">Otro</button>
             </div>
             <input class="pay-input hidden" id="payAmountOther" type="text" inputmode="numeric" placeholder="Escribe el monto en USD" />
+            <div class="pay-summary" id="paySummary"></div>
             <div class="pay-pane" data-pay-pane="paypal">
               <div class="pay-paypal">
                 <span class="pay-paypal-logo">Pay<span>Pal</span></span>
@@ -11614,6 +11769,14 @@
               <div id="paypalButtons" hidden></div>
               <p class="pay-note" id="paypalStatus"></p>
               <p class="pay-note" id="payPaypalDemoNote">Pago seguro procesado por PayPal. (Demo: acredita saldo simulado; al conectar la cuenta PayPal real, este botón abre el pago y el saldo se acredita al confirmarse.)</p>
+            </div>
+            <div class="pay-method-off">
+              <span class="pmo-radio"></span>
+              <div>
+                <div class="pmo-name">Yappy</div>
+                <div class="pmo-desc">Paga desde tu banco con Yappy.</div>
+              </div>
+              <span class="pmo-soon">PRÓXIMAMENTE</span>
             </div>
           </div>
         </div>
@@ -14719,6 +14882,7 @@
             const oldPanel = document.querySelector(".admin-credit-panel");
             if (oldPanel) oldPanel.style.display = "none";
             if (!adminUsersLoaded && typeof adminLoadUsers === "function") adminLoadUsers();
+            if (!adminCouponsLoaded && typeof adminLoadCoupons === "function") adminLoadCoupons();
           }
           const header = document.getElementById("dashboardHeader");
           if (header) {
@@ -17248,6 +17412,81 @@
         btn.textContent = on ? "Desactivar pagos" : "Activar pagos";
         btn.className = "button small " + (on ? "reject" : "primary");
       }
+
+      // ---- Cupones (admin): crear, listar, activar/desactivar ----
+      let adminCouponsData = [];
+      let adminCouponsLoaded = false;
+      async function adminLoadCoupons() {
+        const list = document.getElementById("adminCouponsList");
+        if (!supabaseEnabled) { if (list) list.innerHTML = '<p class="admin-users-empty">Disponible solo con el backend conectado.</p>'; return; }
+        if (list) list.innerHTML = '<p class="admin-users-empty">Cargando…</p>';
+        const { data, error } = await supabaseClient.rpc("admin_list_coupons");
+        if (error) { if (list) list.innerHTML = '<p class="admin-users-empty">No se pudo cargar: ' + escapeHtml(error.message) + ' (¿Corriste supabase/2s-coupons.sql?)</p>'; return; }
+        adminCouponsData = data || [];
+        adminCouponsLoaded = true;
+        renderAdminCoupons();
+      }
+      window.adminLoadCoupons = adminLoadCoupons;
+
+      function renderAdminCoupons() {
+        const list = document.getElementById("adminCouponsList");
+        if (!list) return;
+        if (!adminCouponsData.length) { list.innerHTML = '<p class="admin-users-empty">Aún no hay cupones. Crea el primero arriba.</p>'; return; }
+        const rows = adminCouponsData.map((c) => {
+          const pct = Math.min(100, Math.round((Number(c.used_count) / Math.max(1, Number(c.max_uses))) * 100));
+          const agotado = Number(c.used_count) >= Number(c.max_uses);
+          const vencido = c.expires_at && new Date(c.expires_at) < new Date();
+          const estado = agotado ? '<span style="font-size:10.5px;font-weight:900;background:#f1f4f8;color:#8a97a8;border-radius:999px;padding:3px 9px">Agotado</span>'
+            : vencido ? '<span style="font-size:10.5px;font-weight:900;background:#f1f4f8;color:#8a97a8;border-radius:999px;padding:3px 9px">Vencido</span>'
+            : c.active ? '<span style="font-size:10.5px;font-weight:900;background:#eaf7ee;color:#166534;border:1px solid #cce8cc;border-radius:999px;padding:3px 9px">Activo</span>'
+            : '<span style="font-size:10.5px;font-weight:900;background:#fdeaea;color:#b91c1c;border-radius:999px;padding:3px 9px">Inactivo</span>';
+          const codeAttr = escapeHtml(String(c.code || "")).replace(/'/g, "");
+          const toggle = agotado ? "" : `<button type="button" onclick="adminToggleCoupon('${codeAttr}', ${c.active ? "false" : "true"})" style="background:none;border:none;color:${c.active ? "#b91c1c" : "#166534"};font-size:12px;font-weight:800;text-decoration:underline;cursor:pointer">${c.active ? "Desactivar" : "Reactivar"}</button>`;
+          const vence = c.expires_at ? new Date(c.expires_at).toLocaleDateString("es-PA", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 4px;border-bottom:1px solid #f0f4f9;flex-wrap:wrap">
+            <span style="font-family:Consolas,monospace;font-weight:800;background:#eef3f9;border-radius:7px;padding:3px 10px;color:var(--navy)">${escapeHtml(c.code)}</span>
+            <b style="color:var(--navy)">${money.format(Number(c.value) || 0)}</b>
+            <span style="min-width:130px"><span style="display:block;background:#eef3f9;border-radius:999px;height:7px;width:110px;overflow:hidden"><span style="display:block;height:100%;width:${pct}%;background:var(--orange,#e05b2a);border-radius:999px"></span></span><span style="font-size:11px;color:#5b6b82;font-weight:700">${c.used_count} / ${c.max_uses} usados</span></span>
+            <span style="font-size:11.5px;color:#5b6b82">Vence: ${escapeHtml(vence)}</span>
+            ${estado}
+            <span style="margin-left:auto">${toggle}</span>
+          </div>`;
+        }).join("");
+        list.innerHTML = rows;
+      }
+
+      async function adminCreateCoupon() {
+        const st = document.getElementById("cupFormStatus");
+        const setSt = (t, ok) => { if (st) { st.textContent = t; st.style.color = ok ? "#166534" : "#b91c1c"; } };
+        if (!supabaseEnabled) { setSt("Disponible solo con el backend conectado.", false); return; }
+        const code = String((document.getElementById("cupCode") || {}).value || "").trim().toUpperCase();
+        const value = Number((document.getElementById("cupValue") || {}).value);
+        const maxUses = Number((document.getElementById("cupMaxUses") || {}).value);
+        const expiresRaw = String((document.getElementById("cupExpires") || {}).value || "").trim();
+        if (code.length < 3) { setSt("El código debe tener al menos 3 caracteres.", false); return; }
+        if (!isFinite(value) || value <= 0) { setSt("Valor inválido.", false); return; }
+        if (!isFinite(maxUses) || maxUses <= 0) { setSt("Usos máximos inválidos.", false); return; }
+        // El vencimiento cierra al FINAL del día elegido (hora de Panamá UTC-5).
+        const expires = expiresRaw ? new Date(expiresRaw + "T23:59:59-05:00").toISOString() : null;
+        if (!confirm("¿Crear el cupón " + code + " de " + money.format(value) + " con " + maxUses + " usos" + (expiresRaw ? " (vence " + expiresRaw + ")" : "") + "?\n\nCada canje regala crédito real.")) return;
+        setSt("Creando…", true);
+        const { error } = await supabaseClient.rpc("admin_create_coupon", { p_code: code, p_value: value, p_max_uses: maxUses, p_expires: expires });
+        if (error) { setSt("No se pudo: " + error.message, false); return; }
+        setSt("✓ Cupón " + code + " creado.", true);
+        const inp = document.getElementById("cupCode");
+        if (inp) inp.value = "";
+        adminLoadCoupons();
+      }
+      window.adminCreateCoupon = adminCreateCoupon;
+
+      async function adminToggleCoupon(code, on) {
+        const activar = on === true || on === "true";
+        if (!confirm((activar ? "¿Reactivar" : "¿Desactivar") + " el cupón " + code + "?")) return;
+        const { error } = await supabaseClient.rpc("admin_set_coupon_active", { p_code: code, p_on: activar });
+        if (error) { alert("No se pudo: " + error.message); return; }
+        adminLoadCoupons();
+      }
+      window.adminToggleCoupon = adminToggleCoupon;
       // Elimina por completo un usuario (auth + perfil + publicaciones + saldo).
       // Deja libre el email para volver a registrarse. Doble confirmación.
       async function adminDeleteUser(email) {
@@ -17566,6 +17805,26 @@
         } catch (e) { paymentsEnabled = false; }
         paymentsFlagLoaded = true;
       }
+
+      // Canje de cupón de crédito regalo (tabla coupons, RPC redeem_coupon).
+      // Toda la validación es del servidor: 1 por usuario, tope de usos, vencimiento.
+      async function redeemCoupon() {
+        const inp = document.getElementById("couponInput");
+        const st = document.getElementById("couponStatus");
+        const setSt = (txt, cls) => { if (st) { st.textContent = txt; st.className = "cb-status " + (cls || ""); } };
+        const code = String((inp && inp.value) || "").trim().toUpperCase();
+        if (!code) { setSt("Escribe el código del cupón.", "err"); return; }
+        if (!supabaseEnabled || !currentUserEmail) { setSt("Inicia sesión para canjear un cupón.", "err"); return; }
+        setSt("Canjeando…", "");
+        const { data, error } = await supabaseClient.rpc("redeem_coupon", { p_code: code });
+        if (error) { setSt(error.message || "No se pudo canjear.", "err"); return; }
+        if (inp) inp.value = "";
+        await refreshBalance();
+        render();
+        const st2 = document.getElementById("couponStatus");
+        if (st2) { st2.textContent = "✓ ¡Listo! Se acreditaron " + money.format(Number(data) || 0) + " a tu billetera."; st2.className = "cb-status ok"; }
+      }
+      window.redeemCoupon = redeemCoupon;
 
       // Compras de crédito por PayPal del usuario = fuente de los comprobantes de pago.
       // RLS (paypal_orders_select_own) garantiza que cada quien solo ve las suyas.
@@ -19469,6 +19728,9 @@
           walletAddBtn.style.opacity = pagosOff ? "0.65" : "";
           walletAddBtn.style.cursor = pagosOff ? "not-allowed" : "";
         }
+        // Caja de cupón: visible solo con sesión y backend (el canje es del servidor).
+        const couponBox = document.getElementById("couponBox");
+        if (couponBox) couponBox.hidden = !(supabaseEnabled && currentUserEmail);
         // Estado de broker: en producción manda Supabase (myProfile); en demo local, la ficha local.
         const localBroker = getBrokerAccount(currentUserEmail);
         const bstatus = supabaseEnabled ? myBrokerStatus() : (localBroker ? localBroker.status : null);
@@ -21414,14 +21676,34 @@
       // Cuando tengas la cuenta PayPal Business, pon aquí tu usuario de PayPal.Me (ej. "konektaya")
       const paypalMeHandle = "";
 
+      // ITBMS (Panamá): las recargas cobran base + 7%. El total REAL lo calcula el
+      // servidor (paypal-credit) con el mismo %; aquí solo se muestra el desglose.
+      const ITBMS_PCT = 7;
+      function payTotals(base) {
+        const b = Math.max(0, Number(base) || 0);
+        const tax = Math.round(b * ITBMS_PCT) / 100;
+        return { base: b, tax, total: Math.round((b + tax) * 100) / 100 };
+      }
+
       function updatePayButtons() {
         const cardBtn = document.getElementById("payCardBtn");
         const yappyBtn = document.getElementById("payYappyBtn");
         const paypalBtn = document.getElementById("payPaypalBtn");
-        const label = payAmount > 0 ? `$${payAmount.toLocaleString("en-US")}` : "";
+        const t = payTotals(payAmount);
+        const label = t.total > 0 ? `$${t.total.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "";
         if (cardBtn) cardBtn.textContent = `Pagar ${label}`.trim();
         if (yappyBtn) yappyBtn.textContent = `Ya pagué ${label}`.trim();
         if (paypalBtn) paypalBtn.textContent = `Pagar ${label} con PayPal`.trim();
+        const summary = document.getElementById("paySummary");
+        if (summary) {
+          summary.innerHTML = t.base > 0
+            ? `
+              <div class="ps-row"><span>Recarga de crédito KonektaYa</span><b>${money.format(t.base)}</b></div>
+              <div class="ps-row"><span>ITBMS (${ITBMS_PCT}%)</span><b>${money.format(t.tax)}</b></div>
+              <div class="ps-row ps-total"><span>Total a pagar</span><b>${money.format(t.total)}</b></div>
+              <div class="ps-note">Recibirás <b>${money.format(t.base)}</b> de crédito en tu billetera. El comprobante incluye el ITBMS desglosado.</div>`
+            : "";
+        }
       }
 
       function setupPayModal() {
@@ -22560,7 +22842,13 @@
             ? String(o.created_at || "")
             : String(_d.getDate()).padStart(2, "0") + "/" + String(_d.getMonth() + 1).padStart(2, "0") + "/" + _d.getFullYear()
         );
-        const monto = esc(money.format(o.amount || 0));
+        const pagado = Number(o.amount || 0);
+        // El pago incluye ITBMS 7% (mismo % del servidor): base = pagado / 1.07.
+        const baseNum = Math.round((pagado / (1 + ITBMS_PCT / 100)) * 100) / 100;
+        const taxNum = Math.round((pagado - baseNum) * 100) / 100;
+        const monto = esc(money.format(pagado));
+        const baseFmt = esc(money.format(baseNum));
+        const taxFmt = esc(money.format(taxNum));
         const cero = esc(money.format(0));
         const tx = esc(String(o.order_id || "").slice(0, 16));
         const e = KY_EMISOR;
@@ -22603,9 +22891,10 @@
           '<div class="billto"><div class="l">Cliente</div><div class="v">' + cliente + " <small>· " + correo + "</small></div></div>" +
           '<table><thead><tr><th>#</th><th>Descripción</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Total</th></tr></thead>' +
           '<tbody><tr><td>1</td><td class="idsc"><b>Recarga de crédito KonektaYa</b><small>Crédito para desbloquear contactos calificados</small></td>' +
-          '<td class="num">1</td><td class="num">' + monto + '</td><td class="num">' + monto + "</td></tr></tbody></table>" +
+          '<td class="num">1</td><td class="num">' + baseFmt + '</td><td class="num">' + baseFmt + "</td></tr></tbody></table>" +
           '<div class="totals">' +
-          '<div class="rowt"><span>Subtotal</span><span>' + monto + "</span></div>" +
+          '<div class="rowt"><span>Subtotal</span><span>' + baseFmt + "</span></div>" +
+          '<div class="rowt"><span>ITBMS (' + ITBMS_PCT + '%)</span><span>' + taxFmt + "</span></div>" +
           '<div class="rowt grand"><span>Total</span><span>' + monto + "</span></div>" +
           '<div class="rowt"><span>Importe pagado</span><span>' + monto + "</span></div>" +
           '<div class="rowt"><span>Saldo pendiente</span><span>' + cero + "</span></div></div>" +

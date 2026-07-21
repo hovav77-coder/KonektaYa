@@ -16,6 +16,9 @@ function json(o: unknown, s = 200) {
   return new Response(JSON.stringify(o), { status: s, headers: { ...cors, "Content-Type": "application/json" } });
 }
 
+// ITBMS (Panamá) sobre las recargas: se cobra base + 7%; la billetera recibe la base.
+const ITBMS_PCT = 7;
+
 function paypalBase() {
   return (Deno.env.get("PAYPAL_ENV") || "sandbox") === "live"
     ? "https://api-m.paypal.com"
@@ -65,14 +68,17 @@ Deno.serve(async (req) => {
     const token = await paypalToken();
 
     if (action === "create") {
+      // body.amount = BASE del crédito. Se cobra base + ITBMS 7% (Panamá); el
+      // crédito acreditado será la base. El total lo calcula el SERVIDOR.
       let amount = Number(body.amount) || 0;
       amount = Math.min(2000, Math.max(1, Math.round(amount * 100) / 100));
+      const total = Math.round(amount * (100 + ITBMS_PCT)) / 100;
       const r = await fetch(`${paypalBase()}/v2/checkout/orders`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           intent: "CAPTURE",
-          purchase_units: [{ amount: { currency_code: "USD", value: amount.toFixed(2) } }],
+          purchase_units: [{ amount: { currency_code: "USD", value: total.toFixed(2) } }],
         }),
       });
       const d = await r.json();
@@ -107,13 +113,17 @@ Deno.serve(async (req) => {
       const paid = Number(capture.amount?.value || 0);
       if (!(paid > 0)) return json({ error: "Monto inválido" }, 400);
 
+      // El pago incluye ITBMS 7%: base = pagado / 1.07 (es lo que entra a la billetera).
+      const base = Math.round((paid / (1 + ITBMS_PCT / 100)) * 100) / 100;
+      if (!(base > 0)) return json({ error: "Monto inválido" }, 400);
+
       // Bono por paquete de broker. Se decide EN EL SERVIDOR (no se confía en el cliente
       // para el monto): el flag body.pkg solo OPTA al bono, y el % sale de esta tabla
-      // según el monto REALMENTE pagado. Debe coincidir con brokerPackages del cliente
-      // (Starter 50/+10%, Pro 150/+20%, Elite 400/+30%).
+      // según la BASE realmente pagada (sin ITBMS). Debe coincidir con brokerPackages
+      // del cliente (Starter 50/+10%, Pro 150/+20%, Elite 400/+30%).
       const PKG_BONUS: Record<number, number> = { 50: 10, 150: 20, 400: 30 };
-      const pct = (body.pkg === true && PKG_BONUS[Math.round(paid)] != null) ? PKG_BONUS[Math.round(paid)] : 0;
-      const credited = pct ? Math.round(paid * (1 + pct / 100)) : paid;
+      const pct = (body.pkg === true && PKG_BONUS[Math.round(base)] != null) ? PKG_BONUS[Math.round(base)] : 0;
+      const credited = pct ? Math.round(base * (1 + pct / 100)) : base;
 
       // Marcar como acreditada SOLO si seguía en 'created' (gana una sola petición).
       // paypal_orders.amount = lo que PAGÓ (para el recibo); la wallet recibe `credited` (con bono).
