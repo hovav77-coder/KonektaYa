@@ -21657,6 +21657,9 @@
       // ITBMS (Panamá): las recargas cobran base + 7%. El total REAL lo calcula el
       // servidor (paypal-credit) con el mismo %; aquí solo se muestra el desglose.
       const ITBMS_PCT = 7;
+      // Espejo de la tabla de bonos del SERVIDOR (paypal-credit PKG_BONUS): solo
+      // para MOSTRAR el bono en el resumen; el monto real lo decide el servidor.
+      const PKG_BONUS_VIEW = { 50: 10, 150: 20, 400: 30 };
       function payTotals(base) {
         const b = Math.max(0, Number(base) || 0);
         const tax = Math.round(b * ITBMS_PCT) / 100;
@@ -21674,12 +21677,19 @@
         if (paypalBtn) paypalBtn.textContent = `Pagar ${label} con PayPal`.trim();
         const summary = document.getElementById("paySummary");
         if (summary) {
+          // Paquete de broker: mostrar el bono explícito (el servidor lo acredita igual).
+          const pct = payIsPackage ? (PKG_BONUS_VIEW[Math.round(t.base)] || 0) : 0;
+          const credited = pct ? Math.round(t.base * (1 + pct / 100)) : t.base;
+          const bonusRow = pct
+            ? `<div class="ps-row" style="color:#166534;font-weight:800"><span>Bono broker (+${pct}%)</span><b style="color:#166534">+ ${money.format(credited - t.base)}</b></div>`
+            : "";
           summary.innerHTML = t.base > 0
             ? `
-              <div class="ps-row"><span>Recarga de crédito KonektaYa</span><b>${money.format(t.base)}</b></div>
+              <div class="ps-row"><span>${payIsPackage ? "Paquete broker" : "Recarga de crédito KonektaYa"}</span><b>${money.format(t.base)}</b></div>
+              ${bonusRow}
               <div class="ps-row"><span>ITBMS (${ITBMS_PCT}%)</span><b>${money.format(t.tax)}</b></div>
               <div class="ps-row ps-total"><span>Total a pagar</span><b>${money.format(t.total)}</b></div>
-              <div class="ps-note">Recibirás <b>${money.format(t.base)}</b> de crédito en tu billetera. El comprobante incluye el ITBMS desglosado.</div>`
+              <div class="ps-note">Recibirás <b>${money.format(credited)}</b> de crédito en tu billetera${pct ? ` (incluye el bono del ${pct}%)` : ""}. El comprobante incluye el ITBMS desglosado.</div>`
             : "";
         }
       }
@@ -21799,6 +21809,9 @@
           otherInput.classList.add("hidden");
           otherInput.value = "";
         }
+        // Paquete de broker: el precio es fijo → sin selector de montos.
+        const amountsRow = overlay.querySelector("#payAmounts");
+        if (amountsRow) amountsRow.style.display = payIsPackage ? "none" : "";
         overlay.querySelectorAll("#payAmounts .pay-amount").forEach((b) => b.classList.toggle("active", Number(b.dataset.payAmount) === payAmount));
         overlay.querySelectorAll(".pay-tab").forEach((t) => t.classList.toggle("active", t.dataset.payMethod === "paypal"));
         overlay.querySelectorAll(".pay-pane").forEach((p) => p.classList.toggle("hidden", p.dataset.payPane !== "paypal"));
