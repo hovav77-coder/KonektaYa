@@ -52,6 +52,14 @@ Deno.serve(async (req) => {
     if (!user) return json({ error: "No autenticado" }, 401);
 
     const admin = createClient(url, service);
+
+    // Kill switch global (app_config.payments_enabled): si los pagos están apagados,
+    // no se crea ni se captura NINGUNA orden. Fail closed: sin tabla/fila => apagado.
+    const { data: appCfg } = await admin.from("app_config").select("payments_enabled").eq("id", 1).maybeSingle();
+    if (!appCfg || appCfg.payments_enabled !== true) {
+      return json({ error: "Los pagos están desactivados por el momento." }, 403);
+    }
+
     const body = await req.json();
     const action = body.action;
     const token = await paypalToken();

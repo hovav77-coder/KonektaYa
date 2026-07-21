@@ -11300,6 +11300,14 @@
                 </div>
               </div>
 
+              <div id="adminPaymentsBar" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:13px 16px;margin:0 0 16px">
+                <div>
+                  <div style="font-size:14.5px;font-weight:900;color:var(--navy)">Pagos con PayPal <span id="paymentsStateChip"></span></div>
+                  <div style="font-size:12.5px;color:#5b6b82;margin-top:2px" id="paymentsStateDesc">Cargando estado…</div>
+                </div>
+                <button class="button small" type="button" id="paymentsToggleBtn" onclick="adminTogglePayments()" disabled>…</button>
+              </div>
+
               <div class="admin-metrics">
                 <div class="admin-metrics-head">
                   <h3>Métricas de la plataforma</h3>
@@ -13240,8 +13248,8 @@
       // PayPal (Fase 2): Client ID público (va en el navegador). El Secret vive
       // solo en Supabase (Edge Function). fn = nombre de la función de crédito.
       const PAYPAL = {
-        clientId: "AaGuDeCDtxUZqGPrsTCkyY3sRNKAjq7TvIPk5kVIzx2kpbS2HyCU1EqY2cgkYubUgNMxU2IIubVhBq58",
-        env: "sandbox",
+        clientId: "AbO5K8mKJVIBZFbMD3qPddSsRhmns0VHkwmBmOUMiUgzM6_z4eY8Ycg9O4zfcRRwLlTHxUDLNT_La1mv",
+        env: "live",
         fn: "paypal-credit"
       };
 
@@ -17201,6 +17209,45 @@
         await adminLoadUsers();
       }
       window.adminSetUserRole = adminSetUserRole;
+
+      // Interruptor de pagos: el admin enciende/apaga los cobros con PayPal para TODOS.
+      async function adminTogglePayments() {
+        if (!supabaseEnabled) { alert("Disponible solo con el backend conectado."); return; }
+        const next = !paymentsEnabled;
+        const msg = next
+          ? "¿ACTIVAR los pagos con PayPal?\n\nDesde ese momento los usuarios podrán comprar crédito con dinero REAL."
+          : "¿Desactivar los pagos con PayPal?\n\nNadie podrá comprar crédito hasta que los reactives.";
+        if (!confirm(msg)) return;
+        const { data, error } = await supabaseClient.rpc("admin_set_payments_enabled", { p_on: next });
+        if (error) { alert("No se pudo cambiar: " + error.message + "\n\n(¿Ya corriste supabase/2r-payments.sql?)"); return; }
+        paymentsEnabled = data === true;
+        render();
+      }
+      window.adminTogglePayments = adminTogglePayments;
+
+      function renderPaymentsSwitch() {
+        const chip = document.getElementById("paymentsStateChip");
+        const desc = document.getElementById("paymentsStateDesc");
+        const btn = document.getElementById("paymentsToggleBtn");
+        if (!chip || !desc || !btn) return;
+        if (!supabaseEnabled) {
+          chip.innerHTML = "";
+          desc.textContent = "Solo aplica con el backend conectado (demo local sin cobros).";
+          btn.disabled = true;
+          btn.textContent = "No disponible";
+          return;
+        }
+        const on = paymentsEnabled;
+        chip.innerHTML = on
+          ? '<span style="font-size:11px;font-weight:900;background:#eaf7ee;color:#166534;border:1px solid #cce8cc;border-radius:999px;padding:2px 10px;vertical-align:middle;margin-left:6px">ACTIVADOS</span>'
+          : '<span style="font-size:11px;font-weight:900;background:#fdeaea;color:#b91c1c;border:1px solid #f3c2c2;border-radius:999px;padding:2px 10px;vertical-align:middle;margin-left:6px">DESACTIVADOS</span>';
+        desc.textContent = on
+          ? "Los usuarios pueden comprar crédito con PayPal (dinero real). Apágalo si necesitas frenar los cobros."
+          : "Nadie puede pagar todavía. Actívalos cuando quieras empezar a cobrar.";
+        btn.disabled = !paymentsFlagLoaded;
+        btn.textContent = on ? "Desactivar pagos" : "Activar pagos";
+        btn.className = "button small " + (on ? "reject" : "primary");
+      }
       // Elimina por completo un usuario (auth + perfil + publicaciones + saldo).
       // Deja libre el email para volver a registrarse. Doble confirmación.
       async function adminDeleteUser(email) {
@@ -17272,6 +17319,7 @@
               supaLoadUnlocks().catch(warn("supaLoadUnlocks")),
               supaLoadWhoUnlockedMe().catch(warn("supaLoadWhoUnlockedMe")),
               supaLoadOrders().catch(warn("supaLoadOrders")),
+              supaLoadPaymentsFlag().catch(warn("supaLoadPaymentsFlag")),
               supaLoadRequests().catch(warn("supaLoadRequests"))
             ]);
           } else if (!email) {
@@ -17502,6 +17550,22 @@
         dir2: "Ciudad de Panamá, Rep. de Panamá",
         contacto: "pagos@konektaya.com · +507 6490-5233",
       };
+
+      // Interruptor global de pagos (kill switch, tabla app_config). Los cobros con
+      // PayPal arrancan APAGADOS hasta que el admin los active desde su panel.
+      // Fail closed: si el flag no se puede leer, se asume apagado (el servidor
+      // igual rechaza — paypal-credit verifica el mismo flag antes de cobrar).
+      let paymentsEnabled = !supabaseEnabled; // demo local sin backend: sin bloqueo
+      let paymentsFlagLoaded = false;
+      async function supaLoadPaymentsFlag() {
+        if (!supabaseEnabled) { paymentsFlagLoaded = true; return; }
+        try {
+          const { data, error } = await supabaseClient
+            .from("app_config").select("payments_enabled").eq("id", 1).maybeSingle();
+          paymentsEnabled = !error && !!(data && data.payments_enabled === true);
+        } catch (e) { paymentsEnabled = false; }
+        paymentsFlagLoaded = true;
+      }
 
       // Compras de crédito por PayPal del usuario = fuente de los comprobantes de pago.
       // RLS (paypal_orders_select_own) garantiza que cada quien solo ve las suyas.
@@ -18792,6 +18856,7 @@
         renderDashboardLists();
         renderHistory();
         renderPayments();
+        renderPaymentsSwitch();
         renderBrokerB2B();
         refreshResultsModal();
         if (typeof refreshAuthUI === "function") refreshAuthUI();
@@ -19394,6 +19459,15 @@
         }
         if (walletBalanceValue) {
           walletBalanceValue.textContent = money.format(getBalance(currentUserEmail));
+        }
+        // Kill switch: con pagos apagados, el botón de recarga queda deshabilitado.
+        const walletAddBtn = document.querySelector(".wab-add");
+        if (walletAddBtn && supabaseEnabled) {
+          const pagosOff = !paymentsEnabled;
+          walletAddBtn.disabled = pagosOff;
+          walletAddBtn.textContent = pagosOff ? "Recargas disponibles pronto" : "+ Agregar crédito";
+          walletAddBtn.style.opacity = pagosOff ? "0.65" : "";
+          walletAddBtn.style.cursor = pagosOff ? "not-allowed" : "";
         }
         // Estado de broker: en producción manda Supabase (myProfile); en demo local, la ficha local.
         const localBroker = getBrokerAccount(currentUserEmail);
@@ -21446,6 +21520,10 @@
       }
 
       function openPayModal(amount, isPackage) {
+        if (supabaseEnabled && !paymentsEnabled) {
+          alert("Las recargas con PayPal estarán disponibles muy pronto. Por ahora no se pueden hacer pagos.");
+          return;
+        }
         if (isBrokerPending(currentUserEmail)) {
           alert("Tu cuenta de broker está en revisión. Podrás agregar crédito y desbloquear contactos cuando un administrador apruebe tu cuenta.");
           return;
@@ -21563,6 +21641,7 @@
         __lastProfileRefresh = now;
         try {
           await supaLoadMyProfile();
+          if (typeof supaLoadPaymentsFlag === "function") await supaLoadPaymentsFlag();
           if (typeof render === "function") render();
           if (typeof refreshAuthUI === "function") refreshAuthUI();
         } catch (e) {}
@@ -21663,7 +21742,7 @@
                 <span class="b2b-pkg-name">${pkg.name}</span>
                 <span class="b2b-pkg-price">$${pkg.base}</span>
                 <span class="b2b-pkg-bonus">+${pkg.bonus}% bono → ${money.format(credited)} de crédito</span>
-                <button class="button ${pkg.featured ? "primary" : "dark"}" type="button" onclick="buyBrokerPackage(${pkg.base}, ${pkg.bonus})">Comprar</button>
+                <button class="button ${pkg.featured ? "primary" : "dark"}" type="button" onclick="buyBrokerPackage(${pkg.base}, ${pkg.bonus})" ${supabaseEnabled && !paymentsEnabled ? 'disabled style="opacity:.65;cursor:not-allowed" title="Pagos disponibles pronto"' : ""}>${supabaseEnabled && !paymentsEnabled ? "Disponible pronto" : "Comprar"}</button>
               </article>
             `;
           })
