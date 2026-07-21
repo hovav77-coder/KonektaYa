@@ -3222,8 +3222,7 @@
         width: 100%;
       }
 
-      .b2b-foot,
-      .b2b-monthly {
+      .b2b-foot {
         align-items: center;
         color: var(--muted);
         display: flex;
@@ -3237,14 +3236,6 @@
         flex-shrink: 0;
         height: 15px;
         width: 15px;
-      }
-
-      .b2b-monthly {
-        background: #f3f7fc;
-        border: 1px solid #dce7f4;
-        border-radius: 12px;
-        color: var(--navy);
-        padding: 12px 16px;
       }
 
       .broker-review-banner {
@@ -21345,6 +21336,7 @@
 
       let payAmount = 25;
       let payMethod = "paypal";
+      let payIsPackage = false; // true solo al comprar un paquete de broker (activa el bono server-side)
       // Cuando tengas la cuenta PayPal Business, pon aquí tu usuario de PayPal.Me (ej. "konektaya")
       const paypalMeHandle = "";
 
@@ -21442,7 +21434,7 @@
           },
           onApprove: async (data) => {
             if (status) status.textContent = "Procesando pago…";
-            const res = await supabaseClient.functions.invoke(PAYPAL.fn, { body: { action: "capture", orderID: data.orderID } });
+            const res = await supabaseClient.functions.invoke(PAYPAL.fn, { body: { action: "capture", orderID: data.orderID, pkg: payIsPackage } });
             if (res.error || !res.data || !res.data.ok) { if (status) status.textContent = "El pago no se pudo confirmar."; return; }
             await refreshBalance();
             render();
@@ -21453,13 +21445,14 @@
         }).render("#paypalButtons");
       }
 
-      function openPayModal(amount) {
+      function openPayModal(amount, isPackage) {
         if (isBrokerPending(currentUserEmail)) {
           alert("Tu cuenta de broker está en revisión. Podrás agregar crédito y desbloquear contactos cuando un administrador apruebe tu cuenta.");
           return;
         }
         setupPayModal();
         payAmount = Number(amount) || 25;
+        payIsPackage = !!isPackage; // recarga normal = false; compra de paquete de broker = true
         payMethod = "paypal";
         const overlay = document.getElementById("payModal");
         if (!overlay) return;
@@ -21638,16 +21631,9 @@
 
       function buyBrokerPackage(base, bonus) {
         if (!isBrokerApproved(currentUserEmail)) return;
-        const credited = Math.round(Number(base) * (1 + Number(bonus) / 100));
-        addBalance(currentUserEmail, credited);
-        balanceAdds.push({
-          amount: credited,
-          email: currentUserEmail,
-          note: `Paquete broker $${base} (+${bonus}%)`,
-          date: new Date().toISOString()
-        });
-        save();
-        render();
+        // Pago REAL por PayPal del precio del paquete; el bono lo acredita el servidor
+        // (paypal-credit) según su propia tabla, no el navegador.
+        openPayModal(Number(base), true);
       }
 
       function renderBrokerB2B() {
@@ -21701,7 +21687,6 @@
             <p class="b2b-desc">Recargas crédito con bono por volumen. El crédito no vence y sirve para inmuebles y vehículos.</p>
             <div class="b2b-packages">${cards}</div>
             <p class="b2b-foot"><svg viewBox="0 0 24 24" fill="none" stroke="#1f7a4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg> El crédito se descuenta automáticamente según el nivel de cada match. Cada desbloqueo con Garantía KonektaYa.</p>
-            <p class="b2b-monthly"><strong>¿Mucho volumen?</strong> Plan mensual con desbloqueos ilimitados por vertical — pregúntanos.</p>
           </section>
           <section class="b2b-panel" style="margin-top:14px" id="bulkCard"></section>
         `;

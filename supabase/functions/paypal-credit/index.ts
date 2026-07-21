@@ -96,13 +96,22 @@ Deno.serve(async (req) => {
       if (d.status !== "COMPLETED" || !capture || capture.status !== "COMPLETED") {
         return json({ error: "El pago no está completo", detail: d }, 402);
       }
-      const amount = Number(capture.amount?.value || 0);
-      if (!(amount > 0)) return json({ error: "Monto inválido" }, 400);
+      const paid = Number(capture.amount?.value || 0);
+      if (!(paid > 0)) return json({ error: "Monto inválido" }, 400);
+
+      // Bono por paquete de broker. Se decide EN EL SERVIDOR (no se confía en el cliente
+      // para el monto): el flag body.pkg solo OPTA al bono, y el % sale de esta tabla
+      // según el monto REALMENTE pagado. Debe coincidir con brokerPackages del cliente
+      // (Starter 50/+10%, Pro 150/+20%, Elite 400/+30%).
+      const PKG_BONUS: Record<number, number> = { 50: 10, 150: 20, 400: 30 };
+      const pct = (body.pkg === true && PKG_BONUS[Math.round(paid)] != null) ? PKG_BONUS[Math.round(paid)] : 0;
+      const credited = pct ? Math.round(paid * (1 + pct / 100)) : paid;
 
       // Marcar como acreditada SOLO si seguía en 'created' (gana una sola petición).
+      // paypal_orders.amount = lo que PAGÓ (para el recibo); la wallet recibe `credited` (con bono).
       const { data: claimed } = await admin
         .from("paypal_orders")
-        .update({ amount, status: "credited" })
+        .update({ amount: paid, status: "credited" })
         .eq("order_id", orderID)
         .eq("status", "created")
         .select("order_id");
@@ -113,12 +122,12 @@ Deno.serve(async (req) => {
       // Crédito ATÓMICO en Postgres. Si falla, REVERTIMOS el estado a 'created'
       // para poder reintentar: si no, la orden quedaría marcada 'credited' pero
       // sin sumar el saldo (dinero cobrado y no acreditado, sin reintento posible).
-      const { data: newBal, error: credErr } = await admin.rpc("wallet_credit", { p_user: user.id, p_amount: amount });
+      const { data: newBal, error: credErr } = await admin.rpc("wallet_credit", { p_user: user.id, p_amount: credited });
       if (credErr) {
         await admin.from("paypal_orders").update({ status: "created" }).eq("order_id", orderID).eq("status", "credited");
         return json({ error: "No se pudo acreditar. Intenta de nuevo.", detail: credErr.message }, 500);
       }
-      return json({ ok: true, credited: amount, balance: Number(newBal || 0) });
+      return json({ ok: true, credited, balance: Number(newBal || 0) });
     }
 
     return json({ error: "Acción no soportada" }, 400);
