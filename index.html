@@ -9329,55 +9329,6 @@
       }
       .passkey-link:hover { color: var(--navy, #0a2f55); }
 
-      .admin-topup {
-        background: #f7fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        margin: 0 0 18px;
-        padding: 16px 18px;
-      }
-
-      .admin-topup-head strong {
-        color: #0f2a4a;
-        display: block;
-        font-size: 15px;
-      }
-
-      .admin-topup-head span {
-        color: #64748b;
-        display: block;
-        font-size: 12.5px;
-        margin: 2px 0 12px;
-      }
-
-      .admin-topup-row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .admin-topup-row input {
-        border: 1px solid #cbd5e1;
-        border-radius: 10px;
-        flex: 1;
-        min-width: 140px;
-        padding: 10px 12px;
-      }
-
-      .admin-topup-row input[type="number"] {
-        max-width: 140px;
-      }
-
-      .admin-topup-status {
-        font-size: 13px;
-        font-weight: 700;
-        margin: 10px 0 0;
-        min-height: 1px;
-      }
-
-      .admin-topup-status.ok { color: #15803d; }
-      .admin-topup-status.err { color: #b91c1c; }
-
       .admin-users {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -11490,18 +11441,6 @@
                       <h3>Clientes y créditos</h3>
                       <p>Busca un usuario, revisa saldo, movimientos y registra devoluciones demo.</p>
                     </div>
-                  </div>
-                  <div class="admin-topup" id="adminTopupCard">
-                    <div class="admin-topup-head">
-                      <strong>Acreditar saldo a un usuario</strong>
-                      <span>Suma saldo real (servidor) a cualquier cuenta registrada, por su email. Solo administradores.</span>
-                    </div>
-                    <div class="admin-topup-row">
-                      <input id="adminTopupEmail" type="email" placeholder="email del usuario" />
-                      <input id="adminTopupAmount" type="number" min="1" step="1" placeholder="monto USD" />
-                      <button class="button primary" type="button" onclick="adminAddCredit()">Acreditar</button>
-                    </div>
-                    <p class="admin-topup-status" id="adminTopupStatus"></p>
                   </div>
                   <div class="admin-users" id="adminUsersCard">
                     <div class="admin-users-head">
@@ -17210,25 +17149,8 @@
         }
       }
 
-      // Admin: acreditar saldo real a cualquier usuario por su email (RPC segura).
-      async function adminAddCredit() {
-        const emailEl = document.getElementById("adminTopupEmail");
-        const amtEl = document.getElementById("adminTopupAmount");
-        const status = document.getElementById("adminTopupStatus");
-        const setStatus = (msg, ok) => { if (status) { status.textContent = msg; status.className = "admin-topup-status" + (ok ? " ok" : msg ? " err" : ""); } };
-        const email = String((emailEl || {}).value || "").trim();
-        const amount = Number((amtEl || {}).value || 0);
-        if (!email) { setStatus("Escribe el email del usuario."); return; }
-        if (!(amount > 0)) { setStatus("Escribe un monto mayor a 0."); return; }
-        if (!supabaseEnabled) { setStatus("Disponible solo con el backend conectado."); return; }
-        setStatus("Acreditando…");
-        const { data, error } = await supabaseClient.rpc("admin_add_credit", { target_email: email, amount });
-        if (error) { setStatus("No se pudo acreditar: " + error.message); return; }
-        setStatus(`✓ Acreditado. Nuevo saldo de ${email}: ${money.format(Number(data || 0))}`, true);
-        if (amtEl) amtEl.value = "";
-        // Si el admin se acreditó a sí mismo, refrescar su saldo visible.
-        if (email.toLowerCase() === String(currentUserEmail).toLowerCase()) { try { await refreshBalance(); render(); } catch (e) {} }
-      }
+      // (La tarjeta "Acreditar saldo a un usuario" se eliminó: era redundante con el
+      // ajuste de saldo de la ficha del usuario, que además permite restar.)
 
       // ---- Admin: lista de TODOS los usuarios registrados (servidor) ----
       let adminUsersData = [];
