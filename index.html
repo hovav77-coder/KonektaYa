@@ -342,7 +342,7 @@
         justify-content: center;
         padding: 20px;
         position: fixed;
-        z-index: 80;
+        z-index: 120; /* por encima de la .bottombar móvil (90) */
       }
 
       .rd-modal[hidden] {
@@ -6003,7 +6003,7 @@
         position: fixed;
         right: 0;
         top: 0;
-        z-index: 90;
+        z-index: 120; /* por encima de la .bottombar móvil (90): el modal tapa la barra */
       }
 
       .results-modal-overlay.hidden {
@@ -7104,7 +7104,7 @@
         justify-content: center;
         padding: 20px;
         position: fixed;
-        z-index: 60;
+        z-index: 120; /* por encima de la .bottombar móvil (90) */
       }
 
       .mydata-modal[hidden] { display: none; }
@@ -17796,15 +17796,30 @@
       // Compras de crédito por PayPal del usuario = fuente de los comprobantes de pago.
       // RLS (paypal_orders_select_own) garantiza que cada quien solo ve las suyas.
       let myOrders = [];
+      let myCoupons = []; // canjes de cupones del usuario (RLS cr_select_own)
       async function supaLoadOrders() {
         myOrders = [];
+        myCoupons = [];
         if (!supabaseEnabled || !currentUserEmail) return;
         // select("*") para no romper si aún no corre la migración de receipt_seq.
         const { data, error } = await supabaseClient
           .from("paypal_orders")
           .select("*")
           .order("created_at", { ascending: false });
-        if (!error && Array.isArray(data)) myOrders = data;
+        if (!error && Array.isArray(data)) {
+          // Solo pagos COMPLETADOS: las órdenes 'created' (abrió PayPal y no pagó)
+          // no son pagos y salían como "Pagado USD 0.00" en la lista.
+          myOrders = data.filter((r) => (r.status ? r.status === "credited" : Number(r.amount) > 0));
+        }
+        // Canjes de cupones (para mostrarlos en "Pagos y recibos"). Si la tabla no
+        // existe aún (falta correr 2s-coupons.sql), queda vacío sin romper nada.
+        try {
+          const { data: cups, error: cupErr } = await supabaseClient
+            .from("coupon_redemptions")
+            .select("coupon_code,amount,created_at")
+            .order("created_at", { ascending: false });
+          if (!cupErr && Array.isArray(cups)) myCoupons = cups;
+        } catch (e) {}
       }
 
       // Número de recibo estable. Usa la secuencia del servidor (receipt_seq) si existe;
@@ -22762,16 +22777,36 @@
       function renderPayments() {
         const target = document.getElementById("userPayments");
         if (!target) return;
-        if (!myOrders.length) {
+        // Pagos reales + canjes de cupones, mezclados por fecha (más nuevo primero).
+        const items = [
+          ...myOrders.map((o) => ({ kind: "pago", date: o.created_at, o })),
+          ...myCoupons.map((c) => ({ kind: "cupon", date: c.created_at, c }))
+        ].sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        if (!items.length) {
           target.innerHTML =
-            '<article class="card empty"><h3>Sin pagos todavía</h3><p>Cuando recargues crédito con PayPal, aquí aparecerán tus comprobantes descargables.</p></article>';
+            '<article class="card empty"><h3>Sin pagos todavía</h3><p>Cuando recargues crédito con PayPal o canjees un cupón, aparecerán aquí.</p></article>';
           return;
         }
-        const total = myOrders.reduce((s, o) => s + Number(o.amount || 0), 0);
+        const totalPagado = myOrders.reduce((s, o) => s + Number(o.amount || 0), 0);
+        const totalCupones = myCoupons.reduce((s, c) => s + Number(c.amount || 0), 0);
         const cardIcon =
           '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 10h18" stroke="currentColor" stroke-width="2"/></svg>';
-        const rows = myOrders
-          .map((o) => {
+        const rows = items
+          .map((it) => {
+            if (it.kind === "cupon") {
+              const c = it.c;
+              return `
+              <div class="pay-row">
+                <span class="pay-ic" style="background:#eaf7ee">🎟️</span>
+                <div class="pay-main">
+                  <div class="pay-t">Cupón ${escapeHtml(String(c.coupon_code || ""))}</div>
+                  <div class="pay-d">${formatDate(c.created_at)} · Crédito regalo</div>
+                </div>
+                <span class="pill-paid">Canjeado</span>
+                <span class="pay-amt" style="color:#166534">+ ${money.format(c.amount || 0)}</span>
+              </div>`;
+            }
+            const o = it.o;
             const oid = String(o.order_id || "").replace(/'/g, "");
             return `
               <div class="pay-row">
@@ -22786,8 +22821,12 @@
               </div>`;
           })
           .join("");
+        const resumen = [
+          myOrders.length ? `${myOrders.length} pago${myOrders.length === 1 ? "" : "s"} · Total pagado <strong>${money.format(totalPagado)}</strong>` : "",
+          myCoupons.length ? `${myCoupons.length} cupón${myCoupons.length === 1 ? "" : "es"} <strong style="color:#166534">+ ${money.format(totalCupones)}</strong>` : ""
+        ].filter(Boolean).join(" · ");
         target.innerHTML = `
-          <div class="history-summary">${myOrders.length} pago${myOrders.length === 1 ? "" : "s"} · Total recargado <strong>${money.format(total)}</strong></div>
+          <div class="history-summary">${resumen}</div>
           <div class="pay-rows">${rows}</div>
         `;
       }
