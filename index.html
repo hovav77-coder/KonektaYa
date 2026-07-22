@@ -3700,6 +3700,109 @@
         display: none;
       }
 
+      /* Enlace "Ya tengo cuenta" dentro del gate */
+      .form-account-gate .fag-alt {
+        color: #6a7a90;
+        font-size: 13px;
+        margin: 12px 0 0;
+      }
+      .form-account-gate .fag-alt a {
+        color: #0f5e91;
+        font-weight: 800;
+        text-decoration: underline;
+      }
+
+      /* Banner "¿Ya tienes cuenta?" (solo visitantes, arriba del formulario) */
+      .form-auth-banner {
+        align-items: center;
+        background: #f2f7ff;
+        border: 1.5px solid #cfe0f5;
+        border-radius: 13px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding: 13px 15px;
+      }
+      .form-auth-banner .fab-t {
+        flex: 1;
+        min-width: 200px;
+      }
+      .form-auth-banner .fab-t b {
+        color: var(--navy);
+        font-size: 14px;
+      }
+      .form-auth-banner .fab-t span {
+        color: #6a7a90;
+        display: block;
+        font-size: 12.5px;
+        margin-top: 1px;
+      }
+      .form-auth-banner .fab-btn {
+        background: var(--navy);
+        border: none;
+        border-radius: 11px;
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 13.5px;
+        font-weight: 900;
+        padding: 11px 18px;
+        white-space: nowrap;
+      }
+
+      /* Chip de identidad (logueado): "Tus datos" colapsado a una línea */
+      .form-idchip {
+        align-items: center;
+        background: #eaf7ee;
+        border: 1.5px solid #cce8cc;
+        border-radius: 13px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 11px;
+        margin-bottom: 14px;
+        padding: 11px 14px;
+      }
+      .form-idchip .fic-av {
+        align-items: center;
+        background: var(--orange, #e05b2a);
+        border-radius: 50%;
+        color: #ffffff;
+        display: inline-flex;
+        flex: 0 0 auto;
+        font-size: 13px;
+        font-weight: 900;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+      .form-idchip .fic-m {
+        flex: 1;
+        min-width: 180px;
+      }
+      .form-idchip .fic-m b {
+        color: #166534;
+        display: block;
+        font-size: 13.5px;
+      }
+      .form-idchip .fic-m span {
+        color: #2f6647;
+        display: block;
+        font-size: 12px;
+      }
+      .form-idchip .fic-edit {
+        background: none;
+        border: none;
+        color: #0f5e91;
+        cursor: pointer;
+        font-size: 12.5px;
+        font-weight: 800;
+        text-decoration: underline;
+        white-space: nowrap;
+      }
+      .form-step.step-collapsed {
+        display: none;
+      }
+
       .form-step-title {
         align-items: center;
         display: flex;
@@ -16142,6 +16245,16 @@
         if (!form || form.dataset.gateReady === "true") return;
         const firstStep = form.querySelector(".form-step");
         if (!firstStep) return;
+        // Banner para el cliente EXISTENTE: entrar con 1 toque antes de llenar nada.
+        const banner = document.createElement("div");
+        banner.className = "form-auth-banner";
+        banner.setAttribute("data-auth-banner", "");
+        banner.hidden = true;
+        banner.innerHTML =
+          '<div class="fab-t"><b>👋 ¿Ya tienes cuenta?</b><span>Inicia sesión y tus datos se llenan solos.</span></div>' +
+          '<button type="button" class="fab-btn">Iniciar sesión</button>';
+        banner.querySelector(".fab-btn").addEventListener("click", () => loginFromForm(form));
+        firstStep.insertAdjacentElement("beforebegin", banner);
         const gate = document.createElement("div");
         gate.className = "form-account-gate";
         gate.setAttribute("data-account-gate", "");
@@ -16149,8 +16262,10 @@
         gate.innerHTML =
           '<div class="fag-head">🔒 Crea tu cuenta para continuar</div>' +
           '<p class="fag-note">Con tu nombre y email creamos tu cuenta. Confirmas por correo y sigues llenando el resto — no perderás lo que escribiste.</p>' +
-          '<button type="button" class="button primary fag-continue">Crear cuenta y continuar</button>';
+          '<button type="button" class="button primary fag-continue">Crear cuenta y continuar</button>' +
+          '<p class="fag-alt">¿Ya tienes cuenta? <a href="#" class="fag-login">Inicia sesión aquí</a> — tus datos se llenan solos.</p>';
         gate.querySelector(".fag-continue").addEventListener("click", () => startAccountFromForm(form));
+        gate.querySelector(".fag-login").addEventListener("click", (e) => { e.preventDefault(); loginFromForm(form); });
         firstStep.insertAdjacentElement("afterend", gate);
         form.dataset.gateReady = "true";
       }
@@ -16168,6 +16283,46 @@
         if (gate) gate.hidden = loggedIn;
         const submitRow = form.querySelector(".form-submit-row");
         if (submitRow) submitRow.classList.toggle("gate-hidden", !loggedIn);
+        // Banner "¿Ya tienes cuenta?" solo para visitantes.
+        const banner = form.querySelector("[data-auth-banner]");
+        if (banner) banner.hidden = loggedIn;
+        // Con sesión: "Tus datos" se colapsa a una línea con el perfil. Excepciones
+        // (el paso queda visible como siempre): perfiles broker (tienen licencia/
+        // empresa en ese paso) y perfiles sin teléfono (deben poder escribirlo —
+        // un campo required oculto y vacío bloquearía el envío del formulario).
+        if (loggedIn) prefillContactFields(form);
+        const prof = (typeof myProfile !== "undefined" && myProfile) ? myProfile : {};
+        const phoneEl = form.querySelector('[name="phone"]');
+        const phoneOk = Boolean(phoneEl && String(phoneEl.value || "").trim());
+        const canCollapse = loggedIn && prof.role !== "broker" && phoneOk;
+        const firstStep = form.querySelector(".form-step");
+        let chip = form.querySelector("[data-id-chip]");
+        if (!chip && firstStep) {
+          chip = document.createElement("div");
+          chip.className = "form-idchip";
+          chip.setAttribute("data-id-chip", "");
+          chip.hidden = true;
+          firstStep.insertAdjacentElement("beforebegin", chip);
+        }
+        if (chip) {
+          chip.hidden = !canCollapse;
+          if (canCollapse) {
+            const nm = String(prof.name || "").trim() || currentUserEmail;
+            const phone = String((phoneEl && phoneEl.value) || "").trim();
+            const initials = nm.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("") || "?";
+            const abierto = form.dataset.contactOpen === "1";
+            const verbo = form.id === "searchForm" || form.id === "vehicleSearchForm" ? "Buscando" : "Publicando";
+            chip.innerHTML =
+              '<span class="fic-av">' + escapeHtml(initials) + "</span>" +
+              '<div class="fic-m"><b>✓ ' + verbo + " como " + escapeHtml(nm) + "</b><span>" + escapeHtml(currentUserEmail) + (phone ? " · " + escapeHtml(phone) : "") + "</span></div>" +
+              '<button type="button" class="fic-edit">' + (abierto ? "Ocultar datos" : "Cambiar datos") + "</button>";
+            chip.querySelector(".fic-edit").addEventListener("click", () => {
+              form.dataset.contactOpen = form.dataset.contactOpen === "1" ? "" : "1";
+              applyFormGate(form);
+            });
+          }
+        }
+        if (firstStep) firstStep.classList.toggle("step-collapsed", canCollapse && form.dataset.contactOpen !== "1");
       }
 
       function applyAllFormGates() {
@@ -16199,6 +16354,23 @@
         ensureAccountForForm(form, data); // guarda borrador + lleva a registro prellenado
       }
       window.startAccountFromForm = startAccountFromForm;
+
+      // "Ya tengo cuenta": guarda lo escrito (si hay algo) y lleva a INICIAR SESIÓN.
+      // Al entrar, el retorno estándar (applySupabaseSession) devuelve al formulario
+      // con todo restaurado y los datos del perfil puestos.
+      function loginFromForm(form) {
+        if (!form) return;
+        const tab = Object.keys(FORM_TABS).find((t) => FORM_TABS[t] === form.id);
+        if (tab) savePendingForm(tab);
+        authMode = "login";
+        applyAuthMode();
+        showTab("login");
+        const loginEmail = document.getElementById("loginEmail");
+        const typed = form.querySelector('[name="email"]');
+        if (loginEmail && typed && typed.value.trim() && !loginEmail.value) loginEmail.value = typed.value.trim();
+        showLoginStatus("Inicia sesión y te devolvemos al formulario con tus datos puestos.");
+      }
+      window.loginFromForm = loginFromForm;
 
       // Recuerda el teléfono (una vez ingresado, se rellena solo en próximos
       // formularios). En memoria + localStorage; en el servidor lo guarda
@@ -23242,6 +23414,12 @@
           if (tabLink) {
             event.preventDefault();
             activatePropertyYaTab(tabLink.dataset.tab);
+            // Si el enlace lleva a un formulario, prellenar igual que los botones
+            // (antes solo [data-tab-button] prellenaba: un logueado entrando por
+            // enlace veía el formulario sin sus datos).
+            if (window.prefillFormForTab && window.FORM_TABS && window.FORM_TABS[tabLink.dataset.tab]) {
+              window.prefillFormForTab(tabLink.dataset.tab);
+            }
             return;
           }
 
@@ -23256,6 +23434,13 @@
         });
 
         activatePropertyYaTab((location.hash || "#inicio").replace("#", ""));
+        // Deep-link directo a un formulario (#propietario, #busqueda, …): prellenar también.
+        (() => {
+          const startTab = (location.hash || "").replace("#", "");
+          if (window.prefillFormForTab && window.FORM_TABS && window.FORM_TABS[startTab]) {
+            window.prefillFormForTab(startTab);
+          }
+        })();
 
         // Enlace de recuperación/confirmación vencido o inválido: Supabase redirige
         // con #error=...&error_code=otp_expired. Antes caía en la portada en blanco
