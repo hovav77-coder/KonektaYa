@@ -205,6 +205,26 @@ function priceFromScore(score: number, c: any) {
 }
 
 // -------- Aviso por email al buscador (revelado mutuo) via Resend --------
+// Los datos del que pagó van ENMASCARADOS en el email (el correo es un canal
+// inseguro: se reenvía/almacena fuera de la app). El contacto completo se ve
+// solo dentro de Mi panel, detrás del login (bloque "Ya conectados").
+function maskName(name: string) {
+  const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return "";
+  return words.map((w) => w.slice(0, 2) + "•".repeat(Math.min(5, Math.max(2, w.length - 2)))).join(" ");
+}
+function maskPhone(phone: string) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (!digits) return "";
+  if (digits.length <= 4) return "••••";
+  return digits.slice(0, 3) + "•".repeat(Math.max(2, digits.length - 5)) + digits.slice(-2);
+}
+function maskEmail(email: string) {
+  const e = String(email || "").trim();
+  const at = e.indexOf("@");
+  if (at <= 0) return e ? "•••" : "";
+  return e[0] + "•".repeat(Math.min(6, Math.max(3, at - 1))) + e.slice(at);
+}
 function unlockNoticeHtml(searcherName: string, ownerName: string, ownerPhone: string, ownerEmail: string, vertical: string) {
   // Escapar TODO dato de usuario: el dueño controla su nombre/teléfono sin sanear
   // y este correo sale desde el dominio de confianza → sin esto podría inyectar
@@ -212,9 +232,11 @@ function unlockNoticeHtml(searcherName: string, ownerName: string, ownerPhone: s
   const esc = (s: string) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
   const cosa = vertical === "vehiculo" ? "vehículo" : "inmueble";
   const hola = searcherName ? `Hola ${esc(searcherName)},` : "Hola,";
-  const oName = esc(ownerName) || "Un interesado";
-  const tel = ownerPhone ? `<div style="font-size:14px;margin:3px 0"><strong>Tel:</strong> ${esc(ownerPhone)}</div>` : "";
-  const mail = ownerEmail ? `<div style="font-size:14px;margin:3px 0"><strong>Email:</strong> ${esc(ownerEmail)}</div>` : "";
+  const oName = esc(maskName(ownerName)) || "Un interesado";
+  const telMask = maskPhone(ownerPhone);
+  const mailMask = maskEmail(ownerEmail);
+  const tel = telMask ? `<div style="font-size:14px;margin:3px 0"><strong>Tel:</strong> ${esc(telMask)}</div>` : "";
+  const mail = mailMask ? `<div style="font-size:14px;margin:3px 0"><strong>Email:</strong> ${esc(mailMask)}</div>` : "";
   return `<!doctype html><html><body style="margin:0;background:#eef3fa;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f2a4a">
   <div style="max-width:520px;margin:0 auto;padding:24px">
     <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,42,74,.08)">
@@ -224,12 +246,13 @@ function unlockNoticeHtml(searcherName: string, ownerName: string, ownerPhone: s
       </div>
       <div style="padding:24px">
         <p style="font-size:15px;line-height:1.6;margin:0 0 12px">${hola}</p>
-        <p style="font-size:15px;line-height:1.6;margin:0 0 16px">Alguien interesado en tu búsqueda de <strong>${cosa}</strong> pagó por ver tus datos y ya puede escribirte. Para que también lo contactes tú, aquí están sus datos:</p>
+        <p style="font-size:15px;line-height:1.6;margin:0 0 16px">Alguien interesado en tu búsqueda de <strong>${cosa}</strong> pagó por ver tus datos y ya puede escribirte:</p>
         <div style="background:#f8fbff;border:1px solid #e6edf5;border-radius:12px;padding:14px 16px;margin:0 0 18px">
           <div style="font-size:16px;font-weight:800;color:#0a2f55">${oName}</div>
           ${tel}${mail}
+          <div style="font-size:12.5px;color:#64748b;margin-top:8px">🔒 Por tu seguridad, el contacto completo se muestra solo dentro de tu panel.</div>
         </div>
-        <a href="https://konektaya.com" style="display:inline-block;background:#e05b2a;color:#fff;text-decoration:none;font-weight:800;padding:13px 22px;border-radius:12px;font-size:15px">Ver en Mi panel</a>
+        <a href="https://konektaya.com" style="display:inline-block;background:#e05b2a;color:#fff;text-decoration:none;font-weight:800;padding:13px 22px;border-radius:12px;font-size:15px">Ver su contacto en Mi panel</a>
         <p style="font-size:13px;color:#64748b;line-height:1.6;margin:18px 0 0">¿No quieres más contactos? Entra a tu panel y <strong>pausa tu búsqueda</strong>: dejarás de aparecer y nadie podrá desbloquear tu contacto.</p>
       </div>
     </div>
