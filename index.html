@@ -3793,7 +3793,7 @@
         width: 100%;
       }
 
-      /* Popup de registro en 2 pasos (contraseña → código de 6 dígitos) */
+      /* Popup de registro en 2 pasos (contraseña → código del correo (6-10 dígitos, largo lo define Supabase)) */
       .rp-idchip {
         align-items: center;
         background: #eefaf2;
@@ -3850,10 +3850,10 @@
         border: 2px solid #d7dee6;
         border-radius: 13px;
         color: var(--navy);
-        font-size: 26px;
+        font-size: 23px;
         font-weight: 800;
-        letter-spacing: 12px;
-        padding: 12px 6px 12px 18px;
+        letter-spacing: 6px;
+        padding: 12px 6px 12px 12px;
         text-align: center;
         width: 100%;
       }
@@ -10553,11 +10553,11 @@
               <button type="button" onclick="openWebmail('https://www.icloud.com/mail/')">iCloud</button>
             </div>
           </div>
-          <!-- Confirmación por código: el correo trae un código de 6 dígitos además
+          <!-- Confirmación por código: el correo trae un código del correo (6-10 dígitos, largo lo define Supabase) además
                del enlace; escribirlo aquí evita cambiar de pestaña/navegador. -->
           <div class="rd-code">
-            <p class="rd-code-label">¿Ves un <strong>código de 6 dígitos</strong> en el correo? Escríbelo aquí:</p>
-            <input class="rp-code-input" id="rdCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" />
+            <p class="rd-code-label">¿Ves un <strong>código</strong> en el correo? Escríbelo completo aquí:</p>
+            <input class="rp-code-input" id="rdCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="········" />
             <div class="rp-status" id="rdCodeStatus" hidden></div>
             <button type="button" class="rd-btn rd-btn-primary" onclick="confirmSignupCodeFromDone()">Confirmar código</button>
           </div>
@@ -10592,7 +10592,7 @@
             <div class="rd-actions">
               <button type="button" class="rd-btn rd-btn-primary" id="rpCreateBtn" onclick="registerPopCreate()">Crear mi cuenta</button>
             </div>
-            <p class="rp-note">Te enviaremos un código de 6 dígitos para confirmar tu correo.</p>
+            <p class="rp-note">Te enviaremos un código al correo para confirmarlo aquí mismo.</p>
           </div>
         </div>
         <div data-pop-step="code" hidden>
@@ -10601,8 +10601,8 @@
             <h3>Revisa tu correo</h3>
           </div>
           <div class="rd-body">
-            <p>Enviamos un código de 6 dígitos a <strong id="rpEmailSent">tu correo</strong>. Escríbelo aquí y sigues donde ibas:</p>
-            <input class="rp-code-input" id="rpCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" />
+            <p>Enviamos un código a <strong id="rpEmailSent">tu correo</strong>. Escríbelo completo aquí y sigues donde ibas:</p>
+            <input class="rp-code-input" id="rpCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="········" />
             <div class="rp-status" id="rpCodeStatus" hidden></div>
             <div class="rd-actions">
               <button type="button" class="rd-btn rd-btn-primary" id="rpVerifyBtn" onclick="registerPopVerify()">Confirmar y continuar</button>
@@ -16283,7 +16283,7 @@
           if (!currentUserEmail) {
             const tab = Object.keys(FORM_TABS).find((t) => FORM_TABS[t] === form.id);
             if (tab) savePendingForm(tab); // guarda lo escrito para retomarlo
-            // Popup encima del formulario: contraseña → código de 6 dígitos.
+            // Popup encima del formulario: contraseña → código del correo (6-10 dígitos, largo lo define Supabase).
             // El usuario nunca sale de la página (el borrador queda en ESTE navegador).
             const fullNm = [data.firstName, data.lastName].filter(Boolean).join(" ").trim() || String(data.name || "").trim();
             openRegisterPop({ name: fullNm, email: String(data.email || "").trim(), form });
@@ -16637,7 +16637,7 @@
       window.applyAllFormGates = applyAllFormGates;
 
       // "Crear cuenta con mi email": valida "Tus datos" + consentimiento y abre el
-      // popup de registro ENCIMA del formulario (contraseña → código de 6 dígitos).
+      // popup de registro ENCIMA del formulario (contraseña → código del correo (6-10 dígitos, largo lo define Supabase)).
       // El usuario nunca abandona la página.
       function startAccountFromForm(form) {
         hideGateError(form);
@@ -16983,8 +16983,10 @@
       // onAuthStateChange restaura el formulario (el popup se cierra solo).
       async function registerPopVerify() {
         const code = String((document.getElementById("rpCodeInput") || {}).value || "").replace(/\D/g, "");
-        if (code.length !== 6) {
-          rpStatus("rpCodeStatus", "Escribe los 6 dígitos del código que te enviamos.");
+        // El largo del código lo define Supabase (6-10 según configuración del
+        // proyecto; este proyecto envía 8) — aceptamos el rango completo.
+        if (code.length < 6 || code.length > 10) {
+          rpStatus("rpCodeStatus", "Escribe el código completo tal como llegó en el correo.");
           return;
         }
         const btn = document.getElementById("rpVerifyBtn");
@@ -17035,7 +17037,7 @@
           const box = document.getElementById("rdCodeStatus");
           if (box) { box.textContent = msg || ""; box.hidden = !msg; box.classList.toggle("rp-ok", Boolean(ok)); }
         };
-        if (code.length !== 6) { st("Escribe los 6 dígitos del código que te enviamos."); return; }
+        if (code.length < 6 || code.length > 10) { st("Escribe el código completo tal como llegó en el correo."); return; }
         st("Confirmando…", true);
         try {
           const { error } = await verifySignupCode(registerDoneEmail, code);
