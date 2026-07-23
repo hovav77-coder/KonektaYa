@@ -206,7 +206,16 @@
       "PowerShell(Get-ScheduledTask | Where-Object { $_.Actions.Execute -match 'konektaya|wscript' -or $_.Actions.Arguments -match 'konektaya' -or $_.TaskName -match 'konekta' } | Select-Object TaskName, TaskPath, State | Format-List)",
       "PowerShell(Get-ScheduledTask | ForEach-Object { $t = $_; $_.Actions | Where-Object { \\($_.Execute -match 'wscript|node'\\) -or \\($_.Arguments -match 'konektaya|serve'\\) } | ForEach-Object { [PSCustomObject]@{ Task = $t.TaskPath + $t.TaskName; Exe = $_.Execute; Args = $_.Arguments; State = $t.State } } } | Format-List; Get-CimInstance Win32_StartupCommand | Where-Object { $_.Command -match 'konektaya|serve|wscript' } | Select-Object Name, Command, Location | Format-List)",
       "PowerShell(Remove-Item \"C:\\\\Users\\\\HSAID\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\Startup\\\\konektaya-server.vbs\" -Confirm:$false; $pid3005 = \\(Get-NetTCPConnection -LocalPort 3005 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1\\).OwningProcess; if \\($pid3005\\) { $p = Get-Process -Id $pid3005; \"Proceso puerto 3005: PID $pid3005 \\($\\($p.ProcessName\\)\\) - deteniendo\"; Stop-Process -Id $pid3005 -Confirm:$false } else { \"Nada escuchando en 3005\" })",
-      "Bash(git commit -m 'Registro sin salir del formulario: popup + codigo de 6 digitos + Google en el gate *)"
+      "Bash(git commit -m 'Registro sin salir del formulario: popup + codigo de 6 digitos + Google en el gate *)",
+      "Bash(curl -s https://www.konektaya.com)",
+      "Bash(curl -s -I https://www.konektaya.com)",
+      "Bash(curl -s -o /dev/null -w \"status: %{http_code}\\\\n\" https://www.konektaya.com/)",
+      "Bash(curl -s -D - -o /dev/null https://www.konektaya.com/)",
+      "Bash(git commit -m 'Terminos/Privacidad en modal encima del formulario \\(el target=_blank rompia el registro en celular\\) *)",
+      "Bash(git commit -m 'Codigo de confirmacion: aceptar 6-10 digitos \\(este proyecto Supabase envia 8, el campo cortaba a 6\\) *)",
+      "Bash(git commit -m 'Mi panel \\(barra inferior\\): sin sesion lleva a iniciar sesion, no al panel vacio *)",
+      "Bash(git commit -m 'Google: mostrar siempre el selector de cuentas \\(prompt=select_account\\) *)",
+      "Bash(git commit -m 'Google sin salir de la pagina: One Tap \\(signInWithIdToken\\) con respaldo por redirect *)"
     ]
   }
 }

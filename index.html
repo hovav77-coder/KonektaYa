@@ -16684,13 +16684,11 @@
         const phone = String((form.querySelector('[name="phone"]') || {}).value || "").trim();
         if (phone) rememberContactPhone(phone);
         const tab = Object.keys(FORM_TABS).find((t) => FORM_TABS[t] === form.id);
-        if (tab) savePendingForm(tab);
+        if (tab) savePendingForm(tab); // por si el respaldo termina en redirect
         try { localStorage.setItem("konektaya_tos_pending", new Date().toISOString()); } catch (e) {}
-        // prompt=select_account: Google SIEMPRE muestra el selector de cuentas
-        // (sin esto reutiliza en silencio la última cuenta usada).
-        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin, queryParams: { prompt: "select_account" } } })
-          .then((r) => { if (r && r.error) showGateError(form, typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
-          .catch(() => { showGateError(form, "No se pudo conectar con Google. Intenta de nuevo o usa tu email."); });
+        // Selector de Google ENCIMA del formulario (One Tap); si no puede
+        // mostrarse, cae solo al redirect clásico con prompt=select_account.
+        googleSignInSmart((msg) => showGateError(form, msg));
       }
       window.googleFromForm = googleFromForm;
 
@@ -17659,6 +17657,74 @@
       // Supabase (Authentication → Providers → Google) con el Client ID/Secret de
       // Google Cloud. Hasta entonces el botón muestra "pronto" y avisa amablemente.
       window.GOOGLE_LOGIN_ENABLED = true;
+      // Client ID de Google (público) para el selector SIN salir de la página
+      // (Google Identity Services + signInWithIdToken). Con "" el botón usa el
+      // redirect clásico. Requiere en Google Cloud: Authorized JavaScript origins
+      // = https://konektaya.com, https://www.konektaya.com, http://localhost:3000.
+      window.GOOGLE_GSI_CLIENT_ID = "749732140400-gkf3nf7big745nn321lgmgcr5010p9q4.apps.googleusercontent.com";
+
+      // Carga on-demand del script de Google Identity Services.
+      let gsiLoadPromise = null;
+      function loadGsi() {
+        if (window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
+        if (gsiLoadPromise) return gsiLoadPromise;
+        gsiLoadPromise = new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://accounts.google.com/gsi/client";
+          s.async = true;
+          s.onload = resolve;
+          s.onerror = () => { gsiLoadPromise = null; reject(new Error("gsi")); };
+          document.head.appendChild(s);
+        });
+        return gsiLoadPromise;
+      }
+
+      // Camino clásico: redirect completo a Google (respaldo del selector).
+      function googleRedirectFlow(reportError) {
+        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin, queryParams: { prompt: "select_account" } } })
+          .then((r) => { if (r && r.error) reportError(typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
+          .catch(() => { reportError("No se pudo conectar con Google. Intenta de nuevo o usa tu email."); });
+      }
+
+      // Camino preferido: selector de cuentas de Google ENCIMA de la página
+      // (sin redirect — inmune a webviews, saltos entre apps y URLs quemadas).
+      // Si Google no puede mostrarlo (sin sesión de Google, cooldown, FedCM off),
+      // cae solo al redirect clásico.
+      let gsiInited = false;
+      function googleSignInSmart(reportError) {
+        const cid = window.GOOGLE_GSI_CLIENT_ID;
+        if (!cid) { googleRedirectFlow(reportError); return; }
+        loadGsi().then(() => {
+          try {
+            if (!gsiInited) {
+              gsiInited = true;
+              google.accounts.id.initialize({
+                client_id: cid,
+                use_fedcm_for_prompt: true,
+                callback: async (resp) => {
+                  try {
+                    const { error } = await supabaseClient.auth.signInWithIdToken({ provider: "google", token: resp.credential });
+                    if (error) reportError(typeof traduceAuthError === "function" ? traduceAuthError(error.message) : error.message);
+                    // Éxito: onAuthStateChange (SIGNED_IN) cierra popups y restaura el formulario.
+                  } catch (e) {
+                    reportError("No se pudo completar el ingreso con Google. Intenta de nuevo.");
+                  }
+                }
+              });
+            }
+            google.accounts.id.prompt((n) => {
+              // API de momentos: si el selector no se mostró, respaldo por redirect.
+              try {
+                const noShow = (n.isNotDisplayed && n.isNotDisplayed()) || (n.isSkippedMoment && n.isSkippedMoment());
+                if (noShow) googleRedirectFlow(reportError);
+              } catch (e) { /* FedCM puede no exponer los métodos: sin señal, no forzamos redirect */ }
+            });
+          } catch (e) {
+            googleRedirectFlow(reportError);
+          }
+        }).catch(() => googleRedirectFlow(reportError));
+      }
+
       function loginWithGoogle() {
         if (!window.GOOGLE_LOGIN_ENABLED || !supabaseEnabled || !supabaseClient) {
           if (typeof showLoginStatus === "function") showLoginStatus("Entrar con Google estará disponible muy pronto. Por ahora usa tu email. 🙌");
@@ -17666,13 +17732,10 @@
         }
         // El aviso bajo el botón hace las veces de aceptación de Términos y es
         // visible en ambos modos (Google crea la cuenta aunque estés en "Iniciar
-        // sesión"). Se estampa al volver con sesión SOLO si la cuenta no tiene ya
+        // sesión"). Se estampa al llegar la sesión SOLO si la cuenta no tiene ya
         // su sello (applySupabaseSession comprueba tos_accepted_at antes).
         try { localStorage.setItem("konektaya_tos_pending", new Date().toISOString()); } catch (e) {}
-        // prompt=select_account: Google SIEMPRE muestra el selector de cuentas.
-        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin, queryParams: { prompt: "select_account" } } })
-          .then((r) => { if (r && r.error && typeof showLoginStatus === "function") showLoginStatus(typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
-          .catch(() => {});
+        googleSignInSmart((msg) => { if (typeof showLoginStatus === "function") showLoginStatus(msg); });
       }
       window.loginWithGoogle = loginWithGoogle;
 
