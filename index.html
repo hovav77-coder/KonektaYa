@@ -16686,7 +16686,9 @@
         const tab = Object.keys(FORM_TABS).find((t) => FORM_TABS[t] === form.id);
         if (tab) savePendingForm(tab);
         try { localStorage.setItem("konektaya_tos_pending", new Date().toISOString()); } catch (e) {}
-        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin } })
+        // prompt=select_account: Google SIEMPRE muestra el selector de cuentas
+        // (sin esto reutiliza en silencio la última cuenta usada).
+        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin, queryParams: { prompt: "select_account" } } })
           .then((r) => { if (r && r.error) showGateError(form, typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
           .catch(() => { showGateError(form, "No se pudo conectar con Google. Intenta de nuevo o usa tu email."); });
       }
@@ -17667,7 +17669,8 @@
         // sesión"). Se estampa al volver con sesión SOLO si la cuenta no tiene ya
         // su sello (applySupabaseSession comprueba tos_accepted_at antes).
         try { localStorage.setItem("konektaya_tos_pending", new Date().toISOString()); } catch (e) {}
-        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin } })
+        // prompt=select_account: Google SIEMPRE muestra el selector de cuentas.
+        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin, queryParams: { prompt: "select_account" } } })
           .then((r) => { if (r && r.error && typeof showLoginStatus === "function") showLoginStatus(typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
           .catch(() => {});
       }
