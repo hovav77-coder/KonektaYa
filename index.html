@@ -16445,7 +16445,18 @@
         if (what === "inicio") { if (window.activatePropertyYaTab) activatePropertyYaTab("inicio"); else showTab("inicio"); }
         else if (what === "publicar") { goPublishOrSearch(); if (window.setHomeFlow) setHomeFlow("publicar"); }
         else if (what === "buscar") { goPublishOrSearch(); if (window.setHomeFlow) setHomeFlow("buscar"); }
-        else if (what === "panel") { if (window.showDashboardView) window.showDashboardView("user"); showTab("admin"); }
+        else if (what === "panel") {
+          // Sin sesión no hay panel que mostrar: llevar a iniciar sesión.
+          if (supabaseEnabled && !currentUserEmail) {
+            authMode = "login";
+            applyAuthMode();
+            showTab("login");
+            showLoginStatus("Inicia sesión para ver tu panel.");
+          } else {
+            if (window.showDashboardView) window.showDashboardView("user");
+            showTab("admin");
+          }
+        }
         const bar = document.getElementById("bottomBar");
         if (bar) bar.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.bn === what));
       }
