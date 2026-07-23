@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.join(__dirname, "..");
-const port = 3005;
+const port = process.env.PORT || 3000; // 3000 = el puerto permitido en Supabase (Redirect URLs)
 
 const types = {
   ".html": "text/html; charset=utf-8",

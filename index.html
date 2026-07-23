@@ -3705,6 +3705,7 @@
         color: #6a7a90;
         font-size: 13px;
         margin: 12px 0 0;
+        text-align: center;
       }
       .form-account-gate .fag-alt a {
         color: #0f5e91;
@@ -3712,42 +3713,213 @@
         text-decoration: underline;
       }
 
-      /* Banner "¿Ya tienes cuenta?" (solo visitantes, arriba del formulario) */
-      .form-auth-banner {
-        align-items: center;
-        background: #f2f7ff;
-        border: 1.5px solid #cfe0f5;
-        border-radius: 13px;
+      /* Gate v2: consentimiento único + Google + email (sin salir del formulario) */
+      .form-account-gate .fag-consent {
+        align-items: flex-start;
+        background: #ffffff;
+        border: 1.5px solid #eadfd6;
+        border-radius: 12px;
+        color: #5c554e;
+        cursor: pointer;
         display: flex;
-        flex-wrap: wrap;
+        font-size: 13px;
+        gap: 10px;
+        line-height: 1.45;
+        padding: 11px 13px;
+      }
+      .form-account-gate .fag-consent input {
+        accent-color: var(--orange);
+        flex: 0 0 auto;
+        height: 17px;
+        margin-top: 1px;
+        width: 17px;
+      }
+      .form-account-gate .fag-consent a {
+        color: #b4530f;
+        font-weight: 700;
+      }
+      .form-account-gate .fag-error {
+        background: #fdeeee;
+        border: 1.5px solid #f3c1c1;
+        border-radius: 11px;
+        color: #a02929;
+        font-size: 13px;
+        line-height: 1.45;
+        padding: 10px 13px;
+      }
+      .form-account-gate .fag-error[hidden] {
+        display: none;
+      }
+      .form-account-gate .fag-google {
+        align-items: center;
+        background: #ffffff;
+        border: 1.5px solid #d7dee6;
+        border-radius: 13px;
+        color: #3c4043;
+        cursor: pointer;
+        display: flex;
+        font-size: 15px;
+        font-weight: 700;
+        gap: 10px;
+        justify-content: center;
+        min-height: 48px;
+        padding: 12px 16px;
+        width: 100%;
+      }
+      .form-account-gate .fag-google svg {
+        flex: 0 0 auto;
+        height: 18px;
+        width: 18px;
+      }
+      .form-account-gate .fag-or {
+        align-items: center;
+        color: #a58873;
+        display: flex;
+        font-size: 11px;
+        font-weight: 800;
         gap: 12px;
-        margin-bottom: 14px;
-        padding: 13px 15px;
+        letter-spacing: 1.2px;
+        margin: 0;
       }
-      .form-auth-banner .fab-t {
+      .form-account-gate .fag-or::before,
+      .form-account-gate .fag-or::after {
+        background: #e8d5c6;
+        content: "";
         flex: 1;
-        min-width: 200px;
+        height: 1px;
       }
-      .form-auth-banner .fab-t b {
-        color: var(--navy);
+      .form-account-gate .fag-continue {
+        justify-self: stretch;
+        width: 100%;
+      }
+
+      /* Popup de registro en 2 pasos (contraseña → código de 6 dígitos) */
+      .rp-idchip {
+        align-items: center;
+        background: #eefaf2;
+        border: 1.5px solid #bfe6cd;
+        border-radius: 12px;
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        padding: 10px 13px;
+        text-align: left;
+      }
+      .rp-idchip b {
+        color: #166b3d;
+        display: block;
         font-size: 14px;
       }
-      .form-auth-banner .fab-t span {
-        color: #6a7a90;
+      .rp-idchip small {
+        color: #4c9a6e;
         display: block;
         font-size: 12.5px;
-        margin-top: 1px;
+        overflow-wrap: anywhere;
       }
-      .form-auth-banner .fab-btn {
-        background: var(--navy);
+      .rp-idchip button {
+        background: none;
         border: none;
-        border-radius: 11px;
-        color: #ffffff;
+        color: #1c8a4c;
         cursor: pointer;
-        font-size: 13.5px;
-        font-weight: 900;
-        padding: 11px 18px;
-        white-space: nowrap;
+        flex: 0 0 auto;
+        font-size: 12.5px;
+        font-weight: 700;
+        min-height: 44px;
+        padding: 8px;
+        text-decoration: underline;
+      }
+      .rp-status {
+        background: #fdeeee;
+        border: 1.5px solid #f3c1c1;
+        border-radius: 11px;
+        color: #a02929;
+        font-size: 13px;
+        line-height: 1.45;
+        padding: 10px 13px;
+        text-align: left;
+      }
+      .rp-status[hidden] {
+        display: none;
+      }
+      .rp-status.rp-ok {
+        background: #eefaf2;
+        border-color: #bfe6cd;
+        color: #166b3d;
+      }
+      .rp-code-input {
+        border: 2px solid #d7dee6;
+        border-radius: 13px;
+        color: var(--navy);
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: 12px;
+        padding: 12px 6px 12px 18px;
+        text-align: center;
+        width: 100%;
+      }
+      .rp-code-input:focus {
+        border-color: var(--orange);
+        outline: none;
+      }
+      .rp-links {
+        color: #8ba0b5;
+        display: flex;
+        font-size: 12.5px;
+        gap: 10px;
+        justify-content: space-between;
+        margin: 12px 0 0;
+      }
+      .rp-links a {
+        color: #b4530f;
+        font-weight: 700;
+      }
+      .rp-note {
+        color: #8ba0b5;
+        font-size: 12px;
+        line-height: 1.5;
+        margin: 10px 0 0;
+        text-align: center;
+      }
+      #registerPopModal .field {
+        text-align: left;
+      }
+      #registerPopModal [data-pop-step][hidden] {
+        display: none;
+      }
+      /* Móvil con teclado abierto: la tarjeta alta necesita su propio scroll */
+      #registerPopModal .rd-card {
+        max-height: 90vh;
+        max-height: 90dvh;
+        overflow-y: auto;
+      }
+      .rd-code {
+        border-top: 1px solid #edf1f6;
+        display: grid;
+        gap: 10px;
+        margin-top: 14px;
+        padding-top: 14px;
+      }
+      .rd-code .rd-code-label {
+        color: #5c6b7a;
+        font-size: 13px;
+        line-height: 1.45;
+        margin: 0;
+      }
+      /* Aviso de términos bajo "Continuar con Google" (solo modo Crear cuenta) */
+      .google-terms {
+        color: #7b8a99;
+        display: block;
+        font-size: 11.5px;
+        line-height: 1.45;
+        margin: -4px 0 2px;
+        text-align: center;
+      }
+      .google-terms a {
+        color: #b4530f;
+        font-weight: 700;
+      }
+      .google-terms[hidden] {
+        display: none;
       }
 
       /* Chip de identidad (logueado): "Tus datos" colapsado a una línea */
@@ -10324,7 +10496,66 @@
               <button type="button" onclick="openWebmail('https://www.icloud.com/mail/')">iCloud</button>
             </div>
           </div>
+          <!-- Confirmación por código: el correo trae un código de 6 dígitos además
+               del enlace; escribirlo aquí evita cambiar de pestaña/navegador. -->
+          <div class="rd-code">
+            <p class="rd-code-label">¿Ves un <strong>código de 6 dígitos</strong> en el correo? Escríbelo aquí:</p>
+            <input class="rp-code-input" id="rdCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" />
+            <div class="rp-status" id="rdCodeStatus" hidden></div>
+            <button type="button" class="rd-btn rd-btn-primary" onclick="confirmSignupCodeFromDone()">Confirmar código</button>
+          </div>
           <p class="rd-resend">¿No llegó? Revisa spam o <a href="#" onclick="event.preventDefault(); resendConfirmation()">reenviar correo</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Popup: crear cuenta SIN salir del formulario (paso 1 contraseña, paso 2 código) -->
+    <div class="rd-modal" id="registerPopModal" hidden>
+      <div class="rd-scrim" onclick="registerPopScrimClick()"></div>
+      <div class="rd-card" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
+        <div data-pop-step="pass">
+          <div class="rd-head">
+            <div class="rd-ico" aria-hidden="true">🔑</div>
+            <h3 id="rpTitle">Crea tu contraseña</h3>
+          </div>
+          <div class="rd-body">
+            <p>Tu cuenta se crea con los datos que ya escribiste:</p>
+            <div class="rp-idchip">
+              <div><b id="rpName">—</b><small id="rpEmail">—</small></div>
+              <button type="button" onclick="registerPopEdit()">Cambiar</button>
+            </div>
+            <label class="field full">Contraseña
+              <span class="password-wrap">
+                <input id="rpPassword" type="password" autocomplete="new-password" minlength="8" />
+                <button type="button" class="password-toggle" onclick="toggleRpPassword()" aria-label="Mostrar u ocultar contraseña" title="Mostrar u ocultar">👁️</button>
+              </span>
+              <small class="password-hint">Mínimo 8 caracteres, con una mayúscula y un número.</small>
+            </label>
+            <div class="rp-status" id="rpPassStatus" hidden></div>
+            <div class="rd-actions">
+              <button type="button" class="rd-btn rd-btn-primary" id="rpCreateBtn" onclick="registerPopCreate()">Crear mi cuenta</button>
+            </div>
+            <p class="rp-note">Te enviaremos un código de 6 dígitos para confirmar tu correo.</p>
+          </div>
+        </div>
+        <div data-pop-step="code" hidden>
+          <div class="rd-head">
+            <div class="rd-ico" aria-hidden="true">📧</div>
+            <h3>Revisa tu correo</h3>
+          </div>
+          <div class="rd-body">
+            <p>Enviamos un código de 6 dígitos a <strong id="rpEmailSent">tu correo</strong>. Escríbelo aquí y sigues donde ibas:</p>
+            <input class="rp-code-input" id="rpCodeInput" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" />
+            <div class="rp-status" id="rpCodeStatus" hidden></div>
+            <div class="rd-actions">
+              <button type="button" class="rd-btn rd-btn-primary" id="rpVerifyBtn" onclick="registerPopVerify()">Confirmar y continuar</button>
+            </div>
+            <div class="rp-links">
+              <a href="#" id="rpResendLink" onclick="event.preventDefault(); registerPopResend()">Reenviar código</a>
+              <span>¿No llega? Revisa spam</span>
+            </div>
+            <p class="rp-note">El enlace del correo también funciona — esta ventana se cierra sola al confirmar.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -11308,6 +11539,9 @@
                 <span>Continuar con Google</span>
                 <span class="soon-badge" id="googleSoon">pronto</span>
               </button>
+              <!-- Visible en AMBOS modos: Google no distingue login de registro —
+                   un usuario nuevo puede crear cuenta desde "Iniciar sesión". -->
+              <small class="google-terms">Al continuar con Google aceptas los <a href="#terminos" target="_blank" rel="noopener">Términos y Condiciones</a> y la <a href="#privacidad" target="_blank" rel="noopener">Política de Privacidad</a>.</small>
               <div class="login-or login-or-email"><span>o con tu email</span></div>
               <div class="login-status" id="loginStatus"></div>
               <div class="field-grid">
@@ -11322,7 +11556,7 @@
                     <span class="pw-meter-track"><b id="loginPwFill"></b></span>
                     <span class="pw-meter-label" id="loginPwLabel"></span>
                   </span>
-                  <small class="password-hint" id="loginPasswordHint" hidden>Usa al menos 8 caracteres, con una mayúscula, una minúscula y un número.</small>
+                  <small class="password-hint" id="loginPasswordHint" hidden>Mínimo 8 caracteres, con una mayúscula y un número.</small>
                 </label>
               </div>
               <label class="auth-consent" data-register-only hidden>
@@ -15992,17 +16226,10 @@
           if (!currentUserEmail) {
             const tab = Object.keys(FORM_TABS).find((t) => FORM_TABS[t] === form.id);
             if (tab) savePendingForm(tab); // guarda lo escrito para retomarlo
-            authMode = "register";
-            applyAuthMode();
-            showTab("login");
-            // Auto-completar nombre y email con lo que la persona ya escribió en
-            // el formulario, para que no tenga que volver a teclearlos.
-            const regName = document.querySelector('#loginForm [data-register-only] input');
-            const regEmail = document.getElementById("loginEmail");
+            // Popup encima del formulario: contraseña → código de 6 dígitos.
+            // El usuario nunca sale de la página (el borrador queda en ESTE navegador).
             const fullNm = [data.firstName, data.lastName].filter(Boolean).join(" ").trim() || String(data.name || "").trim();
-            if (regName && fullNm) regName.value = fullNm;
-            if (regEmail && data.email) regEmail.value = String(data.email).trim();
-            showLoginStatus("Crea tu cuenta o inicia sesión para publicar. Guardamos lo que escribiste y te lo devolvemos.");
+            openRegisterPop({ name: fullNm, email: String(data.email || "").trim(), form });
             return false;
           }
           data.email = currentUserEmail; // publica siempre con la cuenta logueada
@@ -16245,29 +16472,51 @@
         if (!form || form.dataset.gateReady === "true") return;
         const firstStep = form.querySelector(".form-step");
         if (!firstStep) return;
-        // Banner para el cliente EXISTENTE: entrar con 1 toque antes de llenar nada.
-        const banner = document.createElement("div");
-        banner.className = "form-auth-banner";
-        banner.setAttribute("data-auth-banner", "");
-        banner.hidden = true;
-        banner.innerHTML =
-          '<div class="fab-t"><b>👋 ¿Ya tienes cuenta?</b><span>Inicia sesión y tus datos se llenan solos.</span></div>' +
-          '<button type="button" class="fab-btn">Iniciar sesión</button>';
-        banner.querySelector(".fab-btn").addEventListener("click", () => loginFromForm(form));
-        firstStep.insertAdjacentElement("beforebegin", banner);
+        // Gate v2: todo pasa ENCIMA del formulario (popup), sin saltar a #login.
+        // Un solo consentimiento (vale para Google y email) + un solo "ya tengo cuenta".
         const gate = document.createElement("div");
         gate.className = "form-account-gate";
         gate.setAttribute("data-account-gate", "");
         gate.hidden = true;
         gate.innerHTML =
           '<div class="fag-head">🔒 Crea tu cuenta para continuar</div>' +
-          '<p class="fag-note">Con tu nombre y email creamos tu cuenta. Confirmas por correo y sigues llenando el resto — no perderás lo que escribiste.</p>' +
-          '<button type="button" class="button primary fag-continue">Crear cuenta y continuar</button>' +
-          '<p class="fag-alt">¿Ya tienes cuenta? <a href="#" class="fag-login">Inicia sesión aquí</a> — tus datos se llenan solos.</p>';
+          '<p class="fag-note">Confirmas con un código que te enviamos al correo y sigues llenando aquí mismo — no pierdes nada de lo que escribiste.</p>' +
+          '<label class="fag-consent"><input type="checkbox" data-gate-consent />' +
+          '<span>He leído y acepto los <a href="#terminos" target="_blank" rel="noopener">Términos y Condiciones</a> y la <a href="#privacidad" target="_blank" rel="noopener">Política de Privacidad</a>.</span></label>' +
+          '<div class="fag-error" data-gate-error hidden></div>' +
+          '<button type="button" class="fag-google">' +
+          '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.3-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 16 3 9.1 7.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36 26.7 37 24 37c-5.3 0-9.7-2.6-11.3-6.9l-6.5 5C9.1 42.3 16 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2C41.9 35.9 45 30.4 45 24c0-1.3-.1-2.5-.4-3.5z"/></svg>' +
+          "Continuar con Google</button>" +
+          '<div class="fag-or"><span>o</span></div>' +
+          '<button type="button" class="button primary fag-continue">Crear cuenta con mi email</button>' +
+          '<p class="fag-alt">¿Ya tienes cuenta? <a href="#" class="fag-login">Inicia sesión</a></p>';
         gate.querySelector(".fag-continue").addEventListener("click", () => startAccountFromForm(form));
+        gate.querySelector(".fag-google").addEventListener("click", () => googleFromForm(form));
         gate.querySelector(".fag-login").addEventListener("click", (e) => { e.preventDefault(); loginFromForm(form); });
+        // Al marcar el consentimiento se limpia el error (si era por eso).
+        gate.querySelector("[data-gate-consent]").addEventListener("change", () => hideGateError(form));
         firstStep.insertAdjacentElement("afterend", gate);
         form.dataset.gateReady = "true";
+      }
+
+      // Error inline del gate (reemplaza los alert() nativos).
+      function showGateError(form, message) {
+        const box = form && form.querySelector("[data-gate-error]");
+        if (!box) { alert(message); return; }
+        box.textContent = message;
+        box.hidden = false;
+        box.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      function hideGateError(form) {
+        const box = form && form.querySelector("[data-gate-error]");
+        if (box) box.hidden = true;
+      }
+      // Consentimiento del gate: requerido para AMBOS caminos (email y Google).
+      function gateConsentOk(form) {
+        const cb = form && form.querySelector("[data-gate-consent]");
+        if (cb && cb.checked) return true;
+        showGateError(form, "Para crear tu cuenta debes aceptar los Términos y Condiciones y la Política de Privacidad (marca la casilla de arriba).");
+        return false;
       }
 
       function applyFormGate(form) {
@@ -16283,9 +16532,6 @@
         if (gate) gate.hidden = loggedIn;
         const submitRow = form.querySelector(".form-submit-row");
         if (submitRow) submitRow.classList.toggle("gate-hidden", !loggedIn);
-        // Banner "¿Ya tienes cuenta?" solo para visitantes.
-        const banner = form.querySelector("[data-auth-banner]");
-        if (banner) banner.hidden = loggedIn;
         // Con sesión: "Tus datos" se colapsa a una línea con el perfil. Excepciones
         // (el paso queda visible como siempre): perfiles broker (tienen licencia/
         // empresa en ese paso) y perfiles sin teléfono (deben poder escribirlo —
@@ -16333,10 +16579,11 @@
       }
       window.applyAllFormGates = applyAllFormGates;
 
-      // "Crear cuenta y continuar": valida "Tus datos" y manda a crear la cuenta
-      // (guarda borrador + pantalla de registro prellenada). Al volver logueado,
-      // el retorno reabre el formulario con los pasos desbloqueados.
+      // "Crear cuenta con mi email": valida "Tus datos" + consentimiento y abre el
+      // popup de registro ENCIMA del formulario (contraseña → código de 6 dígitos).
+      // El usuario nunca abandona la página.
       function startAccountFromForm(form) {
+        hideGateError(form);
         const data = formToObject(form);
         const first = String(data.firstName || "").trim();
         const last = String(data.lastName || "").trim();
@@ -16348,12 +16595,34 @@
         if (!/^\S+@\S+\.\S+$/.test(email)) faltan.push("email válido");
         if (!phone) faltan.push("teléfono");
         if (faltan.length) {
-          alert("Completa tus datos para crear la cuenta: " + faltan.join(", ") + ".");
+          showGateError(form, "Completa tus datos para crear la cuenta: " + faltan.join(", ") + ".");
           return;
         }
-        ensureAccountForForm(form, data); // guarda borrador + lleva a registro prellenado
+        if (!gateConsentOk(form)) return;
+        ensureAccountForForm(form, data); // guarda borrador + abre el popup de registro
       }
       window.startAccountFromForm = startAccountFromForm;
+
+      // "Continuar con Google" desde el gate: guarda el borrador ANTES del redirect
+      // (signInWithOAuth descarga la página) y deja pendiente el sello de
+      // consentimiento para estamparlo al volver con sesión.
+      function googleFromForm(form) {
+        hideGateError(form);
+        if (!gateConsentOk(form)) return;
+        if (!window.GOOGLE_LOGIN_ENABLED || !supabaseEnabled || !supabaseClient) {
+          showGateError(form, "Entrar con Google no está disponible en este momento. Usa tu email.");
+          return;
+        }
+        const phone = String((form.querySelector('[name="phone"]') || {}).value || "").trim();
+        if (phone) rememberContactPhone(phone);
+        const tab = Object.keys(FORM_TABS).find((t) => FORM_TABS[t] === form.id);
+        if (tab) savePendingForm(tab);
+        try { localStorage.setItem("konektaya_tos_pending", new Date().toISOString()); } catch (e) {}
+        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin } })
+          .then((r) => { if (r && r.error) showGateError(form, typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
+          .catch(() => { showGateError(form, "No se pudo conectar con Google. Intenta de nuevo o usa tu email."); });
+      }
+      window.googleFromForm = googleFromForm;
 
       // "Ya tengo cuenta": guarda lo escrito (si hay algo) y lleva a INICIAR SESIÓN.
       // Al entrar, el retorno estándar (applySupabaseSession) devuelve al formulario
@@ -16489,13 +16758,228 @@
           if (note) {
             note.innerHTML = error
               ? "No se pudo reenviar: " + escapeHtml(error.message)
-              : "✅ Reenviamos el correo a <b>" + escapeHtml(registerDoneEmail) + "</b>. Revisa tu bandeja o spam.";
+              : "✅ Reenviamos el correo a <b>" + escapeHtml(registerDoneEmail) + "</b>. Revisa tu bandeja o spam. (Solo vale el código del último correo.)";
           }
         } catch (e) {
           if (note) note.textContent = "No se pudo reenviar. Intenta de nuevo en un momento.";
         }
       }
       window.resendConfirmation = resendConfirmation;
+
+      // ============================================================
+      // Popup de registro SIN salir del formulario: paso 1 contraseña (nombre y
+      // email vienen de "Tus datos", no se vuelven a pedir), paso 2 código de 6
+      // dígitos (verifyOtp) — la sesión nace en ESTE navegador, así el borrador
+      // nunca se pierde por confirmar en otro lado. El enlace del correo sigue
+      // funcionando como respaldo.
+      // ============================================================
+      let registerPopCtx = { name: "", email: "", formId: "" };
+
+      function openRegisterPop(ctx) {
+        registerPopCtx = { name: ctx.name || "", email: ctx.email || "", formId: ctx.form ? ctx.form.id : "" };
+        const nm = document.getElementById("rpName");
+        const em = document.getElementById("rpEmail");
+        if (nm) nm.textContent = registerPopCtx.name || "—";
+        if (em) em.textContent = registerPopCtx.email || "—";
+        registerPopShowStep("pass");
+        const pass = document.getElementById("rpPassword");
+        if (pass) pass.value = "";
+        const code = document.getElementById("rpCodeInput");
+        if (code) code.value = "";
+        rpStatus("rpPassStatus", "");
+        rpStatus("rpCodeStatus", "");
+        const m = document.getElementById("registerPopModal");
+        if (m) m.hidden = false;
+        if (pass) setTimeout(() => { try { pass.focus(); } catch (e) {} }, 60);
+      }
+      function closeRegisterPop() {
+        const m = document.getElementById("registerPopModal");
+        if (m) m.hidden = true;
+      }
+      window.closeRegisterPop = closeRegisterPop;
+      // Toque en el fondo oscuro: cierra solo en el paso contraseña. En el paso
+      // código la cuenta YA se creó — un toque accidental a mitad de confirmación
+      // dejaría el proceso colgado sin señal de cómo retomarlo.
+      function registerPopScrimClick() {
+        const pass = document.querySelector('#registerPopModal [data-pop-step="pass"]');
+        if (pass && !pass.hidden) closeRegisterPop();
+      }
+      window.registerPopScrimClick = registerPopScrimClick;
+      function registerPopShowStep(step) {
+        document.querySelectorAll("#registerPopModal [data-pop-step]").forEach((el) => {
+          el.hidden = el.getAttribute("data-pop-step") !== step;
+        });
+      }
+      // "Cambiar": cierra el popup y enfoca "Tus datos" para corregir nombre/email.
+      function registerPopEdit() {
+        closeRegisterPop();
+        const form = registerPopCtx.formId ? document.getElementById(registerPopCtx.formId) : null;
+        const el = form && form.querySelector('[name="email"]');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+      }
+      window.registerPopEdit = registerPopEdit;
+      function toggleRpPassword() {
+        const input = document.getElementById("rpPassword");
+        if (input) input.type = input.type === "password" ? "text" : "password";
+      }
+      window.toggleRpPassword = toggleRpPassword;
+      function rpStatus(id, message, ok) {
+        const box = document.getElementById(id);
+        if (!box) return;
+        box.textContent = message || "";
+        box.hidden = !message;
+        box.classList.toggle("rp-ok", Boolean(ok));
+      }
+
+      // Paso 1 → signUp. El consentimiento ya se marcó en el gate: viaja como
+      // tos_accepted_at en la metadata de la cuenta (prueba de aceptación, Ley 81).
+      async function registerPopCreate() {
+        const email = registerPopCtx.email;
+        const name = registerPopCtx.name;
+        const pass = String((document.getElementById("rpPassword") || {}).value || "");
+        if (pass.length < 8 || !/[A-Z]/.test(pass) || !/[0-9]/.test(pass)) {
+          rpStatus("rpPassStatus", "La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.");
+          return;
+        }
+        const btn = document.getElementById("rpCreateBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Creando tu cuenta…"; }
+        rpStatus("rpPassStatus", "");
+        try {
+          const { data: res, error } = await supabaseClient.auth.signUp({
+            email,
+            password: pass,
+            options: {
+              data: { name, tos_accepted_at: new Date().toISOString() },
+              emailRedirectTo: location.origin
+            }
+          });
+          if (btn) { btn.disabled = false; btn.textContent = "Crear mi cuenta"; }
+          if (error) {
+            rpStatus("rpPassStatus", traduceAuthError(error.message));
+            if (/already registered|already exists|user already/i.test(error.message || "")) registerPopGoLogin();
+            return;
+          }
+          // Anti-enumeración de Supabase: si el email YA tiene cuenta devuelve
+          // "éxito" sin sesión y con identities vacías — y el correo nunca llega.
+          if (res && res.user && Array.isArray(res.user.identities) && res.user.identities.length === 0) {
+            registerPopGoLogin();
+            return;
+          }
+          if (res && res.session) { closeRegisterPop(); return; } // Confirm email OFF: entra directo
+          registerDoneEmail = email; // reutiliza el reenvío existente
+          const sent = document.getElementById("rpEmailSent");
+          if (sent) sent.textContent = email;
+          registerPopShowStep("code");
+          const code = document.getElementById("rpCodeInput");
+          if (code) setTimeout(() => { try { code.focus(); } catch (e) {} }, 60);
+        } catch (e) {
+          if (btn) { btn.disabled = false; btn.textContent = "Crear mi cuenta"; }
+          rpStatus("rpPassStatus", "No se pudo crear la cuenta. Revisa tu conexión e intenta de nuevo.");
+        }
+      }
+      window.registerPopCreate = registerPopCreate;
+
+      // Email ya registrado: cerrar el popup y llevar a iniciar sesión (con el
+      // borrador ya guardado, el retorno estándar lo devuelve al formulario).
+      function registerPopGoLogin() {
+        closeRegisterPop();
+        const form = registerPopCtx.formId ? document.getElementById(registerPopCtx.formId) : null;
+        if (form) loginFromForm(form);
+        showLoginStatus("Este correo ya tiene una cuenta. Inicia sesión para continuar (o usa \"¿Olvidaste tu contraseña?\").");
+      }
+
+      // Confirmación por código: compartida entre el popup y el modal clásico.
+      async function verifySignupCode(email, code) {
+        let res = await supabaseClient.auth.verifyOtp({ email, token: code, type: "signup" });
+        // Compatibilidad: algunas versiones del SDK usan el tipo genérico "email".
+        if (res.error && /type|invalid/i.test(res.error.message || "") && !/expired/i.test(res.error.message || "")) {
+          const retry = await supabaseClient.auth.verifyOtp({ email, token: code, type: "email" });
+          if (!retry.error) res = retry;
+        }
+        return res;
+      }
+
+      // Paso 2 → verifyOtp. Al validar, la sesión nace aquí mismo y
+      // onAuthStateChange restaura el formulario (el popup se cierra solo).
+      async function registerPopVerify() {
+        const code = String((document.getElementById("rpCodeInput") || {}).value || "").replace(/\D/g, "");
+        if (code.length !== 6) {
+          rpStatus("rpCodeStatus", "Escribe los 6 dígitos del código que te enviamos.");
+          return;
+        }
+        const btn = document.getElementById("rpVerifyBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Confirmando…"; }
+        rpStatus("rpCodeStatus", "");
+        try {
+          const { error } = await verifySignupCode(registerPopCtx.email, code);
+          if (error) {
+            if (btn) { btn.disabled = false; btn.textContent = "Confirmar y continuar"; }
+            rpStatus("rpCodeStatus", /expired|invalid/i.test(error.message || "")
+              ? "El código no es válido o venció. Revisa el último correo (solo vale el más reciente) o toca \"Reenviar código\"."
+              : traduceAuthError(error.message));
+            return;
+          }
+          rpStatus("rpCodeStatus", "✅ ¡Correo confirmado! Entrando…", true);
+          if (btn) btn.textContent = "Entrando…";
+          // onAuthStateChange (SIGNED_IN) cierra el popup y restaura el formulario.
+        } catch (e) {
+          if (btn) { btn.disabled = false; btn.textContent = "Confirmar y continuar"; }
+          rpStatus("rpCodeStatus", "No se pudo confirmar. Revisa tu conexión e intenta de nuevo.");
+        }
+      }
+      window.registerPopVerify = registerPopVerify;
+
+      // Reenviar código desde el popup (cooldown: Supabase limita ~1/minuto).
+      let rpResendAt = 0;
+      async function registerPopResend() {
+        const wait = Math.ceil((rpResendAt - Date.now()) / 1000);
+        if (wait > 0) { rpStatus("rpCodeStatus", "Espera " + wait + "s para reenviar."); return; }
+        rpResendAt = Date.now() + 60000;
+        try {
+          const { error } = await supabaseClient.auth.resend({ type: "signup", email: registerPopCtx.email });
+          rpStatus("rpCodeStatus", error
+            ? "No se pudo reenviar: " + error.message
+            : "✅ Código reenviado a " + registerPopCtx.email + ". Solo vale el del último correo.", !error);
+        } catch (e) {
+          rpStatus("rpCodeStatus", "No se pudo reenviar. Intenta de nuevo en un momento.");
+        }
+      }
+      window.registerPopResend = registerPopResend;
+
+      // Confirmar por código desde el modal clásico "¡Cuenta creada!" (quien se
+      // registró por la página de login también recibe el código en el correo).
+      async function confirmSignupCodeFromDone() {
+        const input = document.getElementById("rdCodeInput");
+        const code = String((input && input.value) || "").replace(/\D/g, "");
+        const st = (msg, ok) => {
+          const box = document.getElementById("rdCodeStatus");
+          if (box) { box.textContent = msg || ""; box.hidden = !msg; box.classList.toggle("rp-ok", Boolean(ok)); }
+        };
+        if (code.length !== 6) { st("Escribe los 6 dígitos del código que te enviamos."); return; }
+        st("Confirmando…", true);
+        try {
+          const { error } = await verifySignupCode(registerDoneEmail, code);
+          if (error) {
+            st(/expired|invalid/i.test(error.message || "")
+              ? "El código no es válido o venció. Usa el del último correo o toca \"reenviar correo\"."
+              : traduceAuthError(error.message));
+            return;
+          }
+          st("✅ ¡Correo confirmado! Entrando…", true);
+          // onAuthStateChange cierra este modal y sigue el flujo normal.
+        } catch (e) {
+          st("No se pudo confirmar. Revisa tu conexión e intenta de nuevo.");
+        }
+      }
+      window.confirmSignupCodeFromDone = confirmSignupCodeFromDone;
+
+      // Enter = acción del paso (los inputs viven en <div>, no en <form>: sin esto
+      // la tecla más natural del teclado — y el "ir" del teclado numérico móvil —
+      // no hacía nada). Doble disparo cubierto: cada acción deshabilita su botón.
+      [["rpPassword", registerPopCreate], ["rpCodeInput", registerPopVerify], ["rdCodeInput", confirmSignupCodeFromDone]].forEach(([id, fn]) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); fn(); } });
+      });
       function toggleMyDataEdit(cancel) {
         const view = document.getElementById("myDataView");
         const edit = document.getElementById("myDataEdit");
@@ -16575,17 +17059,6 @@
         setTimeout(() => toggleMyDataEdit(true), 700);
       }
 
-      // Devuelve true si intercepta (visitante sin sesión yendo a un formulario).
-      function gateFormTab(tab) {
-        if (!supabaseEnabled || !FORM_TABS[tab] || currentUserEmail) return false;
-        savePendingForm(tab);
-        authMode = "register";
-        applyAuthMode();
-        showTab("login");
-        showLoginStatus("Crea tu cuenta o inicia sesión para publicar o buscar. Luego te llevamos a tu formulario.");
-        return true;
-      }
-
       function showLoginStatus(message) {
         const status = document.getElementById("loginStatus");
         if (!status) return;
@@ -16639,9 +17112,6 @@
       document.querySelectorAll("[data-tab-button]").forEach((button) => {
         button.addEventListener("click", () => showTab(button.dataset.tabButton));
       });
-      // Expuesto para que el manejador delegado (activatePropertyYaTab) también gate.
-      window.gateFormTab = gateFormTab;
-
       document.getElementById("propertyForm").addEventListener("submit", (event) => {
         event.preventDefault();
         const data = formToObject(event.currentTarget);
@@ -16952,7 +17422,11 @@
           const password = String(data.password || "");
           // Modo recuperación: guardar la nueva contraseña de la sesión de recovery.
           if (passwordRecoveryMode) {
-            if (password.length < 6) { showLoginStatus("La contraseña debe tener al menos 6 caracteres."); return; }
+            // Misma regla que al crear cuenta: la nueva contraseña cumple 8+.
+            if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+              showLoginStatus("La nueva contraseña debe tener al menos 8 caracteres, una mayúscula y un número.");
+              return;
+            }
             // Feedback inmediato: sin esto la pantalla parecía "congelada" mientras
             // esperaba a Supabase.
             const rBtn = document.getElementById("loginSubmitBtn");
@@ -16990,13 +17464,22 @@
               try { consent.focus(); } catch (e) {}
               return;
             }
+            // Regla única de contraseña (igual que el popup del formulario).
+            if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+              showLoginStatus("La contraseña debe tener al menos 8 caracteres, una mayúscula y un número.");
+              return;
+            }
             // Feedback: sin esto la pantalla parecía congelada y permitía doble toque.
             if (sBtn) { sBtn.disabled = true; sBtn.textContent = "Creando tu cuenta…"; }
             showLoginStatus("Creando tu cuenta…");
             const { data: res, error } = await supabaseClient.auth.signUp({
               email,
               password,
-              options: { data: { name: String(data.name || "").trim() } }
+              options: {
+                // tos_accepted_at: prueba de aceptación de Términos (Ley 81/2019).
+                data: { name: String(data.name || "").trim(), tos_accepted_at: new Date().toISOString() },
+                emailRedirectTo: location.origin
+              }
             });
             if (sBtn) { sBtn.disabled = false; sBtn.textContent = sBtnTxt; }
             if (error) {
@@ -17007,7 +17490,19 @@
                 applyAuthMode();
                 const le = document.getElementById("loginEmail");
                 if (le) le.value = email;
+                showLoginStatus("Este correo ya tiene una cuenta. Inicia sesión con tu contraseña.");
               }
+              return;
+            }
+            // Anti-enumeración de Supabase: email YA registrado devuelve "éxito"
+            // sin sesión y con identities vacías (y el correo nunca llega). Sin
+            // este check mostrábamos "¡Cuenta creada!" en falso.
+            if (res && res.user && Array.isArray(res.user.identities) && res.user.identities.length === 0) {
+              authMode = "login";
+              applyAuthMode();
+              const le = document.getElementById("loginEmail");
+              if (le) le.value = email;
+              showLoginStatus("Este correo ya tiene una cuenta. Inicia sesión con tu contraseña (o usa \"¿Olvidaste tu contraseña?\").");
               return;
             }
             if (!res.session) {
@@ -17074,6 +17569,11 @@
           if (typeof showLoginStatus === "function") showLoginStatus("Entrar con Google estará disponible muy pronto. Por ahora usa tu email. 🙌");
           return;
         }
+        // El aviso bajo el botón hace las veces de aceptación de Términos y es
+        // visible en ambos modos (Google crea la cuenta aunque estés en "Iniciar
+        // sesión"). Se estampa al volver con sesión SOLO si la cuenta no tiene ya
+        // su sello (applySupabaseSession comprueba tos_accepted_at antes).
+        try { localStorage.setItem("konektaya_tos_pending", new Date().toISOString()); } catch (e) {}
         supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin } })
           .then((r) => { if (r && r.error && typeof showLoginStatus === "function") showLoginStatus(typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
           .catch(() => {});
@@ -17108,6 +17608,9 @@
         // El navegador guarda mejor si distingue contraseña nueva vs existente.
         const pass = document.getElementById("loginPassword");
         if (pass) pass.setAttribute("autocomplete", isReg ? "new-password" : "current-password");
+        // Regla única: al CREAR cuenta se exigen 8+; al entrar aceptamos las
+        // contraseñas viejas de 6 (cuentas creadas antes de esta regla).
+        if (pass) pass.setAttribute("minlength", isReg ? "8" : "6");
         // "¿Olvidaste tu contraseña?" solo tiene sentido al iniciar sesión.
         const forgot = document.getElementById("loginForgotRow");
         if (forgot) forgot.hidden = isReg;
@@ -17139,13 +17642,15 @@
         if (meter) meter.hidden = !show;
         if (!show) return;
         const v = input.value || "";
+        // Los tres primeros son REQUISITO (validados al crear la cuenta, aquí y
+        // en el popup del formulario); la minúscula solo suma al medidor.
         const checks = [
           { ok: v.length >= 8, label: "8+ caracteres" },
           { ok: /[A-Z]/.test(v), label: "una mayúscula" },
-          { ok: /[a-z]/.test(v), label: "una minúscula" },
-          { ok: /[0-9]/.test(v), label: "un número" }
+          { ok: /[0-9]/.test(v), label: "un número" },
+          { ok: /[a-z]/.test(v), label: "una minúscula" }
         ];
-        hint.innerHTML = "Sugerido: " + checks.map((c) =>
+        hint.innerHTML = "Necesita: " + checks.slice(0, 3).map((c) =>
           `<span class="${c.ok ? "pw-ok" : ""}">${c.ok ? "✓" : "•"} ${c.label}</span>`
         ).join(" · ");
         // Fuerza: requisitos cumplidos + bonus por longitud y símbolo
@@ -17719,6 +18224,23 @@
         setTimeout(async () => {
           if (email && changed) {
             lastAuthEmail = email;
+            // La sesión llegó: cerrar los popups de registro/confirmación si siguen
+            // abiertos (ej. confirmó por código, por enlace en otra pestaña, o volvió
+            // de Google) para que no tapen el formulario restaurado.
+            try { closeRegisterDone(); } catch (e) {}
+            try { closeRegisterPop(); } catch (e) {}
+            // Sello de consentimiento pendiente (camino Google desde el gate): la
+            // casilla se marcó ANTES del redirect; se estampa aquí en la metadata.
+            try {
+              const tosPending = localStorage.getItem("konektaya_tos_pending");
+              if (tosPending) {
+                localStorage.removeItem("konektaya_tos_pending");
+                const meta = (session.user && session.user.user_metadata) || {};
+                if (!meta.tos_accepted_at) {
+                  supabaseClient.auth.updateUser({ data: { tos_accepted_at: tosPending } }).catch(() => {});
+                }
+              }
+            } catch (e) {}
             if (typeof showLoadingSkeletons === "function") showLoadingSkeletons(); // #10 placeholder mientras carga
             const warn = (n) => (e) => console.warn(n, e);
             // Cargar todo EN PARALELO (antes eran 6 llamadas en fila = lento en celular)
@@ -23450,9 +23972,11 @@
           const h = location.hash || "";
           if (!/[#&](error|error_code|error_description)=/.test(h)) return;
           const expired = /otp_expired|expired|invalid/i.test(h);
+          // El enlace puede ser de CONFIRMAR CUENTA o de recuperar contraseña:
+          // el mensaje cubre ambos casos (antes asumía solo recuperación).
           const msg = expired
-            ? "El enlace expiró o ya se usó. Escribe tu email y toca \"¿Olvidaste tu contraseña?\" para recibir uno nuevo."
-            : "No se pudo completar la acción del enlace. Pide uno nuevo desde \"¿Olvidaste tu contraseña?\".";
+            ? "El enlace expiró o ya se usó. Si estabas confirmando tu cuenta, inicia sesión con tu email y contraseña (te reenviamos el código si hace falta). Si era para recuperar tu contraseña, toca \"¿Olvidaste tu contraseña?\"."
+            : "No se pudo completar la acción del enlace. Inicia sesión, o pide un enlace nuevo desde \"¿Olvidaste tu contraseña?\".";
           try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
           try {
             if (typeof showTab === "function") showTab("login");

@@ -5,3 +5,8 @@ data/*.db
 data/*.db-shm
 data/*.db-wal
 .next
+
+# Kit de redes sociales (assets, no forma parte de la app)
+kit-redes-konektaya/
+promo-coming-soon.html
+KonektaYa-Kit-Redes.pdf
