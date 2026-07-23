@@ -18414,6 +18414,16 @@
               supaLoadPaymentsFlag().catch(warn("supaLoadPaymentsFlag")),
               supaLoadRequests().catch(warn("supaLoadRequests"))
             ]);
+            // Bienvenida (una sola vez por cuenta, Google o email): si el perfil
+            // no tiene la marca, se lo pedimos al servidor — welcome-email hace
+            // el reclamo atómico y deduplica; aquí es fire-and-forget.
+            try {
+              if (myProfile && !myProfile.welcomed_at) {
+                supabaseClient.functions.invoke("welcome-email", { body: {} })
+                  .then((r) => { if (r && !r.error && myProfile) myProfile.welcomed_at = new Date().toISOString(); })
+                  .catch(() => {});
+              }
+            } catch (e) {}
           } else if (!email) {
             lastAuthEmail = null;
           }
