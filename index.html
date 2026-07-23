@@ -3892,6 +3892,51 @@
         max-height: 90dvh;
         overflow-y: auto;
       }
+
+      /* Modal legal (Términos/Privacidad) — por encima de cualquier otro modal */
+      #legalModal {
+        z-index: 130;
+      }
+      #legalModal .legal-modal-card {
+        max-height: 86vh;
+        max-height: 86dvh;
+        overflow-y: auto;
+        padding: 20px 20px 16px;
+        text-align: left;
+        width: min(620px, 94vw);
+      }
+      .legal-modal-close {
+        background: #f1f5f9;
+        border: none;
+        border-radius: 50%;
+        color: #475569;
+        cursor: pointer;
+        font-size: 15px;
+        height: 36px;
+        position: sticky;
+        top: 0;
+        float: right;
+        width: 36px;
+      }
+      .legal-modal-body h2 {
+        color: var(--navy);
+        font-size: 21px;
+        margin: 4px 0 6px;
+      }
+      .legal-modal-body h3 {
+        color: var(--navy);
+        font-size: 15px;
+        margin: 16px 0 6px;
+      }
+      .legal-modal-body p,
+      .legal-modal-body li {
+        color: #45566a;
+        font-size: 13.5px;
+        line-height: 1.6;
+      }
+      .legal-modal-foot {
+        margin-top: 14px;
+      }
       .rd-code {
         border-top: 1px solid #edf1f6;
         display: grid;
@@ -10430,6 +10475,18 @@
     </style>
   </head>
   <body>
+    <!-- Modal legal: Términos/Privacidad ENCIMA de donde estés (sin pestañas nuevas
+         ni navegación — en móvil/webview el target=_blank rompía el flujo). -->
+    <div class="rd-modal" id="legalModal" hidden>
+      <div class="rd-scrim" onclick="closeLegalModal()"></div>
+      <div class="rd-card legal-modal-card" role="dialog" aria-modal="true" aria-label="Documento legal">
+        <button type="button" class="legal-modal-close" onclick="closeLegalModal()" aria-label="Cerrar">✕</button>
+        <div class="legal-modal-body" id="legalModalBody"></div>
+        <div class="rd-actions legal-modal-foot">
+          <button type="button" class="rd-btn rd-btn-primary" onclick="closeLegalModal()">Entendido, volver</button>
+        </div>
+      </div>
+    </div>
     <header class="topbar">
       <a class="brand tab-link active" href="#inicio" data-tab="inicio">
         <span class="brand-mark" aria-hidden="true">
@@ -11541,7 +11598,7 @@
               </button>
               <!-- Visible en AMBOS modos: Google no distingue login de registro —
                    un usuario nuevo puede crear cuenta desde "Iniciar sesión". -->
-              <small class="google-terms">Al continuar con Google aceptas los <a href="#terminos" target="_blank" rel="noopener">Términos y Condiciones</a> y la <a href="#privacidad" target="_blank" rel="noopener">Política de Privacidad</a>.</small>
+              <small class="google-terms">Al continuar con Google aceptas los <a href="#terminos" onclick="event.preventDefault(); openLegalModal('terminos')">Términos y Condiciones</a> y la <a href="#privacidad" onclick="event.preventDefault(); openLegalModal('privacidad')">Política de Privacidad</a>.</small>
               <div class="login-or login-or-email"><span>o con tu email</span></div>
               <div class="login-status" id="loginStatus"></div>
               <div class="field-grid">
@@ -11561,7 +11618,7 @@
               </div>
               <label class="auth-consent" data-register-only hidden>
                 <input type="checkbox" id="loginConsent" name="consent" />
-                <span>He leído y acepto los <a href="#terminos" target="_blank" rel="noopener">Términos y Condiciones</a> y la <a href="#privacidad" target="_blank" rel="noopener">Política de Privacidad</a>.</span>
+                <span>He leído y acepto los <a href="#terminos" onclick="event.preventDefault(); openLegalModal('terminos')">Términos y Condiciones</a> y la <a href="#privacidad" onclick="event.preventDefault(); openLegalModal('privacidad')">Política de Privacidad</a>.</span>
               </label>
               <button class="button primary" type="submit" id="loginSubmitBtn">Entrar</button>
               <button class="button ghost" type="button" id="loginCreateHint" hidden onclick="switchToRegisterWithEmail()">Crear cuenta con este email →</button>
@@ -16482,7 +16539,7 @@
           '<div class="fag-head">🔒 Crea tu cuenta para continuar</div>' +
           '<p class="fag-note">Confirmas con un código que te enviamos al correo y sigues llenando aquí mismo — no pierdes nada de lo que escribiste.</p>' +
           '<label class="fag-consent"><input type="checkbox" data-gate-consent />' +
-          '<span>He leído y acepto los <a href="#terminos" target="_blank" rel="noopener">Términos y Condiciones</a> y la <a href="#privacidad" target="_blank" rel="noopener">Política de Privacidad</a>.</span></label>' +
+          '<span>He leído y acepto los <a href="#terminos" onclick="event.preventDefault(); openLegalModal(\'terminos\')">Términos y Condiciones</a> y la <a href="#privacidad" onclick="event.preventDefault(); openLegalModal(\'privacidad\')">Política de Privacidad</a>.</span></label>' +
           '<div class="fag-error" data-gate-error hidden></div>' +
           '<button type="button" class="fag-google">' +
           '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.4 29.3 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.3-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.1 29.6 3 24 3 16 3 9.1 7.6 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36 26.7 37 24 37c-5.3 0-9.7-2.6-11.3-6.9l-6.5 5C9.1 42.3 16 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.6l6.2 5.2C41.9 35.9 45 30.4 45 24c0-1.3-.1-2.5-.4-3.5z"/></svg>' +
@@ -16797,6 +16854,29 @@
         if (m) m.hidden = true;
       }
       window.closeRegisterPop = closeRegisterPop;
+
+      // Términos/Privacidad en modal (encima de donde estés): clona el contenido
+      // de la pestaña legal. Sin pestañas nuevas — en el celular el target=_blank
+      // sacaba al usuario del formulario a mitad del registro sin camino de vuelta.
+      function openLegalModal(which) {
+        const id = which === "privacidad" ? "privacidad" : "terminos";
+        const src = document.getElementById(id);
+        const body = document.getElementById("legalModalBody");
+        const m = document.getElementById("legalModal");
+        if (!src || !body || !m) { showTab(id); return; } // fallback: misma pestaña
+        const sec = src.querySelector(".section");
+        body.innerHTML = sec ? sec.innerHTML : src.innerHTML;
+        m.hidden = false;
+        const card = m.querySelector(".rd-card");
+        if (card) card.scrollTop = 0;
+      }
+      function closeLegalModal() {
+        const m = document.getElementById("legalModal");
+        if (m) m.hidden = true;
+      }
+      window.openLegalModal = openLegalModal;
+      window.closeLegalModal = closeLegalModal;
+
       // Toque en el fondo oscuro: cierra solo en el paso contraseña. En el paso
       // código la cuenta YA se creó — un toque accidental a mitad de confirmación
       // dejaría el proceso colgado sin señal de cómo retomarlo.
