@@ -10558,6 +10558,14 @@
       }
       .dashboard-secondary .dash-sec-btn:hover { border-color: #cbd7e6; box-shadow: 0 8px 20px -12px rgba(16,32,51,.3); }
       .dashboard-secondary .dash-sec-btn.active { border-color: #0a2f55; box-shadow: 0 0 0 1px #0a2f55 inset; }
+      /* Popup de Historial / Pagos */
+      #secondaryModal { z-index: 130; }
+      #secondaryModal .secondary-modal-card {
+        max-height: 86vh; max-height: 86dvh; overflow-y: auto;
+        padding: 18px 18px 22px; text-align: left; width: min(560px, 94vw);
+      }
+      #secondaryModal .secondary-modal-body [hidden] { display: none; }
+      #secondaryModal .pane-heading { margin-top: 4px; }
     </style>
   </head>
   <body>
@@ -11848,20 +11856,6 @@
                 </div>
                 <div class="data-list" id="userSearches"></div>
               </div>
-              <div class="user-dashboard-pane" data-user-dashboard-pane="history">
-                <div class="pane-heading">
-                  <h2>Historial de desbloqueos</h2>
-                  <span class="pane-heading-note">Contactos desbloqueados con su costo</span>
-                </div>
-                <div class="history-list" id="unlockHistory"></div>
-              </div>
-              <div class="user-dashboard-pane" data-user-dashboard-pane="payments">
-                <div class="pane-heading">
-                  <h2>Pagos y recibos</h2>
-                  <span class="pane-heading-note">Tus recargas de crédito. Descarga el comprobante de cada pago.</span>
-                </div>
-                <div class="pay-list" id="userPayments"></div>
-              </div>
               <div class="user-dashboard-pane" data-user-dashboard-pane="archived">
                 <div class="pane-heading">
                   <h2>Publicaciones archivadas</h2>
@@ -11872,8 +11866,30 @@
             </div>
             <div class="owner-resumen-strip" id="ownerResumen" hidden></div>
             <div class="dashboard-secondary" aria-label="Historial y pagos">
-              <button type="button" class="dash-sec-btn" data-user-dashboard-button="history">🧾 Historial</button>
-              <button type="button" class="dash-sec-btn" data-user-dashboard-button="payments">💳 Pagos y recibos</button>
+              <button type="button" class="dash-sec-btn" onclick="openSecondaryPanel('history')">🧾 Historial</button>
+              <button type="button" class="dash-sec-btn" onclick="openSecondaryPanel('payments')">💳 Pagos y recibos</button>
+            </div>
+            <div class="rd-modal" id="secondaryModal" hidden>
+              <div class="rd-scrim" onclick="closeSecondaryPanel()"></div>
+              <div class="rd-card secondary-modal-card" role="dialog" aria-modal="true" aria-label="Historial y pagos">
+                <button type="button" class="legal-modal-close" onclick="closeSecondaryPanel()" aria-label="Cerrar">✕</button>
+                <div class="secondary-modal-body">
+                  <div id="secHistory" hidden>
+                    <div class="pane-heading">
+                      <h2>Historial de desbloqueos</h2>
+                      <span class="pane-heading-note">Contactos desbloqueados con su costo</span>
+                    </div>
+                    <div class="history-list" id="unlockHistory"></div>
+                  </div>
+                  <div id="secPayments" hidden>
+                    <div class="pane-heading">
+                      <h2>Pagos y recibos</h2>
+                      <span class="pane-heading-note">Tus recargas de crédito. Descarga el comprobante de cada pago.</span>
+                    </div>
+                    <div class="pay-list" id="userPayments"></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -15388,26 +15404,38 @@
           panes.forEach((pane) => {
             pane.classList.toggle("active", pane.dataset.userDashboardPane === target);
           });
-          // Historial/Pagos viven en botones al fondo. Al activarlos: (a) ocultar
-          // el título "Mis publicaciones" y el filtro por vertical (no aplican a
-          // historial/pagos y el chip sería interacción muerta ahí); (b) subir la
-          // vista para que se vea el contenido. Se usa style.display (no [hidden])
-          // porque .dashboard-nav-bar tiene una regla de autor display:block.
-          const secondary = target === "history" || target === "payments";
-          const sec = document.querySelector(".user-dashboard-tabs");
-          if (sec) {
-            const title = sec.querySelector(".user-dash-title");
-            const nav = sec.querySelector(".dashboard-nav-bar");
-            if (title) title.style.display = secondary ? "none" : "";
-            if (nav) nav.style.display = secondary ? "none" : "";
-            if (secondary) sec.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
         };
 
         buttons.forEach((button) => {
           button.addEventListener("click", () => showPane(button.dataset.userDashboardButton));
         });
       }
+
+      // Historial y Pagos abren como POPUP (antes cambiaban el pane en sitio y no
+      // había forma clara de volver). El contenido (#unlockHistory / #userPayments)
+      // vive dentro del modal; render()/renderHistory/renderPayments lo pueblan por id.
+      function openSecondaryPanel(which) {
+        const modal = document.getElementById("secondaryModal");
+        if (!modal) return;
+        const isPay = which === "payments";
+        const h = document.getElementById("secHistory");
+        const p = document.getElementById("secPayments");
+        if (h) h.hidden = isPay;
+        if (p) p.hidden = !isPay;
+        try {
+          if (isPay) { if (typeof renderPayments === "function") renderPayments(); }
+          else { if (typeof renderHistory === "function") renderHistory(); }
+        } catch (e) {}
+        modal.hidden = false;
+        const card = modal.querySelector(".rd-card");
+        if (card) card.scrollTop = 0;
+      }
+      function closeSecondaryPanel() {
+        const modal = document.getElementById("secondaryModal");
+        if (modal) modal.hidden = true;
+      }
+      window.openSecondaryPanel = openSecondaryPanel;
+      window.closeSecondaryPanel = closeSecondaryPanel;
 
       function setupUserDashboardVerticalFilter() {
         const buttons = document.querySelectorAll("[data-user-vertical-filter]");

@@ -223,7 +223,15 @@ function maskEmail(email: string) {
   const e = String(email || "").trim();
   const at = e.indexOf("@");
   if (at <= 0) return e ? "•••" : "";
-  return e[0] + "•".repeat(Math.min(6, Math.max(3, at - 1))) + e.slice(at);
+  const local = e[0] + "•".repeat(Math.min(6, Math.max(3, at - 1)));
+  // Ocultar también el dominio (no revelar la empresa, ej. @imrsa.com). Se deja
+  // la 1a letra + el TLD para que siga leyéndose como un email: "h••••@i••••.com".
+  const domain = e.slice(at + 1);
+  const dot = domain.lastIndexOf(".");
+  const domMask = dot > 0
+    ? domain[0] + "•".repeat(Math.min(5, Math.max(2, dot - 1))) + domain.slice(dot)
+    : (domain[0] || "") + "•••";
+  return local + "@" + domMask;
 }
 function unlockNoticeHtml(searcherName: string, ownerName: string, ownerPhone: string, ownerEmail: string, vertical: string) {
   // Escapar TODO dato de usuario: el dueño controla su nombre/teléfono sin sanear
