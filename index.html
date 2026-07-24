@@ -795,21 +795,43 @@
       }
 
       .home-choice-card {
-        align-items: center;
+        align-items: stretch;
         background: #ffffff;
         border: 1px solid #dfe8f3;
         border-radius: 16px;
         color: var(--ink);
         cursor: pointer;
         display: flex;
-        gap: 11px;
-        padding: 14px;
+        flex-direction: column;
+        gap: 0;
+        overflow: hidden;
+        padding: 0;
         text-align: left;
         transition:
           border-color 160ms ease,
           box-shadow 160ms ease,
           transform 160ms ease;
         width: 100%;
+      }
+
+      /* Banner con foto render arriba (referencia del usuario) */
+      .home-choice-banner {
+        aspect-ratio: 16 / 9;
+        background: #ffffff;
+        display: block;
+        width: 100%;
+      }
+      .home-choice-banner img {
+        display: block;
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+      }
+      .home-choice-foot {
+        align-items: center;
+        display: flex;
+        gap: 11px;
+        padding: 13px 14px;
       }
 
       .home-choice-card:hover {
@@ -10445,18 +10467,22 @@
         }
 
         .home-choice-card {
-          gap: 14px;
-          padding: 16px 18px;
+          gap: 0;
+          padding: 0;
+        }
+
+        .home-choice-foot {
+          padding: 14px 16px;
         }
 
         .home-choice-icon {
-          height: 52px;
-          width: 52px;
+          height: 48px;
+          width: 48px;
         }
 
         .home-choice-icon svg {
-          height: 24px;
-          width: 24px;
+          height: 23px;
+          width: 23px;
         }
 
         .home-choice-text strong {
@@ -10466,10 +10492,6 @@
 
         .home-choice-text > span {
           font-size: 13.5px;
-        }
-
-        .home-choice-chev {
-          display: block;
         }
       }
     </style>
@@ -10680,34 +10702,42 @@
           <div class="home-step"><span class="home-step-n" aria-hidden="true">2</span><span class="home-step-l">¿Inmueble o vehículo?</span></div>
           <div class="home-choice-grid" data-flow-pane="publicar">
             <button class="home-choice-card" type="button" data-tab-button="propietario">
-              <span class="home-choice-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><path d="M10 20v-5h4v5"></path></svg>
+              <span class="home-choice-banner" aria-hidden="true"><img src="inmueble.jpg" alt="" loading="lazy" decoding="async"></span>
+              <span class="home-choice-foot">
+                <span class="home-choice-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><path d="M10 20v-5h4v5"></path></svg>
+                </span>
+                <span class="home-choice-text"><strong>Inmueble</strong><span>Venta o alquiler</span></span>
               </span>
-              <span class="home-choice-text"><strong>Inmueble</strong><span>Venta o alquiler</span></span>
-              <span class="home-choice-chev" aria-hidden="true">›</span>
             </button>
             <button class="home-choice-card" type="button" data-tab-button="vehiculoOferta">
-              <span class="home-choice-icon home-choice-icon-orange" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9h11l1.5 4H5l1.5-4Z"></path><path d="M5 13v4h2"></path><path d="M17 17h2v-4"></path><circle cx="8.5" cy="17" r="1.5"></circle><circle cx="15.5" cy="17" r="1.5"></circle></svg>
+              <span class="home-choice-banner" aria-hidden="true"><img src="vehiculo.jpg" alt="" loading="lazy" decoding="async"></span>
+              <span class="home-choice-foot">
+                <span class="home-choice-icon home-choice-icon-orange" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9h11l1.5 4H5l1.5-4Z"></path><path d="M5 13v4h2"></path><path d="M17 17h2v-4"></path><circle cx="8.5" cy="17" r="1.5"></circle><circle cx="15.5" cy="17" r="1.5"></circle></svg>
+                </span>
+                <span class="home-choice-text"><strong>Vehículo</strong><span>Autos, motos, flotas</span></span>
               </span>
-              <span class="home-choice-text"><strong>Vehículo</strong><span>Autos, motos, flotas</span></span>
-              <span class="home-choice-chev" aria-hidden="true">›</span>
             </button>
           </div>
           <div class="home-choice-grid" data-flow-pane="buscar" hidden>
             <button class="home-choice-card" type="button" data-tab-button="busqueda">
-              <span class="home-choice-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><circle cx="11" cy="13" r="2.4"></circle><path d="m14 16 2 2"></path></svg>
+              <span class="home-choice-banner" aria-hidden="true"><img src="inmueble.jpg" alt="" loading="lazy" decoding="async"></span>
+              <span class="home-choice-foot">
+                <span class="home-choice-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 11 8-7 8 7"></path><path d="M6 10.5V20h12v-9.5"></path><circle cx="11" cy="13" r="2.4"></circle><path d="m14 16 2 2"></path></svg>
+                </span>
+                <span class="home-choice-text"><strong>Inmueble</strong><span>Para ti o tu empresa</span></span>
               </span>
-              <span class="home-choice-text"><strong>Inmueble</strong><span>Para ti o tu empresa</span></span>
-              <span class="home-choice-chev" aria-hidden="true">›</span>
             </button>
             <button class="home-choice-card" type="button" data-tab-button="vehiculoBusqueda">
-              <span class="home-choice-icon home-choice-icon-orange" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path><path d="M8 10.5h5"></path></svg>
+              <span class="home-choice-banner" aria-hidden="true"><img src="vehiculo.jpg" alt="" loading="lazy" decoding="async"></span>
+              <span class="home-choice-foot">
+                <span class="home-choice-icon home-choice-icon-orange" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path><path d="M8 10.5h5"></path></svg>
+                </span>
+                <span class="home-choice-text"><strong>Vehículo</strong><span>Opciones compatibles</span></span>
               </span>
-              <span class="home-choice-text"><strong>Vehículo</strong><span>Opciones compatibles</span></span>
-              <span class="home-choice-chev" aria-hidden="true">›</span>
             </button>
           </div>
         </aside>
