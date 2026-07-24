@@ -18668,7 +18668,7 @@
       // (supaLoadAll REEMPLAZA los arrays — si aterriza entre el push local y el
       // upsert confirmado, el aviso recién enviado "desaparecería" un momento).
       let pendingPublishUpserts = 0;
-      async function supaUpsertPublication(entityKey, record) {
+      async function supaUpsertPublication(entityKey, record, opts) {
         if (!supabaseEnabled || !currentUserEmail || !record) return;
         const cfg = SUPA_ENTITIES[entityKey];
         if (!cfg) return;
@@ -18685,9 +18685,11 @@
             .single();
           if (error) { console.warn("supaUpsertPublication", cfg.table, error.message); return; }
           record._sbId = res.id;
-          // Avisar por email a los clientes de la contraparte que hacen match.
-          // Fire-and-forget: no debe frenar ni afectar la publicación.
-          notifyMatchesForPublication(entityKey, res.id);
+          // Avisar por email a la contraparte que hace match (ambas direcciones).
+          // Fire-and-forget: no debe frenar ni afectar la publicación. La carga
+          // masiva de brokers pasa skipNotify=true para no disparar cientos de
+          // correos de golpe (protege la reputación del dominio).
+          if (!(opts && opts.skipNotify)) notifyMatchesForPublication(entityKey, res.id);
         } finally {
           pendingPublishUpserts--;
         }
@@ -23567,7 +23569,7 @@
           if (spec.entityKey === "properties") rec.acceptsBroker = true;
           try {
             targetArr.push(rec);
-            if (supabaseEnabled) await supaUpsertPublication(spec.entityKey, rec);
+            if (supabaseEnabled) await supaUpsertPublication(spec.entityKey, rec, { skipNotify: true });
             done++;
           } catch (e) { failed++; }
         }

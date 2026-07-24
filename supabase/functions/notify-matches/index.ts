@@ -276,10 +276,13 @@ Deno.serve(async (req) => {
     if (fresh.owner_id !== user.id) return json({ error: "Solo el dueño puede disparar avisos" }, 403);
     if (fresh.active === false) return json({ ok: true, notified: 0, skipped: "inactive" });
 
-    // Solo avisamos al PROPIETARIO (dueño de la oferta/propiedad): cuando entra una
-    // BÚSQUEDA nueva que coincide con su publicación. Al publicar una oferta, el
-    // propietario ya ve sus resultados en vivo, así que ahí no mandamos correos.
-    if (kind !== "search") return json({ ok: true, notified: 0, skipped: "solo-propietario" });
+    // Avisamos a AMBAS partes del match (decisión del usuario, jul 2026): al entrar
+    // una BÚSQUEDA nueva se avisa al dueño de la OFERTA que coincide; al entrar una
+    // OFERTA nueva se avisa al dueño de la BÚSQUEDA que coincide. El texto del correo
+    // se adapta con recipientIsSearcher. El publicante no se auto-avisa (ve sus
+    // resultados en vivo); se avisa a la contraparte que ya tenía su publicación.
+    // NOTA: la carga masiva de brokers NO llega aquí (el cliente omite el aviso con
+    // skipNotify) para no disparar cientos de correos y dañar la reputación del dominio.
 
     // Config global (fallback a defaults).
     let config: any = DEFAULT_CONFIG;
