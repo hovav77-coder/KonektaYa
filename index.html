@@ -10462,8 +10462,12 @@
           padding: 22px;
         }
 
+        /* Móvil: las 2 tarjetas LADO A LADO para ver Inmueble y Vehículo de un
+           vistazo (sin scroll). Banner más bajo y pie compacto para que ambas
+           entren en una sola pantalla junto con Publicar/Buscar. */
         .home-choice-grid {
-          grid-template-columns: 1fr;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
         }
 
         .home-choice-card {
@@ -10471,27 +10475,32 @@
           padding: 0;
         }
 
+        .home-choice-banner {
+          aspect-ratio: 3 / 2;
+        }
+
         .home-choice-foot {
-          padding: 14px 16px;
+          gap: 9px;
+          padding: 11px 12px;
         }
 
         .home-choice-icon {
-          height: 48px;
-          width: 48px;
+          height: 40px;
+          width: 40px;
         }
 
         .home-choice-icon svg {
-          height: 23px;
-          width: 23px;
+          height: 20px;
+          width: 20px;
         }
 
         .home-choice-text strong {
-          font-size: 17px;
+          font-size: 15px;
           white-space: normal;
         }
 
         .home-choice-text > span {
-          font-size: 13.5px;
+          font-size: 12px;
         }
       }
     </style>
