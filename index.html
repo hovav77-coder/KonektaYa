@@ -17827,39 +17827,13 @@
       // (sin redirect — inmune a webviews, saltos entre apps y URLs quemadas).
       // Si Google no puede mostrarlo (sin sesión de Google, cooldown, FedCM off),
       // cae solo al redirect clásico.
-      let gsiInited = false;
       function googleSignInSmart(reportError) {
-        const cid = window.GOOGLE_GSI_CLIENT_ID;
-        if (!cid) { googleRedirectFlow(reportError); return; }
-        loadGsi().then(() => {
-          try {
-            if (!gsiInited) {
-              gsiInited = true;
-              google.accounts.id.initialize({
-                client_id: cid,
-                use_fedcm_for_prompt: true,
-                callback: async (resp) => {
-                  try {
-                    const { error } = await supabaseClient.auth.signInWithIdToken({ provider: "google", token: resp.credential });
-                    if (error) reportError(typeof traduceAuthError === "function" ? traduceAuthError(error.message) : error.message);
-                    // Éxito: onAuthStateChange (SIGNED_IN) cierra popups y restaura el formulario.
-                  } catch (e) {
-                    reportError("No se pudo completar el ingreso con Google. Intenta de nuevo.");
-                  }
-                }
-              });
-            }
-            google.accounts.id.prompt((n) => {
-              // API de momentos: si el selector no se mostró, respaldo por redirect.
-              try {
-                const noShow = (n.isNotDisplayed && n.isNotDisplayed()) || (n.isSkippedMoment && n.isSkippedMoment());
-                if (noShow) googleRedirectFlow(reportError);
-              } catch (e) { /* FedCM puede no exponer los métodos: sin señal, no forzamos redirect */ }
-            });
-          } catch (e) {
-            googleRedirectFlow(reportError);
-          }
-        }).catch(() => googleRedirectFlow(reportError));
+        // UN SOLO camino, confiable: redirect al selector de cuentas de Google
+        // (prompt=select_account). Antes se intentaba primero el One Tap/FedCM,
+        // pero en PC fallaba (signInWithIdToken rechazaba el token → "no se pudo
+        // completar") y obligaba a un 2º intento incómodo. El redirect entra a la
+        // primera en PC y móvil y muestra el selector de cuentas (lo que se quería).
+        googleRedirectFlow(reportError);
       }
 
       function loginWithGoogle() {
