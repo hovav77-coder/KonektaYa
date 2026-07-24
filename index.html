@@ -18527,24 +18527,33 @@
         await supaLoadMyProfile();
       }
 
+      // Publicaciones guardándose: el refresh silencioso espera a que llegue a 0
+      // (supaLoadAll REEMPLAZA los arrays — si aterriza entre el push local y el
+      // upsert confirmado, el aviso recién enviado "desaparecería" un momento).
+      let pendingPublishUpserts = 0;
       async function supaUpsertPublication(entityKey, record) {
         if (!supabaseEnabled || !currentUserEmail || !record) return;
         const cfg = SUPA_ENTITIES[entityKey];
         if (!cfg) return;
-        // Perfil PRIMERO: así el trigger que marca owner_blocked ve el estado broker actualizado.
-        await supaUpsertProfile(record);
-        const { data } = splitContact(record);
-        const active = record.active !== false && record.available !== false;
-        const { data: res, error } = await supabaseClient
-          .from(cfg.table)
-          .upsert({ id: record.id, data, active })
-          .select("id")
-          .single();
-        if (error) { console.warn("supaUpsertPublication", cfg.table, error.message); return; }
-        record._sbId = res.id;
-        // Avisar por email a los clientes de la contraparte que hacen match.
-        // Fire-and-forget: no debe frenar ni afectar la publicación.
-        notifyMatchesForPublication(entityKey, res.id);
+        pendingPublishUpserts++;
+        try {
+          // Perfil PRIMERO: así el trigger que marca owner_blocked ve el estado broker actualizado.
+          await supaUpsertProfile(record);
+          const { data } = splitContact(record);
+          const active = record.active !== false && record.available !== false;
+          const { data: res, error } = await supabaseClient
+            .from(cfg.table)
+            .upsert({ id: record.id, data, active })
+            .select("id")
+            .single();
+          if (error) { console.warn("supaUpsertPublication", cfg.table, error.message); return; }
+          record._sbId = res.id;
+          // Avisar por email a los clientes de la contraparte que hacen match.
+          // Fire-and-forget: no debe frenar ni afectar la publicación.
+          notifyMatchesForPublication(entityKey, res.id);
+        } finally {
+          pendingPublishUpserts--;
+        }
       }
 
       // Dispara la Edge Function que detecta matches del nuevo aviso y manda el
@@ -19073,10 +19082,24 @@
         return found ? String(found.phone).trim() : "";
       }
 
+      // Caché 60s del listado de brokers: render() corre seguido (refresh
+      // silencioso) y esto disparaba un RPC de red por CADA pintado; el contador
+      // de secuencia evita que una respuesta lenta pise una más nueva.
+      let __brokersCache = null;
+      let __brokersCacheAt = 0;
+      let __brokersReqSeq = 0;
       async function renderValidationAdminSupa(target) {
         if (!isAdminEmail(currentUserEmail)) { target.innerHTML = ""; return; }
-        const { data: brokers, error } = await supabaseClient.rpc("admin_list_brokers");
-        if (error) { target.innerHTML = `<article class="card empty"><p>No se pudo cargar la validación: ${escapeHtml(error.message)}</p></article>`; return; }
+        let brokers = __brokersCache;
+        if (!brokers || Date.now() - __brokersCacheAt > 60000) {
+          const seq = ++__brokersReqSeq;
+          const { data, error } = await supabaseClient.rpc("admin_list_brokers");
+          if (seq !== __brokersReqSeq) return; // llegó tarde: hay una petición más nueva
+          if (error) { target.innerHTML = `<article class="card empty"><p>No se pudo cargar la validación: ${escapeHtml(error.message)}</p></article>`; return; }
+          __brokersCache = data || [];
+          __brokersCacheAt = Date.now();
+          brokers = __brokersCache;
+        }
         const order = { pendiente: 0, rechazado: 1, aprobado: 2 };
         const list = (brokers || []).slice().sort((a, b) => (order[a.broker_status] ?? 3) - (order[b.broker_status] ?? 3));
         if (!list.length) { target.innerHTML = `<article class="card empty"><h3>Sin brokers</h3><p>Aún no hay brokers registrados.</p></article>`; return; }
@@ -20444,6 +20467,12 @@
         const list = document.getElementById("adminClients");
         const detail = document.getElementById("adminClientDetail");
         if (!list || !detail) return;
+        // Si el admin está escribiendo DENTRO del detalle (monto/motivo/nota de
+        // crédito), no repintar: el innerHTML le borraría el texto y el foco.
+        // El próximo render lo pinta. (El buscador de clientes vive FUERA del
+        // detalle, así que filtrar mientras se teclea sigue funcionando.)
+        const ae = document.activeElement;
+        if (ae && detail.contains(ae) && ae.matches && ae.matches("input, textarea, select")) return;
 
         const query = normalize(document.getElementById("adminClientSearch")?.value || "");
         const clients = allAdminClients().filter((client) => {
@@ -22481,6 +22510,7 @@
         return null;
       }
 
+      let __resultsBodyHtml = "";
       function refreshResultsModal() {
         if (!activeResultsModal) return;
         const overlay = document.getElementById("resultsModal");
@@ -22493,8 +22523,13 @@
         document.getElementById("resultsModalTitle").textContent = data.title;
         document.getElementById("resultsModalSubtitle").textContent = data.subtitle;
         document.getElementById("resultsModalBadge").textContent = `${data.count} resultado${data.count === 1 ? "" : "s"} IA`;
-        document.getElementById("resultsModalBody").innerHTML =
-          data.body || '<article class="card empty"><h3>Sin resultados todavía</h3><p>La IA sigue buscando coincidencias.</p></article>';
+        // Repintar el cuerpo SOLO si cambió: cada innerHTML resetea el scroll
+        // interno y con el refresh silencioso el modal "saltaría" solo.
+        const html = data.body || '<article class="card empty"><h3>Sin resultados todavía</h3><p>La IA sigue buscando coincidencias.</p></article>';
+        if (html !== __resultsBodyHtml) {
+          __resultsBodyHtml = html;
+          document.getElementById("resultsModalBody").innerHTML = html;
+        }
       }
 
       // ===== Bloqueo de scroll del fondo con cualquier modal abierto (fix iOS) =====
@@ -22837,23 +22872,97 @@
       setInterval(checkForNewVersion, 30 * 60 * 1000);
       fetchVersionTag().then((t) => { if (t) __verTag = t; }); // huella inicial al cargar
 
-      // Refresca el perfil de Supabase al volver a la pestaña (throttle 8s): así un cambio
-      // de rol hecho desde admin se refleja (chip + panel de broker) sin recargar la página.
-      let __lastProfileRefresh = 0;
-      async function refreshMyProfileOnFocus() {
-        if (!supabaseEnabled || !currentUserEmail || typeof supaLoadMyProfile !== "function") return;
-        const now = Date.now();
-        if (now - __lastProfileRefresh < 8000) return;
-        __lastProfileRefresh = now;
+      // ============================================================
+      // REFRESH SILENCIOSO: la app se mantiene fresca sin recargar la página.
+      // Dos velocidades: BARATO (saldo, perfil, solicitudes, quién me
+      // desbloqueó, flags — ~5 requests chicos) cada 60s con la pestaña
+      // visible; PESADO (todas las publicaciones → matches nuevos, recibos,
+      // desbloqueos, config) cada 5 min y al volver a la pestaña.
+      // Guardas: nunca con la pestaña oculta; se pospone (el próximo ciclo,
+      // ≤60s, reintenta) si el usuario tecleó hace poco, hay un modal abierto,
+      // una publicación guardándose o una carga masiva a medias. 100% separado
+      // del camino de auth: jamás navega, ni cierra popups, ni pone skeletons.
+      // (Reemplaza al viejo refreshMyProfileOnFocus, que solo cubría perfil+pagos.)
+      // ============================================================
+      const REFRESH_CHEAP_MS = 60 * 1000;
+      const REFRESH_HEAVY_MS = 5 * 60 * 1000;
+      const REFRESH_FOCUS_HEAVY_GAP_MS = 90 * 1000;
+      let lastCheapRefreshAt = Date.now(); // el login ya cargó todo
+      let lastHeavyRefreshAt = Date.now();
+      let lastUserTypeAt = 0;
+      document.addEventListener("input", () => { lastUserTypeAt = Date.now(); }, true);
+
+      function refreshUserBusy() {
+        // Tecleó hace <10s en un campo que sigue enfocado → está escribiendo.
+        const ae = document.activeElement;
+        if (ae && ae.matches && ae.matches("input, textarea, select") && Date.now() - lastUserTypeAt < 10000) return true;
+        // Modales clásicos (resultados, pago, mis datos) y popups rd (registro,
+        // código, legal, avisos): con algo abierto no se refresca ni repinta.
+        if (typeof anyModalOpen === "function" && anyModalOpen()) return true;
+        if (document.querySelector(".rd-modal:not([hidden])")) return true;
+        // Carga masiva del broker con filas en preview (render la recrearía).
+        if (typeof bulkState !== "undefined" && bulkState && bulkState.rows && bulkState.rows.length) return true;
+        // Publicación guardándose (supaLoadAll la "desaparecería" un momento).
+        if (typeof pendingPublishUpserts !== "undefined" && pendingPublishUpserts > 0) return true;
+        return false;
+      }
+
+      async function refreshAppData(heavy) {
+        if (!supabaseEnabled || !currentUserEmail || !supabaseClient) return;
+        if (document.visibilityState !== "visible") return;
+        if (refreshUserBusy()) return;
+        const warn = (n) => (e) => console.warn("refresh:" + n, e);
         try {
-          await supaLoadMyProfile();
-          if (typeof supaLoadPaymentsFlag === "function") await supaLoadPaymentsFlag();
-          if (typeof render === "function") render();
-          if (typeof refreshAuthUI === "function") refreshAuthUI();
+          if (heavy) {
+            lastHeavyRefreshAt = Date.now();
+            lastCheapRefreshAt = Date.now();
+            await Promise.all([
+              supaLoadMyProfile().catch(warn("perfil")),
+              supaLoadConfig().catch(warn("config")),
+              supaLoadAll().catch(warn("publicaciones")),
+              refreshBalance().catch(warn("saldo")),
+              supaLoadUnlocks().catch(warn("desbloqueos")),
+              supaLoadWhoUnlockedMe().catch(warn("quienMeDesbloqueo")),
+              supaLoadOrders().catch(warn("recibos")),
+              supaLoadPaymentsFlag().catch(warn("flagPagos")),
+              supaLoadRequests().catch(warn("solicitudes"))
+            ]);
+            // supaLoadAll reemplazó los arrays: sin esto, el caché dataDirty
+            // pintaría los matches VIEJOS con los datos nuevos.
+            if (window.forceMatchRecalc) window.forceMatchRecalc();
+          } else {
+            lastCheapRefreshAt = Date.now();
+            await Promise.all([
+              supaLoadMyProfile().catch(warn("perfil")),
+              refreshBalance().catch(warn("saldo")),
+              supaLoadWhoUnlockedMe().catch(warn("quienMeDesbloqueo")),
+              supaLoadRequests().catch(warn("solicitudes")),
+              supaLoadPaymentsFlag().catch(warn("flagPagos"))
+            ]);
+          }
+          // ¿Se puso a escribir o abrió un modal MIENTRAS cargábamos? No pintar:
+          // los datos ya quedaron en memoria y el próximo ciclo los pinta.
+          if (refreshUserBusy()) return;
+          render();
         } catch (e) {}
       }
-      window.addEventListener("focus", refreshMyProfileOnFocus);
-      document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshMyProfileOnFocus(); });
+      window.refreshAppData = refreshAppData;
+
+      // Reloj: cada 60s decide barato o pesado (los navegadores estrangulan los
+      // timers en pestañas ocultas; el gate de visibilidad cubre el resto).
+      setInterval(() => {
+        if (Date.now() - lastHeavyRefreshAt >= REFRESH_HEAVY_MS) refreshAppData(true);
+        else refreshAppData(false);
+      }, REFRESH_CHEAP_MS);
+
+      // Al volver a la pestaña/app: pesado si ya pasó un rato, barato si no.
+      function refreshOnReturn() {
+        if (document.visibilityState !== "visible") return;
+        if (Date.now() - lastHeavyRefreshAt >= REFRESH_FOCUS_HEAVY_GAP_MS) refreshAppData(true);
+        else if (Date.now() - lastCheapRefreshAt >= 15 * 1000) refreshAppData(false);
+      }
+      window.addEventListener("focus", refreshOnReturn);
+      document.addEventListener("visibilitychange", refreshOnReturn);
 
       function isBrokerPending(email) {
         if (supabaseEnabled) {
@@ -22897,6 +23006,7 @@
           // idOrEmail = uuid del broker (viene de admin_list_brokers)
           supabaseClient.rpc("admin_set_broker_status", { target: idOrEmail, new_status: status }).then(({ error }) => {
             if (error) { alert("No se pudo actualizar: " + error.message); return; }
+            __brokersCacheAt = 0; // invalidar caché: el cambio debe verse ya
             renderValidationAdmin();
           });
           return;
