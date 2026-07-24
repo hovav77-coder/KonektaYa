@@ -10503,6 +10503,61 @@
           font-size: 12px;
         }
       }
+
+      /* ===== Panel del usuario rediseñado (jul 2026) ===== */
+      /* Billetera compacta: el strip de stats/embudo queda vacío y se oculta */
+      #ownerStats:empty { display: none; }
+      /* Título de la sección de publicaciones */
+      .user-dash-title {
+        color: #0a2f55; font-size: clamp(20px, 4vw, 26px); font-weight: 900;
+        letter-spacing: -0.3px; margin: 0 0 14px;
+      }
+      /* Ocultar el h2 por-pane (Mis ofertas / Mis solicitudes): ya está el título + tabs */
+      .user-dashboard-pane[data-user-dashboard-pane="properties"] .pane-heading h2,
+      .user-dashboard-pane[data-user-dashboard-pane="searches"] .pane-heading h2 { display: none; }
+
+      /* Aviso de interés (único accionable) */
+      .owner-interest-alert {
+        align-items: center; display: flex; gap: 11px;
+        background: linear-gradient(90deg, #fff6ef, #ffece0);
+        border: 1.5px solid #f4c19c; border-radius: 15px;
+        margin: 0 0 16px; padding: 13px 15px;
+      }
+      .owner-interest-alert[hidden] { display: none; }
+      .owner-interest-alert .oia-ico { font-size: 20px; line-height: 1; }
+      .owner-interest-alert .oia-tx { color: #8a3f14; flex: 1; font-size: 14px; font-weight: 800; line-height: 1.3; }
+      .owner-interest-alert .oia-go {
+        background: #0a2f55; border: none; border-radius: 10px; color: #fff;
+        cursor: pointer; font-size: 13px; font-weight: 800; padding: 10px 16px; white-space: nowrap;
+      }
+
+      /* Resumen simple (píldoras) al fondo */
+      .owner-resumen-strip {
+        background: #ffffff; border: 1px solid #e6edf5; border-radius: 16px;
+        margin: 16px 0 0; padding: 13px 15px;
+      }
+      .owner-resumen-strip[hidden] { display: none; }
+      .owner-resumen-title {
+        color: #8595a7; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
+        margin: 0 0 9px; text-transform: uppercase;
+      }
+      .owner-resumen-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+      .owner-resumen-pills .orp {
+        align-items: center; background: #f5f8fb; border-radius: 10px; color: #44566a;
+        display: flex; font-size: 13px; font-weight: 700; gap: 6px; padding: 8px 12px;
+      }
+      .owner-resumen-pills .orp b { color: #0a2f55; }
+      .owner-resumen-pills .orp-ic { font-size: 14px; }
+
+      /* Footer: Historial / Pagos (lo menos usado) */
+      .dashboard-secondary { display: flex; gap: 10px; margin: 16px 0 0; }
+      .dashboard-secondary .dash-sec-btn {
+        background: #ffffff; border: 1px solid #e6edf5; border-radius: 13px; color: #0a2f55;
+        cursor: pointer; flex: 1; font-size: 13.5px; font-weight: 800; padding: 13px; text-align: center;
+        transition: border-color 140ms ease, box-shadow 140ms ease;
+      }
+      .dashboard-secondary .dash-sec-btn:hover { border-color: #cbd7e6; box-shadow: 0 8px 20px -12px rgba(16,32,51,.3); }
+      .dashboard-secondary .dash-sec-btn.active { border-color: #0a2f55; box-shadow: 0 0 0 1px #0a2f55 inset; }
     </style>
   </head>
   <body>
@@ -11718,6 +11773,7 @@
               <div id="brokerStatusBanner"></div>
               <div class="wallet-summary-strip" id="ownerStats"></div>
             </div>
+            <div class="owner-interest-alert" id="ownerInterestAlert" hidden></div>
             <div id="brokerB2BPanel"></div>
             <div class="mydata-modal" id="myDataModal" hidden>
               <div class="mydata-backdrop" onclick="closeMyData()"></div>
@@ -11763,23 +11819,8 @@
                 </div>
               </div>
             </div>
-            <div class="dashboard-quick-actions" aria-label="Publicar o buscar">
-              <div class="qa-group">
-                <span class="qa-lbl">Publicar</span>
-                <div class="qa-btns">
-                  <button type="button" class="dqa-btn primary" data-tab-button="propietario">+ Inmueble</button>
-                  <button type="button" class="dqa-btn primary" data-tab-button="vehiculoOferta">+ Vehículo</button>
-                </div>
-              </div>
-              <div class="qa-group">
-                <span class="qa-lbl">Buscar</span>
-                <div class="qa-btns">
-                  <button type="button" class="dqa-btn" data-tab-button="busqueda">Inmueble</button>
-                  <button type="button" class="dqa-btn" data-tab-button="vehiculoBusqueda">Vehículo</button>
-                </div>
-              </div>
-            </div>
             <div class="section user-dashboard-tabs">
+              <h2 class="user-dash-title">Mis publicaciones</h2>
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
                 <span class="dashboard-nav-lbl">Filtrar por</span>
                 <div class="vertical-switch" aria-label="Vertical del dashboard">
@@ -11790,8 +11831,6 @@
                 <div class="user-dashboard-tab-buttons" aria-label="Secciones del dashboard del cliente">
                   <button class="active" type="button" data-user-dashboard-button="properties">Ofertas <span class="tab-count" id="offersTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="searches">Solicitudes <span class="tab-count" id="searchesTabCount">0</span></button>
-                  <button type="button" data-user-dashboard-button="history">Historial</button>
-                  <button type="button" data-user-dashboard-button="payments">Pagos</button>
                   <button type="button" data-user-dashboard-button="archived" id="archivedTabBtn" hidden>Archivadas <span class="tab-count" id="archivedTabCount">0</span></button>
                 </div>
               </div>
@@ -11830,6 +11869,11 @@
                 </div>
                 <div class="data-list" id="userArchived"></div>
               </div>
+            </div>
+            <div class="owner-resumen-strip" id="ownerResumen" hidden></div>
+            <div class="dashboard-secondary" aria-label="Historial y pagos">
+              <button type="button" class="dash-sec-btn" data-user-dashboard-button="history">🧾 Historial</button>
+              <button type="button" class="dash-sec-btn" data-user-dashboard-button="payments">💳 Pagos y recibos</button>
             </div>
           </div>
 
@@ -15284,6 +15328,18 @@
           views.forEach((view) => {
             view.classList.toggle("active", view.dataset.dashboardView === target);
           });
+          // Al ENTRAR al panel del usuario: siempre arrancar en "Todos" + pestaña
+          // "Ofertas" (antes el filtro quedaba pegado en lo elegido la última vez).
+          if (target === "user") {
+            userDashboardVerticalFilter = "all";
+            document.querySelectorAll("[data-user-vertical-filter]").forEach((b) =>
+              b.classList.toggle("active", b.dataset.userVerticalFilter === "all"));
+            document.querySelectorAll("[data-user-dashboard-button]").forEach((b) =>
+              b.classList.toggle("active", b.dataset.userDashboardButton === "properties"));
+            document.querySelectorAll("[data-user-dashboard-pane]").forEach((p) =>
+              p.classList.toggle("active", p.dataset.userDashboardPane === "properties"));
+            if (typeof renderDashboardLists === "function") renderDashboardLists();
+          }
           // Al abrir el admin (modo servidor): ocultar la lista local antigua y
           // cargar la lista real de usuarios (para las métricas y la ficha).
           if (target === "admin" && supabaseEnabled && isAdminEmail(currentUserEmail)) {
@@ -15332,6 +15388,20 @@
           panes.forEach((pane) => {
             pane.classList.toggle("active", pane.dataset.userDashboardPane === target);
           });
+          // Historial/Pagos viven en botones al fondo. Al activarlos: (a) ocultar
+          // el título "Mis publicaciones" y el filtro por vertical (no aplican a
+          // historial/pagos y el chip sería interacción muerta ahí); (b) subir la
+          // vista para que se vea el contenido. Se usa style.display (no [hidden])
+          // porque .dashboard-nav-bar tiene una regla de autor display:block.
+          const secondary = target === "history" || target === "payments";
+          const sec = document.querySelector(".user-dashboard-tabs");
+          if (sec) {
+            const title = sec.querySelector(".user-dash-title");
+            const nav = sec.querySelector(".dashboard-nav-bar");
+            if (title) title.style.display = secondary ? "none" : "";
+            if (nav) nav.style.display = secondary ? "none" : "";
+            if (secondary) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
         };
 
         buttons.forEach((button) => {
@@ -20810,69 +20880,42 @@
           ? `${label(o.propertyType)}${o.zone ? " · " + o.zone : ""}${o.phName ? " · " + phDisplayName(o.phName) : ""}`
           : `${vehicleOfferTitle(o)}${o.year ? " " + o.year : ""}`;
         const capOffers = [...userProperties, ...userVehicleOffers].filter((o) => publicationCapAmount(o) > 0);
-        const resumenHtml = `
-          <div class="owner-resumen">
-            <div class="ores got"><span class="ores-n">${allUnlockedCount}</span><span class="ores-t">Contactos obtenidos</span></div>
-            <div class="ores spent"><span class="ores-n">${money.format(allSpent)}</span><span class="ores-t">Total gastado</span></div>
-            <div class="ores int"><span class="ores-n">${interestCount}</span><span class="ores-t">Con interés activo</span></div>
-          </div>`;
-        const topeHtml = capOffers.length ? `
-          <div class="owner-caps">
-            <p class="owner-caps-label">Tope por publicación</p>
-            <div class="owner-caps-explain">ℹ️ Pagas por cada contacto hasta un tope; al alcanzarlo, los contactos de esa publicación son <strong>gratis</strong> hasta que venza el ciclo.</div>
-            ${capOffers.map((o) => `<div class="owner-cap-item"><p class="owner-cap-title">${capOfferTitle(o)}</p>${publicationStatusHtml(o)}</div>`).join("")}
-          </div>` : "";
+        // Panel rediseñado: la billetera queda COMPACTA (sin embudo ni tarjetas).
+        // El único dato accionable (interés recibido) sube como banner
+        // (#ownerInterestAlert); el resumen va como píldoras simples AL FONDO
+        // (#ownerResumen), sin números repetidos. capOffers/lockedPropertyResults/
+        // sentRequestsPending ya no se muestran aquí.
         const ownerStatsTarget = document.getElementById("ownerStats");
-        if (ownerStatsTarget) {
-          ownerStatsTarget.classList.add("funnel-mode");
-          ownerStatsTarget.innerHTML = `
-            ${resumenHtml}
-            <div class="owner-funnel">
-              <p class="owner-funnel-label">Mi embudo de resultados</p>
-              <div class="owner-funnel-steps">
-                <div class="funnel-step">
-                  <p class="funnel-step-label">${lockedIcon("chart")} Resultados IA</p>
-                  <p class="funnel-step-value">${aiResultsTotal}</p>
-                  <p class="funnel-step-caption">en tus ofertas y búsquedas</p>
-                </div>
-                <span class="funnel-arrow">›</span>
-                <div class="funnel-step hot">
-                  <p class="funnel-step-label">${lockedIcon("target")} Con interés activo</p>
-                  <p class="funnel-step-value">${interestCount}</p>
-                  <p class="funnel-step-caption">${
-                    interestCount === 1 ? "cliente pidió que lo contacten" : "clientes pidieron que los contacten"
-                  }</p>
-                  ${interestCount ? `<button class="funnel-cta" type="button" onclick="goToActiveInterest()">Ver ahora</button>` : ""}
-                </div>
-                <span class="funnel-arrow">›</span>
-                <div class="funnel-step">
-                  <p class="funnel-step-label">${lockedIcon("lock")} Por desbloquear</p>
-                  <p class="funnel-step-value">${lockedPropertyResults}</p>
-                  <p class="funnel-step-caption">contactos disponibles</p>
-                </div>
-                <span class="funnel-arrow">›</span>
-                <div class="funnel-step">
-                  <p class="funnel-step-label">${lockedIcon("user")} Desbloqueados</p>
-                  <p class="funnel-step-value">${allUnlockedCount}</p>
-                  <p class="funnel-step-caption">contactos en tu poder</p>
-                </div>
-              </div>
-              <div class="owner-activity-line">
-                <span class="strong">${lockedIcon("home")} ${userProperties.length + userVehicleOffers.length} ofertas publicadas</span>
-                <span>${lockedIcon("search")} ${userSearches.length + userVehicleSearches.length} solicitudes creadas</span>
-                ${
-                  sentRequestsPending
-                    ? `<span class="strong">${lockedIcon("target")} ${sentRequestsPending} solicitud${
-                        sentRequestsPending === 1 ? "" : "es"
-                      } de contacto enviada${sentRequestsPending === 1 ? "" : "s"} · esperando respuesta</span>`
-                    : ""
-                }
-                <span class="owner-activity-spacer"></span>
-                <span class="strong">${lockedIcon("money")} Total gastado: ${money.format(allSpent)}</span>
-              </div>
-            </div>
-            ${topeHtml}
-          `;
+        if (ownerStatsTarget) { ownerStatsTarget.classList.remove("funnel-mode"); ownerStatsTarget.innerHTML = ""; }
+
+        const interestAlertTarget = document.getElementById("ownerInterestAlert");
+        if (interestAlertTarget) {
+          if (interestCount > 0) {
+            interestAlertTarget.hidden = false;
+            interestAlertTarget.innerHTML =
+              '<span class="oia-ico" aria-hidden="true">🎯</span>' +
+              '<span class="oia-tx">' +
+              (interestCount === 1 ? "1 cliente quiere que lo contactes" : interestCount + " clientes quieren que los contactes") +
+              "</span>" +
+              '<button class="oia-go" type="button" onclick="goToActiveInterest()">Ver</button>';
+          } else {
+            interestAlertTarget.hidden = true;
+            interestAlertTarget.innerHTML = "";
+          }
+        }
+
+        const ownerResumenTarget = document.getElementById("ownerResumen");
+        if (ownerResumenTarget) {
+          ownerResumenTarget.hidden = false;
+          ownerResumenTarget.innerHTML =
+            '<p class="owner-resumen-title">Tu actividad</p>' +
+            '<div class="owner-resumen-pills">' +
+            '<span class="orp"><span class="orp-ic" aria-hidden="true">🔓</span><b>' + allUnlockedCount + "</b> " +
+            (allUnlockedCount === 1 ? "contacto desbloqueado" : "contactos desbloqueados") + "</span>" +
+            '<span class="orp"><span class="orp-ic" aria-hidden="true">💳</span><b>' + money.format(allSpent) + "</b> gastado</span>" +
+            '<span class="orp"><span class="orp-ic" aria-hidden="true">🤖</span><b>' + aiResultsTotal + "</b> " +
+            (aiResultsTotal === 1 ? "resultado de IA" : "resultados de IA") + "</span>" +
+            "</div>";
         }
 
         const kpiOffers =
