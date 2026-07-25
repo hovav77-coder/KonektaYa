@@ -15344,16 +15344,26 @@
           views.forEach((view) => {
             view.classList.toggle("active", view.dataset.dashboardView === target);
           });
-          // Al ENTRAR al panel del usuario: siempre arrancar en "Todos" + pestaña
-          // "Ofertas" (antes el filtro quedaba pegado en lo elegido la última vez).
+          // Al ENTRAR al panel del usuario: filtro vertical en "Todos" (no queda
+          // pegado en lo elegido la última vez) y abrir en la pestaña que TIENE
+          // contenido. Si solo hay solicitudes, abre en "Solicitudes"; así al
+          // entrar SIEMPRE se ve lo publicado, nunca una pestaña vacía.
           if (target === "user") {
             userDashboardVerticalFilter = "all";
             document.querySelectorAll("[data-user-vertical-filter]").forEach((b) =>
               b.classList.toggle("active", b.dataset.userVerticalFilter === "all"));
+            let landingPane = "properties";
+            try {
+              const nOffers = (typeof currentUserProperties === "function" ? currentUserProperties().length : 0)
+                + (typeof currentUserVehicleOffers === "function" ? currentUserVehicleOffers().length : 0);
+              const nSearches = (typeof currentUserSearches === "function" ? currentUserSearches().length : 0)
+                + (typeof currentUserVehicleSearches === "function" ? currentUserVehicleSearches().length : 0);
+              if (nOffers === 0 && nSearches > 0) landingPane = "searches";
+            } catch (e) {}
             document.querySelectorAll("[data-user-dashboard-button]").forEach((b) =>
-              b.classList.toggle("active", b.dataset.userDashboardButton === "properties"));
+              b.classList.toggle("active", b.dataset.userDashboardButton === landingPane));
             document.querySelectorAll("[data-user-dashboard-pane]").forEach((p) =>
-              p.classList.toggle("active", p.dataset.userDashboardPane === "properties"));
+              p.classList.toggle("active", p.dataset.userDashboardPane === landingPane));
             if (typeof renderDashboardLists === "function") renderDashboardLists();
           }
           // Al abrir el admin (modo servidor): ocultar la lista local antigua y
