@@ -12078,7 +12078,7 @@
                   <h2>Administración</h2>
                   <p class="intro">Clientes, créditos, registros y validaciones en una sola vista.</p>
                 </div>
-                <div class="admin-maintenance">
+                <div class="admin-maintenance" id="adminMaintenance">
                   <div>
                     <div class="admin-maintenance-title">Zona de mantenimiento</div>
                     <div class="admin-maintenance-desc">Borra registros, resultados, saldo e historial de este navegador.</div>
@@ -22306,6 +22306,11 @@
       let adminCleanStep = "idle";
 
       function renderAdminMaintenance() {
+        // En producción (Supabase) esta zona no aplica: "Limpiar BD demo" solo
+        // borra el localStorage del demo local, no la base real. Se oculta para
+        // no confundir. Sigue visible en modo demo local (sin Supabase).
+        const zone = document.getElementById("adminMaintenance");
+        if (zone && supabaseEnabled) { zone.style.display = "none"; return; }
         const target = document.getElementById("adminMaintenanceActions");
         if (!target) return;
         const hasBackup = Boolean(localStorage.getItem("propertyYaDemoBackup"));
