@@ -10781,6 +10781,14 @@
           box-shadow: 0 4px 12px -4px rgba(10, 47, 85, 0.5);
         }
       }
+      /* Formulario de cupones: 5 columnas en desktop; apila en móvil */
+      .admin-coupon-form { grid-template-columns: 1.7fr 0.8fr 0.9fr 1.1fr auto; }
+      @media (max-width: 640px) {
+        .admin-coupon-form { grid-template-columns: 1fr 1fr; }
+        .admin-coupon-form > label:nth-child(1) { grid-column: 1 / -1; }
+        .admin-coupon-form > label:nth-child(4) { grid-column: 1 / -1; }
+        .admin-coupon-form > button.button { grid-column: 1 / -1; min-height: 44px; }
+      }
       /* banda de estado de pagos en Resumen */
       .ov-pay-band { background: #fff; border: 1.5px solid #12a150; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
       .ov-pay-band.is-off { border-color: #dc2626; }
@@ -12165,7 +12173,7 @@
                 </div>
                 <div id="adminCouponsBody" hidden style="margin-top:12px">
                 <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="button small ghost" type="button" onclick="adminLoadCoupons()">Actualizar</button></div>
-                <div style="display:grid;grid-template-columns:1.7fr 0.8fr 0.9fr 1.1fr auto;gap:10px;align-items:end;background:#f6f9fd;border:1px solid #e6edf5;border-radius:12px;padding:12px;margin:0 0 12px">
+                <div class="admin-coupon-form" style="display:grid;gap:10px;align-items:end;background:#f6f9fd;border:1px solid #e6edf5;border-radius:12px;padding:12px;margin:0 0 12px">
                   <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Código<input id="cupCode" placeholder="BIENVENIDA10" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;text-transform:uppercase;min-width:0" /></label>
                   <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Valor USD<input id="cupValue" type="number" min="1" step="1" value="10" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;min-width:0" /></label>
                   <label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82;min-width:0">Usos máx.<input id="cupMaxUses" type="number" min="1" step="1" value="100" style="border:1.5px solid #d5dee9;border-radius:9px;padding:8px 10px;font-size:13px;font-weight:700;min-width:0" /></label>
