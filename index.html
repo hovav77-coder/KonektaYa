@@ -10754,6 +10754,33 @@
       .admin-panel-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
       .admin-panel-tabs::-webkit-scrollbar { display: none; }
       .admin-panel-tabs button { flex: 0 0 auto; white-space: nowrap; }
+      /* Móvil/tablet: barra firme — pastillas sólidas + scroll-snap + bordes difuminados */
+      @media (max-width: 860px) {
+        .admin-panel-tabs {
+          scroll-snap-type: x mandatory;
+          gap: 8px;
+          padding: 6px 2px 12px;
+          border-bottom: 0;
+          -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 26px), transparent 100%);
+          mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 26px), transparent 100%);
+        }
+        .admin-panel-tabs button {
+          scroll-snap-align: center;
+          background: #fff;
+          border: 1.5px solid #dce5ef;
+          border-radius: 11px;
+          color: #607086;
+          margin-bottom: 0;
+          padding: 9px 15px;
+          font-weight: 700;
+        }
+        .admin-panel-tabs button.active {
+          background: linear-gradient(135deg, #0a2f55, #1f5b8f);
+          border-color: #0a2f55;
+          color: #ffffff;
+          box-shadow: 0 4px 12px -4px rgba(10, 47, 85, 0.5);
+        }
+      }
       /* banda de estado de pagos en Resumen */
       .ov-pay-band { background: #fff; border: 1.5px solid #12a150; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
       .ov-pay-band.is-off { border-color: #dc2626; }
@@ -15715,7 +15742,11 @@
         };
 
         buttons.forEach((button) => {
-          button.addEventListener("click", () => showPane(button.dataset.adminPanelButton));
+          button.addEventListener("click", () => {
+            showPane(button.dataset.adminPanelButton);
+            // Móvil: centra la pestaña tocada (el scroll-snap se siente intencional).
+            try { button.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }); } catch (e) {}
+          });
         });
       }
 
