@@ -29,7 +29,7 @@ function escapeHtml(v: unknown) {
 }
 
 function welcomeHtml(nameSafe: string) {
-  const saludo = nameSafe ? `¡Bienvenido, ${nameSafe}! 🎉` : "¡Bienvenido! 🎉";
+  const saludo = nameSafe ? `¡Bienvenido, ${nameSafe}! 🏠🚗` : "¡Bienvenido! 🏠🚗";
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f7fb;margin:0;padding:24px 0;font-family:Arial,Helvetica,sans-serif;">
   <tr><td align="center">
     <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="width:480px;max-width:92%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,42,74,0.10);">
@@ -111,7 +111,7 @@ Deno.serve(async (req) => {
           body: JSON.stringify({
             from,
             to: [user.email],
-            subject: nameSafe ? `🎉 ¡Bienvenido a KonektaYa, ${first}!` : "🎉 ¡Bienvenido a KonektaYa!",
+            subject: nameSafe ? `🏠🚗 ¡Bienvenido a KonektaYa, ${first}!` : "🏠🚗 ¡Bienvenido a KonektaYa!",
             html: welcomeHtml(nameSafe),
           }),
         });
