@@ -5192,6 +5192,137 @@
         color: #ffb3a7;
       }
 
+      /* ===== Billetera compacta (tarjeta blanca) — rediseño aprobado 2026-07-24 =====
+         Scoped bajo .wallet-panel-compact para no afectar ningún otro uso. */
+      .wallet-panel-compact {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        gap: 12px;
+        padding: 0;
+      }
+      .wallet-panel-compact .wallet-account-bar {
+        background: #ffffff;
+        border: 1px solid #e6edf5;
+        border-radius: 16px;
+        box-shadow: 0 8px 22px rgba(15, 40, 70, 0.07);
+        display: grid;
+        gap: 0;
+        padding: 15px 16px 13px;
+      }
+      .wallet-panel-compact .wab-id {
+        border-bottom: 1px solid #eef2f7;
+        gap: 11px;
+        padding-bottom: 12px;
+      }
+      .wallet-panel-compact .wab-idmeta {
+        flex: 1;
+        gap: 1px;
+        min-width: 0;
+      }
+      .wallet-panel-compact .session-name {
+        color: #0b2f55;
+        font-size: 14.5px;
+        font-weight: 800;
+        line-height: 1.15;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .wallet-panel-compact .session-pill {
+        color: #607086;
+        font-size: 12.5px;
+        font-weight: 700;
+      }
+      .wallet-panel-compact .wab-idmeta .session-name[hidden] + .session-pill {
+        color: #0b2f55;
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .wallet-panel-compact .session-status {
+        display: none;
+      }
+      .wallet-panel-compact .session-role.role-neutral {
+        background: #e3edf7;
+        border: 1px solid #cddcec;
+        color: #1f4b7a;
+      }
+      .wallet-panel-compact .wab-mid {
+        align-items: flex-end;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 12px;
+        justify-content: space-between;
+        padding-top: 12px;
+      }
+      .wallet-panel-compact .wallet-balance {
+        flex: 0 0 auto;
+        gap: 2px;
+        min-width: 0;
+      }
+      .wallet-panel-compact .wallet-balance .wallet-label {
+        color: #607086;
+      }
+      .wallet-panel-compact .wallet-balance strong {
+        color: #0a2f55;
+        font-size: 30px;
+        line-height: 1;
+      }
+      .wallet-panel-compact .wab-add {
+        flex: 1 1 200px;
+        font-size: 13px;
+        min-height: 44px;
+        padding: 0 16px;
+        white-space: nowrap;
+        width: auto;
+      }
+      .wallet-panel-compact .wab-acts {
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        margin-top: 12px;
+      }
+      .wallet-panel-compact .wab-acts .button.wallet-ghost {
+        background: transparent;
+        border: 0;
+        color: #0a2f55;
+        flex: none;
+        font-size: 12.5px;
+        font-weight: 700;
+        min-height: 0;
+        padding: 2px 0;
+      }
+      .wallet-panel-compact .wab-acts .button.wallet-ghost:hover {
+        background: transparent;
+        text-decoration: underline;
+      }
+      .wallet-panel-compact .coupon-box {
+        background: transparent;
+        border-radius: 0;
+        border-top: 1px solid #eef2f7;
+        color: #0b2f55;
+        margin-top: 12px;
+        padding: 13px 0 2px;
+      }
+      .wallet-panel-compact .coupon-box .cb-head {
+        color: #0b2f55;
+      }
+      .wallet-panel-compact .coupon-box .cb-desc {
+        color: #607086;
+      }
+      .wallet-panel-compact .coupon-box .cb-row input {
+        border: 1.5px solid #d5dee9;
+        color: #0b2f55;
+      }
+      @media (max-width: 420px) {
+        .wallet-panel-compact .wab-mid {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .wallet-panel-compact .wab-add {
+          width: 100%;
+        }
+      }
+
       /* Barra "hay una versión nueva" (aparece solo cuando se detecta un deploy) */
       #updateBanner {
         align-items: center;
@@ -11745,38 +11876,38 @@
           </div>
 
           <div class="dashboard-view active" data-dashboard-view="user">
-            <div class="wallet-panel">
+            <div class="wallet-panel wallet-panel-compact">
               <div class="wallet-account-bar wab-b">
                 <div class="wab-id">
                   <span class="session-avatar" id="currentUserAvatar">PY</span>
                   <span class="wab-idmeta">
+                    <span class="session-name" id="currentUserName" hidden></span>
                     <span class="session-pill" id="currentUserLabel">Sesión demo no iniciada.</span>
-                    <span class="wab-row2">
-                      <span class="session-status off" id="sessionStatusLabel"><span class="session-status-dot"></span>Sin sesión</span>
-                      <span class="session-role" id="currentUserRoleChip" hidden></span>
-                    </span>
+                    <span class="session-status off" id="sessionStatusLabel"><span class="session-status-dot"></span>Sin sesión</span>
                   </span>
+                  <span class="session-role" id="currentUserRoleChip" hidden></span>
                 </div>
-                <div class="wallet-balance">
-                  <span class="wallet-label">Billetera</span>
-                  <strong id="walletBalanceValue">USD 0.00</strong>
-                  <span>Saldo para desbloquear contactos</span>
+                <div class="wab-mid">
+                  <div class="wallet-balance">
+                    <span class="wallet-label">Billetera</span>
+                    <strong id="walletBalanceValue">USD 0.00</strong>
+                  </div>
+                  <button class="button primary wab-add" type="button" onclick="openPayModal(50)">+ Agregar crédito</button>
                 </div>
-                <button class="button primary wab-add" type="button" onclick="openPayModal(50)">+ Agregar crédito</button>
                 <div class="wab-acts">
                   <button class="button wallet-ghost" type="button" onclick="openMyData()">👤 Mis datos</button>
                   <button class="button wallet-ghost" type="button" id="registerPasskeyBtn" hidden onclick="registerPasskeyFlow()">🔒 Face ID</button>
                   <button class="button wallet-ghost" type="button" onclick="logoutUser()">⏻ Salir</button>
                 </div>
-              </div>
-              <div class="coupon-box" id="couponBox" hidden>
-                <div class="cb-head">🎟️ ¿Tienes un cupón?</div>
-                <div class="cb-desc">Canjéalo y el crédito entra directo a tu billetera.</div>
-                <div class="cb-row">
-                  <input id="couponInput" type="text" placeholder="CÓDIGO" autocomplete="off" />
-                  <button type="button" class="cb-btn" onclick="redeemCoupon()">Canjear</button>
+                <div class="coupon-box" id="couponBox" hidden>
+                  <div class="cb-head">🎟️ ¿Tienes un cupón?</div>
+                  <div class="cb-desc">Canjéalo y el crédito entra directo a tu billetera.</div>
+                  <div class="cb-row">
+                    <input id="couponInput" type="text" placeholder="CÓDIGO" autocomplete="off" />
+                    <button type="button" class="cb-btn" onclick="redeemCoupon()">Canjear</button>
+                  </div>
+                  <p class="cb-status" id="couponStatus"></p>
                 </div>
-                <p class="cb-status" id="couponStatus"></p>
               </div>
               <div id="brokerStatusBanner"></div>
               <div class="wallet-summary-strip" id="ownerStats"></div>
@@ -20736,6 +20867,24 @@
             ? currentUserEmail
             : "Sesión demo no iniciada.";
         }
+        // Billetera compacta: mostrar el nombre encima del email cuando lo tengamos
+        // (de la cuenta local o del perfil de Supabase). Si no hay nombre, el email
+        // queda como línea principal (CSS promueve .session-pill).
+        const currentUserNameEl = document.getElementById("currentUserName");
+        if (currentUserNameEl) {
+          const acct = accountByEmail(currentUserEmail);
+          const nm = (
+            (acct && acct.name) ||
+            (typeof myProfile !== "undefined" && myProfile && myProfile.name) ||
+            ""
+          ).trim();
+          if (currentUserEmail && nm && nm.toLowerCase() !== String(currentUserEmail).toLowerCase()) {
+            currentUserNameEl.textContent = nm;
+            currentUserNameEl.hidden = false;
+          } else {
+            currentUserNameEl.hidden = true;
+          }
+        }
         if (currentUserAvatar) {
           const account = accountByEmail(currentUserEmail);
           const source = account?.name || currentUserEmail || "KonektaYa";
@@ -23144,7 +23293,6 @@
           license: (typeof myProfile !== "undefined" && myProfile && myProfile.broker_license) || "",
           company: (typeof myProfile !== "undefined" && myProfile && myProfile.broker_company) || ""
         };
-        const balance = getBalance(currentUserEmail);
         const cards = brokerPackages
           .map((pkg) => {
             const credited = Math.round(pkg.base * (1 + pkg.bonus / 100));
@@ -23168,10 +23316,6 @@
                   <div class="b2b-broker-title">Cuenta Broker <span class="b2b-approved">Aprobada</span></div>
                   <div class="b2b-broker-sub">${escapeHtml(broker.license || "Licencia no indicada")} · ${escapeHtml(broker.company || "")}</div>
                 </div>
-              </div>
-              <div class="b2b-balance">
-                <span>Crédito disponible</span>
-                <strong>${money.format(balance)}</strong>
               </div>
             </div>
             <div class="b2b-title">Comprar paquete de desbloqueos</div>
