@@ -5251,8 +5251,8 @@
         align-items: flex-end;
         display: flex;
         flex-wrap: wrap;
-        gap: 10px 12px;
-        justify-content: space-between;
+        gap: 10px 18px;
+        justify-content: flex-start;
         padding-top: 12px;
       }
       .wallet-panel-compact .wallet-balance {
@@ -5269,10 +5269,10 @@
         line-height: 1;
       }
       .wallet-panel-compact .wab-add {
-        flex: 1 1 200px;
+        flex: 0 0 auto;
         font-size: 13px;
         min-height: 44px;
-        padding: 0 16px;
+        padding: 0 22px;
         white-space: nowrap;
         width: auto;
       }
@@ -5309,16 +5309,20 @@
       .wallet-panel-compact .coupon-box .cb-desc {
         color: #607086;
       }
+      .wallet-panel-compact .coupon-box .cb-row {
+        max-width: 460px;
+      }
       .wallet-panel-compact .coupon-box .cb-row input {
         border: 1.5px solid #d5dee9;
         color: #0b2f55;
       }
-      @media (max-width: 420px) {
+      @media (max-width: 520px) {
         .wallet-panel-compact .wab-mid {
           align-items: stretch;
           flex-direction: column;
         }
         .wallet-panel-compact .wab-add {
+          flex: 0 0 auto;
           width: 100%;
         }
       }
@@ -23600,7 +23604,7 @@
         card.innerHTML = `
           <div class="b2b-title">Carga masiva (Excel)</div>
           <p class="b2b-desc">Sube muchas publicaciones de una vez. Elige el tipo, descarga la plantilla, complétala y súbela. Se publican a tu nombre de broker.</p>
-          <div style="display:inline-flex;border:1px solid #d5dee9;border-radius:10px;overflow:hidden;margin:6px 0 10px">${seg("property", "Inmuebles")}${seg("vehicle", "Vehículos")}</div>
+          <div style="display:inline-flex;align-self:flex-start;border:1px solid #d5dee9;border-radius:10px;overflow:hidden;margin:6px 0 10px">${seg("property", "Inmuebles")}${seg("vehicle", "Vehículos")}</div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
             <button class="button dark" type="button" onclick="downloadBulkTemplate()">⬇ Descargar plantilla (${spec.label})</button>
             <label class="button primary" style="cursor:pointer;margin:0">⬆ Subir Excel lleno
