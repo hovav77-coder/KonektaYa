@@ -12171,21 +12171,12 @@
                   <button type="button" data-admin-panel-button="unlocks">Desbloqueos</button>
                   <button type="button" data-admin-panel-button="validation">Validación</button>
                   <button type="button" data-admin-panel-button="coupons">Cupones</button>
-                  <button type="button" data-admin-panel-button="settings">Ajustes <span id="settingsTabDot" class="tab-stdot"></span></button>
+                  <button type="button" data-admin-panel-button="payments">Pagos <span id="settingsTabDot" class="tab-stdot"></span></button>
                   <button type="button" data-admin-panel-button="matchlab">Laboratorio</button>
                 </div>
 
                 <section class="admin-panel-pane active" data-admin-panel-pane="overview">
-                  <div id="overviewPaymentsBand" class="ov-pay-band"></div>
                   <div class="ov-metrics-slot"></div>
-                  <div class="ov-quick">
-                    <div class="qa-title">Accesos rápidos</div>
-                    <div class="qa-grid">
-                      <button class="qa-card" type="button" onclick="adminGoTab('validation')"><span>Validación</span><span class="arw">›</span></button>
-                      <button class="qa-card" type="button" onclick="adminGoTab('clients')"><span>Clientes y créditos</span><span class="arw">›</span></button>
-                      <button class="qa-card" type="button" onclick="adminGoTab('unlocks')"><span>Desbloqueos</span><span class="arw">›</span></button>
-                    </div>
-                  </div>
                 </section>
 
                 <section class="admin-panel-pane" data-admin-panel-pane="clients">
@@ -12276,15 +12267,14 @@
                   <div class="coupons-slot"></div>
                 </section>
 
-                <section class="admin-panel-pane" data-admin-panel-pane="settings">
+                <section class="admin-panel-pane" data-admin-panel-pane="payments">
                   <div class="admin-section-title">
                     <div>
-                      <h3>Ajustes</h3>
-                      <p>Configuración de la plataforma: pagos, motor de matching y mantenimiento.</p>
+                      <h3>Pagos con PayPal</h3>
+                      <p>Interruptor de cobros con dinero real. Actívalo o desactívalo aquí.</p>
                     </div>
                   </div>
                   <div class="settings-pagos-slot" style="margin-bottom:18px"></div>
-                  <div class="settings-lab-slot" style="margin-bottom:18px"></div>
                   <div class="settings-maint-slot"></div>
                 </section>
 
@@ -15734,7 +15724,7 @@
         const b = document.querySelector('[data-admin-panel-button="' + key + '"]');
         if (b) b.click();
       }
-      function adminGoSettings() { adminGoTab("settings"); }
+      function adminGoSettings() { adminGoTab("payments"); }
       window.adminGoTab = adminGoTab;
       window.adminGoSettings = adminGoSettings;
 
@@ -15761,19 +15751,12 @@
           if (cpHead) { cpHead.removeAttribute("onclick"); cpHead.style.cursor = "default"; }
         }
         const pagos = q("#adminPaymentsBar");
-        const pagosSlot = q('[data-admin-panel-pane="settings"] .settings-pagos-slot');
+        const pagosSlot = q('[data-admin-panel-pane="payments"] .settings-pagos-slot');
         if (pagos && pagosSlot) { pagos.style.margin = "0"; pagosSlot.appendChild(pagos); }
         const maint = q("#adminMaintenance");
-        const maintSlot = q('[data-admin-panel-pane="settings"] .settings-maint-slot');
+        const maintSlot = q('[data-admin-panel-pane="payments"] .settings-maint-slot');
         if (maint && maintSlot) maintSlot.appendChild(maint);
-        const labPane = q('[data-admin-panel-pane="matchlab"]');
-        const labSlot = q('[data-admin-panel-pane="settings"] .settings-lab-slot');
-        if (labPane && labSlot) {
-          while (labPane.firstChild) labSlot.appendChild(labPane.firstChild);
-          labPane.remove();
-        }
-        const labBtn = q('[data-admin-panel-button="matchlab"]');
-        if (labBtn) labBtn.remove();
+        // Laboratorio de Matching queda como su PROPIA pestaña (matchlab): no se mueve.
         ws.dataset.reorged = "1";
       }
       window.setupAdminTabsReorg = setupAdminTabsReorg;
