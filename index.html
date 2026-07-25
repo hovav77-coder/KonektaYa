@@ -5927,6 +5927,46 @@
         color: #ffffff;
       }
 
+      /* ===== Pie de tarjeta compacto (Zona 2): switch + iconos + CTA full-width ===== */
+      .av-wrap { align-items: center; display: inline-flex; gap: 8px; }
+      .av-toggle {
+        background: #dce5ef; border: 0; border-radius: 999px; cursor: pointer;
+        flex: none; height: 24px; padding: 0; position: relative; transition: background 0.18s; width: 44px;
+      }
+      .av-toggle.on { background: var(--green); }
+      .av-knob {
+        background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(11, 47, 85, 0.25);
+        height: 20px; left: 2px; position: absolute; top: 2px; transition: transform 0.18s; width: 20px;
+      }
+      .av-toggle.on .av-knob { transform: translateX(20px); }
+      .av-lab { color: #0b2f55; font-size: 13px; font-weight: 600; }
+      .av-toggle:not(.on) + .av-lab { color: #607086; }
+
+      /* Layout de 2 filas SOLO en pies con switch (ofertas/solicitudes); el modal de
+         resultados (.rc2-foot) y las tarjetas archivadas no tienen .av-wrap y no cambian. */
+      .oc2-foot:has(.av-wrap) {
+        align-items: center;
+        display: grid;
+        gap: 10px 6px;
+        grid-template-columns: 1fr auto auto;
+        padding: 10px 16px 12px;
+      }
+      .oc2-foot:has(.av-wrap) .av-wrap { grid-column: 1; grid-row: 1; }
+      .oc2-foot:has(.av-wrap) .oc2-foot-actions { display: contents; }
+      .oc2-foot:has(.av-wrap) .button.small.ghost {
+        align-items: center; background: #fff; border: 1px solid #dce5ef; border-radius: 10px;
+        display: inline-flex; font-size: 0; height: 34px; justify-content: center;
+        min-height: 0; padding: 0; width: 34px;
+      }
+      .oc2-foot:has(.av-wrap) .button.small.ghost::before { font-size: 15px; line-height: 1; }
+      .oc2-foot:has(.av-wrap) .button.small.ghost:not(.oc2-del)::before { content: "✏️"; }
+      .oc2-foot:has(.av-wrap) .button.small.oc2-del { border-color: #f3c2c2; }
+      .oc2-foot:has(.av-wrap) .button.small.oc2-del::before { content: "🗑️"; }
+      .oc2-foot:has(.av-wrap) .button.small.primary,
+      .oc2-foot:has(.av-wrap) .button.small.results-empty {
+        grid-column: 1 / -1; min-height: 44px; width: 100%;
+      }
+
       .result-row.row-closed {
         opacity: 0.72;
       }
@@ -6613,11 +6653,12 @@
 
       .dashboard-nav-bar {
         background: #ffffff;
-        border: 1px solid #dce5ef;
-        border-radius: 16px;
+        border: 1px solid #e6edf5;
+        border-radius: 14px;
+        box-shadow: 0 1px 3px rgba(11, 47, 85, 0.06);
         display: block;
-        margin-bottom: 18px;
-        padding: 13px 16px 0;
+        margin-bottom: 16px;
+        padding: 12px 14px;
       }
 
       .dashboard-nav-lbl {
@@ -6630,35 +6671,42 @@
         text-transform: uppercase;
       }
 
+      /* Chips de vertical (categoría): fila plana, un solo renglón, nunca envuelve */
       .vertical-switch {
-        background: #f6f8fb;
-        border: 1px solid #dce5ef;
-        border-radius: 999px;
-        display: inline-flex;
-        gap: 4px;
-        margin-bottom: 12px;
-        padding: 4px;
+        background: transparent;
+        border: 0;
+        border-radius: 0;
+        display: flex;
+        gap: 6px;
+        margin: 12px 0 0;
+        padding: 0;
         max-width: 100%;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
       }
+      .vertical-switch::-webkit-scrollbar { display: none; }
 
       .vertical-switch button {
         align-items: center;
-        background: transparent;
-        border: none;
+        background: #f5f8fb;
+        border: 1px solid #e6edf5;
         border-radius: 999px;
         color: var(--muted);
         cursor: pointer;
         display: inline-flex;
-        font-size: 14px;
-        font-weight: 800;
-        gap: 8px;
-        height: 38px;
-        padding: 0 18px;
+        flex: 0 0 auto;
+        font-size: 13px;
+        font-weight: 600;
+        gap: 5px;
+        height: 30px;
+        padding: 0 12px;
+        white-space: nowrap;
       }
 
       .vertical-switch button.active {
         background: var(--navy);
+        border-color: var(--navy);
         color: #ffffff;
       }
 
@@ -7829,10 +7877,10 @@
       }
 
       .user-dashboard-tab-buttons {
-        border-top: 1px solid var(--line);
+        border-bottom: 1px solid #eef2f7;
         display: flex;
         flex-wrap: wrap;
-        gap: 22px;
+        gap: 20px;
       }
 
       .user-dashboard-tab-buttons button {
@@ -10666,33 +10714,32 @@
         cursor: pointer; font-size: 13px; font-weight: 800; padding: 10px 16px; white-space: nowrap;
       }
 
-      /* Resumen simple (píldoras) al fondo */
+      /* Tu actividad + Historial/Pagos: un solo bloque conectado */
       .owner-resumen-strip {
-        background: #ffffff; border: 1px solid #e6edf5; border-radius: 16px;
+        background: #ffffff; border: 1px solid #e6edf5; border-radius: 14px;
+        box-shadow: 0 1px 3px rgba(11, 47, 85, 0.06);
         margin: 16px 0 0; padding: 13px 15px;
       }
       .owner-resumen-strip[hidden] { display: none; }
+      .orr-head { align-items: center; display: flex; justify-content: space-between; margin-bottom: 12px; }
       .owner-resumen-title {
         color: #8595a7; font-size: 11px; font-weight: 800; letter-spacing: 0.5px;
-        margin: 0 0 9px; text-transform: uppercase;
+        margin: 0; text-transform: uppercase;
       }
-      .owner-resumen-pills { display: flex; flex-wrap: wrap; gap: 8px; }
-      .owner-resumen-pills .orp {
-        align-items: center; background: #f5f8fb; border-radius: 10px; color: #44566a;
-        display: flex; font-size: 13px; font-weight: 700; gap: 6px; padding: 8px 12px;
+      .orr-detail { background: none; border: 0; color: #c2410c; cursor: pointer; font-size: 12px; font-weight: 700; padding: 0; }
+      .orr-stats { display: flex; }
+      .orr-stat { flex: 1; min-width: 0; padding: 0 6px; text-align: center; }
+      .orr-stat + .orr-stat { border-left: 1px solid #eef2f7; }
+      .orr-v { color: #0b2f55; display: block; font-size: 19px; font-weight: 800; line-height: 1.1; }
+      .orr-lb { color: #607086; display: block; font-size: 11px; margin-top: 3px; }
+      .orr-div { border-top: 1px solid #e6edf5; margin: 12px -15px 0; }
+      .orr-row {
+        align-items: center; background: none; border: 0; cursor: pointer; display: flex;
+        font: inherit; height: 46px; justify-content: space-between; padding: 0; width: 100%;
       }
-      .owner-resumen-pills .orp b { color: #0a2f55; }
-      .owner-resumen-pills .orp-ic { font-size: 14px; }
-
-      /* Footer: Historial / Pagos (lo menos usado) */
-      .dashboard-secondary { display: flex; gap: 10px; margin: 16px 0 0; }
-      .dashboard-secondary .dash-sec-btn {
-        background: #ffffff; border: 1px solid #e6edf5; border-radius: 13px; color: #0a2f55;
-        cursor: pointer; flex: 1; font-size: 13.5px; font-weight: 800; padding: 13px; text-align: center;
-        transition: border-color 140ms ease, box-shadow 140ms ease;
-      }
-      .dashboard-secondary .dash-sec-btn:hover { border-color: #cbd7e6; box-shadow: 0 8px 20px -12px rgba(16,32,51,.3); }
-      .dashboard-secondary .dash-sec-btn.active { border-color: #0a2f55; box-shadow: 0 0 0 1px #0a2f55 inset; }
+      .orr-row + .orr-row { border-top: 1px solid #f0f4f9; }
+      .orr-row-l { align-items: center; color: #0b2f55; display: flex; font-size: 14px; font-weight: 500; gap: 8px; }
+      .orr-chev { color: #94a3b8; font-size: 16px; }
       /* Popup de Historial / Pagos */
       #secondaryModal { z-index: 130; }
       #secondaryModal .secondary-modal-card {
@@ -11965,16 +12012,15 @@
             <div class="section user-dashboard-tabs">
               <h2 class="user-dash-title">Mis publicaciones</h2>
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
-                <span class="dashboard-nav-lbl">Filtrar por</span>
-                <div class="vertical-switch" aria-label="Vertical del dashboard">
-                  <button type="button" data-user-vertical-filter="all">Todos</button>
-                  <button type="button" data-user-vertical-filter="property">Inmuebles <span class="vertical-count" data-vertical-count="property">0</span></button>
-                  <button type="button" data-user-vertical-filter="vehicle">Vehículos <span class="vertical-count" data-vertical-count="vehicle">0</span></button>
-                </div>
                 <div class="user-dashboard-tab-buttons" aria-label="Secciones del dashboard del cliente">
                   <button class="active" type="button" data-user-dashboard-button="properties">Ofertas <span class="tab-count" id="offersTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="searches">Solicitudes <span class="tab-count" id="searchesTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="archived" id="archivedTabBtn" hidden>Archivadas <span class="tab-count" id="archivedTabCount">0</span></button>
+                </div>
+                <div class="vertical-switch" aria-label="Vertical del dashboard">
+                  <button type="button" data-user-vertical-filter="all">Todos</button>
+                  <button type="button" data-user-vertical-filter="property">🏢 Inmuebles <span class="vertical-count" data-vertical-count="property">0</span></button>
+                  <button type="button" data-user-vertical-filter="vehicle">🚗 Vehículos <span class="vertical-count" data-vertical-count="vehicle">0</span></button>
                 </div>
               </div>
               <div class="user-dashboard-pane active" data-user-dashboard-pane="properties">
@@ -12000,10 +12046,6 @@
               </div>
             </div>
             <div class="owner-resumen-strip" id="ownerResumen" hidden></div>
-            <div class="dashboard-secondary" aria-label="Historial y pagos">
-              <button type="button" class="dash-sec-btn" onclick="openSecondaryPanel('history')">🧾 Historial</button>
-              <button type="button" class="dash-sec-btn" onclick="openSecondaryPanel('payments')">💳 Pagos y recibos</button>
-            </div>
             <div class="rd-modal" id="secondaryModal" hidden>
               <div class="rd-scrim" onclick="closeSecondaryPanel()"></div>
               <div class="rd-card secondary-modal-card" role="dialog" aria-modal="true" aria-label="Historial y pagos">
@@ -21075,14 +21117,18 @@
         if (ownerResumenTarget) {
           ownerResumenTarget.hidden = false;
           ownerResumenTarget.innerHTML =
-            '<p class="owner-resumen-title">Tu actividad</p>' +
-            '<div class="owner-resumen-pills">' +
-            '<span class="orp"><span class="orp-ic" aria-hidden="true">🔓</span><b>' + allUnlockedCount + "</b> " +
-            (allUnlockedCount === 1 ? "contacto desbloqueado" : "contactos desbloqueados") + "</span>" +
-            '<span class="orp"><span class="orp-ic" aria-hidden="true">💳</span><b>' + money.format(allSpent) + "</b> gastado</span>" +
-            '<span class="orp"><span class="orp-ic" aria-hidden="true">🤖</span><b>' + aiResultsTotal + "</b> " +
-            (aiResultsTotal === 1 ? "resultado de IA" : "resultados de IA") + "</span>" +
-            "</div>";
+            '<div class="orr-head">' +
+              '<span class="owner-resumen-title">Tu actividad</span>' +
+              '<button type="button" class="orr-detail" onclick="openSecondaryPanel(\'history\')">Ver detalle ›</button>' +
+            "</div>" +
+            '<div class="orr-stats">' +
+              '<div class="orr-stat"><span class="orr-v">' + allUnlockedCount + '</span><span class="orr-lb">🔓 desbloqueados</span></div>' +
+              '<div class="orr-stat"><span class="orr-v">$' + Math.round(allSpent) + '</span><span class="orr-lb">💳 gastado</span></div>' +
+              '<div class="orr-stat"><span class="orr-v">' + aiResultsTotal + '</span><span class="orr-lb">🤖 resultados IA</span></div>' +
+            "</div>" +
+            '<div class="orr-div"></div>' +
+            '<button type="button" class="orr-row" onclick="openSecondaryPanel(\'history\')"><span class="orr-row-l">🧾 Historial de contactos</span><span class="orr-chev">›</span></button>' +
+            '<button type="button" class="orr-row" onclick="openSecondaryPanel(\'payments\')"><span class="orr-row-l">💳 Pagos y recibos</span><span class="orr-chev">›</span></button>';
         }
 
         const kpiOffers =
@@ -22547,11 +22593,7 @@
       }
 
       function searchActiveSwitch(id, active, fn) {
-        return `<div class="avail-switch" role="group" aria-label="Estado de la búsqueda">
-          <button type="button" class="avail-seg ${active ? "on-active" : ""}" onclick="${fn}('${id}', true)">Buscando</button>
-          <button type="button" class="avail-seg ${active ? "" : "off-active"}" onclick="${fn}('${id}', false)">Pausar</button>
-        </div>
-        <p style="font-size:11.5px;color:#5b6b82;margin:5px 0 0">Si la pausas, dejas de aparecer y nadie podrá contactarte.</p>`;
+        return `<span class="av-wrap"><button type="button" class="av-toggle ${active ? "on" : ""}" role="switch" aria-checked="${active}" aria-label="Estado de la búsqueda: ${active ? "buscando" : "pausada"}" title="${active ? "Activa · si la pausas dejas de aparecer" : "Pausada · nadie puede contactarte"}" onclick="${fn}('${id}', ${!active})"><span class="av-knob"></span></button><span class="av-lab">${active ? "Buscando" : "Pausada"}</span></span>`;
       }
 
       // Reporte de contacto/desbloqueo sospechoso: abre el WhatsApp de soporte con
@@ -22662,10 +22704,7 @@
       }
 
       function availabilitySwitch(id, available, fn) {
-        return `<div class="avail-switch" role="group" aria-label="Disponibilidad">
-          <button type="button" class="avail-seg ${available ? "on-active" : ""}" onclick="${fn}('${id}', true)">Disponible</button>
-          <button type="button" class="avail-seg ${available ? "" : "off-active"}" onclick="${fn}('${id}', false)">No disponible</button>
-        </div>`;
+        return `<span class="av-wrap"><button type="button" class="av-toggle ${available ? "on" : ""}" role="switch" aria-checked="${available}" aria-label="Disponibilidad" title="${available ? "Disponible · tócalo para pausar" : "No disponible · tócalo para activar"}" onclick="${fn}('${id}', ${!available})"><span class="av-knob"></span></button><span class="av-lab">${available ? "Disponible" : "No disponible"}</span></span>`;
       }
 
       function buildArchivableBody(list, sortFn, renderCard, attrsFn) {
