@@ -10714,6 +10714,47 @@
         cursor: pointer; font-size: 13px; font-weight: 800; padding: 10px 16px; white-space: nowrap;
       }
 
+      /* ===== Bloque "Próxima mejor acción" (rediseño panel usuario, 3 estados) ===== */
+      .owner-action { background: #fff; border: 1px solid #e6edf5; border-radius: 14px; box-shadow: 0 2px 8px rgba(10,47,85,.06); margin: 0 0 16px; padding: 16px; }
+      .owner-action[hidden] { display: none; }
+      .owner-action.oa-hot, .owner-action.oa-onboard { border-top: 3px solid transparent; border-image: linear-gradient(90deg, #e05b2a, #f1883f) 1; }
+      .owner-action.oa-calm { border-top: 3px solid #cfe0f4; text-align: center; }
+      .oa-interes { display: flex; align-items: center; gap: 9px; background: #fdf1ea; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; }
+      .oa-interes .oa-b { width: 22px; height: 22px; border-radius: 50%; background: #e05b2a; color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 800; flex: none; }
+      .oa-interes .oa-tx { font-size: 13px; color: #0a2f55; flex: 1; }
+      .oa-interes .oa-ver { background: none; border: 0; font-size: 13px; font-weight: 700; color: #c2410c; cursor: pointer; font-family: inherit; }
+      .oa-cta { width: 100%; height: 44px; border: 0; border-radius: 10px; background: linear-gradient(135deg, #e05b2a, #f1883f); color: #fff; font: 600 14px system-ui; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+      .oa-cta .oa-n2 { background: rgba(255,255,255,.22); border-radius: 999px; padding: 1px 9px; font-weight: 800; font-size: 13px; }
+      .oa-radar { width: 56px; height: 56px; border-radius: 50%; background: #eef4fc; display: grid; place-items: center; margin: 2px auto 12px; position: relative; font-size: 26px; }
+      .oa-radar::before, .oa-radar::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid #bcd4f2; opacity: 0; animation: oaPulse 2.2s ease-out infinite; }
+      .oa-radar::after { animation-delay: 1.1s; }
+      @keyframes oaPulse { 0% { transform: scale(.7); opacity: .7; } 100% { transform: scale(1.5); opacity: 0; } }
+      .oa-calm-t { margin: 0 0 5px; font-size: 15px; font-weight: 700; color: #0a2f55; }
+      .oa-calm-p { margin: 0; font-size: 13px; color: #607086; line-height: 1.5; }
+      .oa-dots { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; background: #f4f7fb; border: 1px solid #e6edf5; border-radius: 999px; padding: 7px 14px; font-size: 12px; font-weight: 700; color: #3a5b86; }
+      .oa-dots i { width: 6px; height: 6px; border-radius: 50%; background: #5f86c0; display: inline-block; animation: oaBlink 1.4s infinite both; }
+      .oa-dots i:nth-child(2) { animation-delay: .2s; }
+      .oa-dots i:nth-child(3) { animation-delay: .4s; }
+      @keyframes oaBlink { 0%,80%,100% { opacity: .25; } 40% { opacity: 1; } }
+      .oa-calm-sub { margin-top: 12px; font-size: 11px; color: #94a3b8; }
+      .oa-ob-t { font-size: 17px; font-weight: 700; color: #0a2f55; margin: 0 0 4px; }
+      .oa-ob-p { font-size: 13px; color: #607086; line-height: 1.5; margin: 0; }
+      .oa-ob-cta { display: flex; gap: 10px; margin-top: 14px; }
+      .oa-ob-cta .button.primary { flex: 1; }
+      .oa-ob-bus { flex: 1; height: 44px; border-radius: 10px; font: 600 14px system-ui; cursor: pointer; background: #fff; border: 1.5px solid #0a2f55; color: #0a2f55; }
+      .oa-stepper { display: flex; align-items: center; gap: 6px; margin-top: 16px; }
+      .oa-stepper .oa-st { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; text-align: center; }
+      .oa-stepper .oa-n { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #dce5ef; color: #0a2f55; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+      .oa-stepper .oa-l { font-size: 10px; color: #607086; line-height: 1.2; }
+      .oa-stepper .oa-bar { height: 1.5px; background: #e6edf5; flex: 0 0 10px; margin-top: -14px; }
+      @media (prefers-reduced-motion: reduce) { .oa-radar::before, .oa-radar::after, .oa-dots i { animation: none; } }
+      /* Cupón plegable en la billetera */
+      .cb-chev { font-size: 12px; color: #607086; margin-left: 4px; }
+      .wallet-panel-compact .coupon-box .cb-head { cursor: pointer; }
+      .coupon-box.coupon-collapsed .cb-desc,
+      .coupon-box.coupon-collapsed .cb-row,
+      .coupon-box.coupon-collapsed .cb-status { display: none; }
+
       /* Tu actividad + Historial/Pagos: un solo bloque conectado */
       .owner-resumen-strip {
         background: #ffffff; border: 1px solid #e6edf5; border-radius: 14px;
@@ -12015,8 +12056,8 @@
                   <button class="button wallet-ghost" type="button" id="registerPasskeyBtn" hidden onclick="registerPasskeyFlow()">🔒 Face ID</button>
                   <button class="button wallet-ghost" type="button" onclick="logoutUser()">⏻ Salir</button>
                 </div>
-                <div class="coupon-box" id="couponBox" hidden>
-                  <div class="cb-head">🎟️ ¿Tienes un cupón?</div>
+                <div class="coupon-box coupon-collapsed" id="couponBox" hidden>
+                  <div class="cb-head" role="button" tabindex="0" onclick="toggleCouponBox()">🎟️ ¿Tienes un cupón? <span class="cb-chev" aria-hidden="true">▸</span></div>
                   <div class="cb-desc">Canjéalo y el crédito entra directo a tu billetera.</div>
                   <div class="cb-row">
                     <input id="couponInput" type="text" placeholder="CÓDIGO" autocomplete="off" />
@@ -12028,7 +12069,7 @@
               <div id="brokerStatusBanner"></div>
               <div class="wallet-summary-strip" id="ownerStats"></div>
             </div>
-            <div class="owner-interest-alert" id="ownerInterestAlert" hidden></div>
+            <div class="owner-action" id="ownerActionBlock" hidden></div>
             <div id="brokerB2BPanel"></div>
             <div class="mydata-modal" id="myDataModal" hidden>
               <div class="mydata-backdrop" onclick="closeMyData()"></div>
@@ -19160,6 +19201,17 @@
       }
       window.redeemCoupon = redeemCoupon;
 
+      // Cupón plegable en la billetera: por defecto colapsado a un enlace.
+      function toggleCouponBox() {
+        const box = document.getElementById("couponBox");
+        if (!box) return;
+        const collapsed = box.classList.toggle("coupon-collapsed");
+        const chev = box.querySelector(".cb-chev");
+        if (chev) chev.textContent = collapsed ? "▸" : "▾";
+        if (!collapsed) { const i = document.getElementById("couponInput"); if (i) i.focus(); }
+      }
+      window.toggleCouponBox = toggleCouponBox;
+
       // Compras de crédito por PayPal del usuario = fuente de los comprobantes de pago.
       // RLS (paypal_orders_select_own) garantiza que cada quien solo ve las suyas.
       let myOrders = [];
@@ -21260,24 +21312,70 @@
         const ownerStatsTarget = document.getElementById("ownerStats");
         if (ownerStatsTarget) { ownerStatsTarget.classList.remove("funnel-mode"); ownerStatsTarget.innerHTML = ""; }
 
-        const interestAlertTarget = document.getElementById("ownerInterestAlert");
-        if (interestAlertTarget) {
-          if (interestCount > 0) {
-            interestAlertTarget.hidden = false;
-            interestAlertTarget.innerHTML =
-              '<span class="oia-ico" aria-hidden="true">🎯</span>' +
-              '<span class="oia-tx">' +
-              (interestCount === 1 ? "1 cliente quiere que lo contactes" : interestCount + " clientes quieren que los contactes") +
-              "</span>" +
-              '<button class="oia-go" type="button" onclick="goToActiveInterest()">Ver</button>';
+        // Bloque "Próxima mejor acción" (rediseño): un solo bloque adaptativo que
+        // reemplaza el aviso de interés suelto. 3 estados según datos existentes:
+        //  - sin publicaciones → onboarding "Empecemos"
+        //  - con interés/resultados → CTA naranja "Ver resultados nuevos"
+        //  - con publicaciones pero 0 coincidencias → "La IA sigue buscando tu match"
+        const pubCount =
+          userProperties.length + userVehicleOffers.length + userSearches.length + userVehicleSearches.length;
+        const actionBlock = document.getElementById("ownerActionBlock");
+        if (actionBlock) {
+          if (!currentUserEmail) {
+            actionBlock.hidden = true;
+            actionBlock.innerHTML = "";
+          } else if (pubCount === 0) {
+            actionBlock.hidden = false;
+            actionBlock.className = "owner-action oa-onboard";
+            actionBlock.innerHTML =
+              '<h3 class="oa-ob-t">Empecemos 👋</h3>' +
+              '<p class="oa-ob-p">Publica lo que ofreces o lo que buscas y te avisamos cuando haya coincidencias.</p>' +
+              '<div class="oa-ob-cta">' +
+                '<button class="button primary" type="button" data-tab-button="propietario">+ Publicar</button>' +
+                '<button class="oa-ob-bus" type="button" data-tab-button="busqueda">🔍 Buscar</button>' +
+              "</div>" +
+              '<div class="oa-stepper">' +
+                '<span class="oa-st"><span class="oa-n">1</span><span class="oa-l">Publica</span></span>' +
+                '<span class="oa-bar"></span>' +
+                '<span class="oa-st"><span class="oa-n">2</span><span class="oa-l">Recibe resultados</span></span>' +
+                '<span class="oa-bar"></span>' +
+                '<span class="oa-st"><span class="oa-n">3</span><span class="oa-l">Desbloquea</span></span>' +
+              "</div>";
+          } else if (interestCount > 0 || aiResultsTotal > 0) {
+            actionBlock.hidden = false;
+            actionBlock.className = "owner-action oa-hot";
+            const resultsN = Math.max(aiResultsTotal, interestCount);
+            let ah = "";
+            if (interestCount > 0) {
+              ah +=
+                '<div class="oa-interes"><span class="oa-b">' + interestCount + "</span>" +
+                '<span class="oa-tx">' +
+                (interestCount === 1 ? "cliente quiere que lo contactes" : "clientes quieren que los contactes") +
+                "</span>" +
+                '<button class="oa-ver" type="button" onclick="goToActiveInterest()">Ver ›</button></div>';
+            }
+            ah +=
+              '<button class="oa-cta" type="button" onclick="goToActiveInterest()">Ver resultados nuevos <span class="oa-n2">' +
+              resultsN + "</span></button>";
+            actionBlock.innerHTML = ah;
           } else {
-            interestAlertTarget.hidden = true;
-            interestAlertTarget.innerHTML = "";
+            actionBlock.hidden = false;
+            actionBlock.className = "owner-action oa-calm";
+            actionBlock.innerHTML =
+              '<div class="oa-radar" aria-hidden="true">🤖</div>' +
+              '<h3 class="oa-calm-t">La IA sigue buscando tu match</h3>' +
+              '<p class="oa-calm-p">Tus publicaciones están activas. En cuanto aparezca una coincidencia, la verás aquí mismo.</p>' +
+              '<div class="oa-dots"><i></i><i></i><i></i> Buscando coincidencias…</div>' +
+              '<div class="oa-calm-sub">' + pubCount + (pubCount === 1 ? " publicación activa" : " publicaciones activas") + " · 0 coincidencias aún</div>";
           }
         }
 
         const ownerResumenTarget = document.getElementById("ownerResumen");
-        if (ownerResumenTarget) {
+        if (ownerResumenTarget && (!currentUserEmail || pubCount === 0)) {
+          // Usuario nuevo / sin sesión: ocultar "Tu actividad" (solo añade ceros).
+          ownerResumenTarget.hidden = true;
+          ownerResumenTarget.innerHTML = "";
+        } else if (ownerResumenTarget) {
           ownerResumenTarget.hidden = false;
           ownerResumenTarget.innerHTML =
             '<div class="orr-head">' +
