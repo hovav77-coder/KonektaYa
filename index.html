@@ -10740,6 +10740,36 @@
       .orr-row + .orr-row { border-top: 1px solid #f0f4f9; }
       .orr-row-l { align-items: center; color: #0b2f55; display: flex; font-size: 14px; font-weight: 500; gap: 8px; }
       .orr-chev { color: #94a3b8; font-size: 16px; }
+
+      /* ===== Admin rediseñado en pestañas (2026-07-25) ===== */
+      .admin-console-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+      .pay-head-chip { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 800; color: #fff; white-space: nowrap; cursor: pointer; align-self: flex-start; }
+      .pay-head-chip.is-on { background: #12a150; }
+      .pay-head-chip.is-off { background: #dc2626; }
+      .pay-head-chip .phc-dot { width: 9px; height: 9px; border-radius: 50%; background: #fff; }
+      .tab-stdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 2px; vertical-align: middle; }
+      .tab-stdot.is-on { background: #12a150; }
+      .tab-stdot.is-off { background: #dc2626; }
+      /* barra de pestañas admin: una sola fila, scroll horizontal en móvil */
+      .admin-panel-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+      .admin-panel-tabs::-webkit-scrollbar { display: none; }
+      .admin-panel-tabs button { flex: 0 0 auto; white-space: nowrap; }
+      /* banda de estado de pagos en Resumen */
+      .ov-pay-band { background: #fff; border: 1.5px solid #12a150; border-radius: 14px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+      .ov-pay-band.is-off { border-color: #dc2626; }
+      .ov-pay-band .ovb-l { display: flex; align-items: center; gap: 11px; }
+      .ov-pay-band .ovb-dot { width: 11px; height: 11px; border-radius: 50%; background: #12a150; flex: none; }
+      .ov-pay-band.is-off .ovb-dot { background: #dc2626; }
+      .ov-pay-band .ovb-t { font-size: 15px; font-weight: 900; color: #0a2f55; }
+      .ov-pay-band .ovb-s { font-size: 13px; color: #607086; margin-top: 1px; }
+      .ov-pay-band .ovb-go { background: #fff; border: 1px solid #dce5ef; border-radius: 10px; color: #0a2f55; font-weight: 800; font-size: 13px; padding: 10px 15px; cursor: pointer; font-family: inherit; white-space: nowrap; }
+      /* accesos rápidos en Resumen */
+      .ov-quick { margin-top: 20px; }
+      .ov-quick .qa-title { font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; color: #607086; margin-bottom: 10px; }
+      .ov-quick .qa-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+      .ov-quick .qa-card { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff; border: 1px solid #dce5ef; border-radius: 12px; padding: 14px 16px; color: #0a2f55; font-weight: 800; font-size: 14px; cursor: pointer; font-family: inherit; text-align: left; }
+      .ov-quick .qa-card:hover { border-color: #cbd7e6; }
+      .ov-quick .qa-card .arw { color: #e05b2a; font-weight: 900; font-size: 16px; }
       /* Popup de Historial / Pagos */
       #secondaryModal { z-index: 130; }
       #secondaryModal .secondary-modal-card {
@@ -12078,6 +12108,7 @@
                   <h2>Administración</h2>
                   <p class="intro">Clientes, créditos, registros y validaciones en una sola vista.</p>
                 </div>
+                <span id="paymentsHeadChip" class="pay-head-chip" role="button" tabindex="0" onclick="adminGoSettings()" title="Ir a Ajustes › Pagos"></span>
                 <div class="admin-maintenance" id="adminMaintenance">
                   <div>
                     <div class="admin-maintenance-title">Zona de mantenimiento</div>
@@ -12134,14 +12165,30 @@
 
               <div class="admin-workspace">
                 <div class="admin-panel-tabs" aria-label="Secciones del admin">
-                  <button class="active" type="button" data-admin-panel-button="clients">Clientes y créditos</button>
+                  <button class="active" type="button" data-admin-panel-button="overview">Resumen</button>
+                  <button type="button" data-admin-panel-button="clients">Clientes y créditos</button>
                   <button type="button" data-admin-panel-button="records">Registros</button>
                   <button type="button" data-admin-panel-button="unlocks">Desbloqueos</button>
                   <button type="button" data-admin-panel-button="validation">Validación</button>
+                  <button type="button" data-admin-panel-button="coupons">Cupones</button>
+                  <button type="button" data-admin-panel-button="settings">Ajustes <span id="settingsTabDot" class="tab-stdot"></span></button>
                   <button type="button" data-admin-panel-button="matchlab">Laboratorio</button>
                 </div>
 
-                <section class="admin-panel-pane active" data-admin-panel-pane="clients">
+                <section class="admin-panel-pane active" data-admin-panel-pane="overview">
+                  <div id="overviewPaymentsBand" class="ov-pay-band"></div>
+                  <div class="ov-metrics-slot"></div>
+                  <div class="ov-quick">
+                    <div class="qa-title">Accesos rápidos</div>
+                    <div class="qa-grid">
+                      <button class="qa-card" type="button" onclick="adminGoTab('validation')"><span>Validación</span><span class="arw">›</span></button>
+                      <button class="qa-card" type="button" onclick="adminGoTab('clients')"><span>Clientes y créditos</span><span class="arw">›</span></button>
+                      <button class="qa-card" type="button" onclick="adminGoTab('unlocks')"><span>Desbloqueos</span><span class="arw">›</span></button>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="admin-panel-pane" data-admin-panel-pane="clients">
                   <div class="admin-section-title">
                     <div>
                       <h3>Clientes y créditos</h3>
@@ -12223,6 +12270,22 @@
                     </div>
                   </div>
                   <div class="grid" id="adminValidation"></div>
+                </section>
+
+                <section class="admin-panel-pane" data-admin-panel-pane="coupons">
+                  <div class="coupons-slot"></div>
+                </section>
+
+                <section class="admin-panel-pane" data-admin-panel-pane="settings">
+                  <div class="admin-section-title">
+                    <div>
+                      <h3>Ajustes</h3>
+                      <p>Configuración de la plataforma: pagos, motor de matching y mantenimiento.</p>
+                    </div>
+                  </div>
+                  <div class="settings-pagos-slot" style="margin-bottom:18px"></div>
+                  <div class="settings-lab-slot" style="margin-bottom:18px"></div>
+                  <div class="settings-maint-slot"></div>
                 </section>
 
                 <section class="admin-panel-pane" data-admin-panel-pane="matchlab">
@@ -15666,6 +15729,55 @@
         });
       }
 
+      // Navegar a una pestaña del admin por su clave (usado por accesos rápidos y el chip de pagos).
+      function adminGoTab(key) {
+        const b = document.querySelector('[data-admin-panel-button="' + key + '"]');
+        if (b) b.click();
+      }
+      function adminGoSettings() { adminGoTab("settings"); }
+      window.adminGoTab = adminGoTab;
+      window.adminGoSettings = adminGoSettings;
+
+      // Rediseño del admin en pestañas: reubica los bloques que antes vivían sueltos
+      // arriba (Métricas, Cupones, Pagos, Laboratorio, Mantenimiento) dentro de sus
+      // pestañas nuevas MOVIENDO LOS NODOS reales (conservan ids y listeners). Idempotente.
+      function setupAdminTabsReorg() {
+        const ws = document.querySelector(".admin-workspace");
+        if (!ws || ws.dataset.reorged) return;
+        const q = (s) => document.querySelector(s);
+        const metrics = q(".admin-metrics");
+        const metricsSlot = q('[data-admin-panel-pane="overview"] .ov-metrics-slot');
+        if (metrics && metricsSlot) metricsSlot.appendChild(metrics);
+        const coupons = q("#adminCouponsCard");
+        const couponsSlot = q('[data-admin-panel-pane="coupons"] .coupons-slot');
+        if (coupons && couponsSlot) {
+          coupons.style.margin = "0";
+          couponsSlot.appendChild(coupons);
+          const body = document.getElementById("adminCouponsBody");
+          if (body) body.hidden = false; // en su pestaña propia va expandido
+          const chev = document.getElementById("cupChevron");
+          if (chev) chev.style.display = "none";
+          const cpHead = coupons.querySelector('[onclick="toggleAdminCoupons()"]');
+          if (cpHead) { cpHead.removeAttribute("onclick"); cpHead.style.cursor = "default"; }
+        }
+        const pagos = q("#adminPaymentsBar");
+        const pagosSlot = q('[data-admin-panel-pane="settings"] .settings-pagos-slot');
+        if (pagos && pagosSlot) { pagos.style.margin = "0"; pagosSlot.appendChild(pagos); }
+        const maint = q("#adminMaintenance");
+        const maintSlot = q('[data-admin-panel-pane="settings"] .settings-maint-slot');
+        if (maint && maintSlot) maintSlot.appendChild(maint);
+        const labPane = q('[data-admin-panel-pane="matchlab"]');
+        const labSlot = q('[data-admin-panel-pane="settings"] .settings-lab-slot');
+        if (labPane && labSlot) {
+          while (labPane.firstChild) labSlot.appendChild(labPane.firstChild);
+          labPane.remove();
+        }
+        const labBtn = q('[data-admin-panel-button="matchlab"]');
+        if (labBtn) labBtn.remove();
+        ws.dataset.reorged = "1";
+      }
+      window.setupAdminTabsReorg = setupAdminTabsReorg;
+
       function setupResultsFilter() {
         const buttons = document.querySelectorAll("[data-results-filter]");
         const items = document.querySelectorAll("[data-results-kind]");
@@ -18482,6 +18594,34 @@
       window.adminTogglePayments = adminTogglePayments;
 
       function renderPaymentsSwitch() {
+        // Rediseño admin: sincroniza el estado de pagos en los 3 anclajes
+        // (chip fijo del header, punto en la pestaña Ajustes, banda del Resumen).
+        (function syncPaymentsAnchors() {
+          const onNow = supabaseEnabled && paymentsEnabled;
+          const headChip = document.getElementById("paymentsHeadChip");
+          const tabDot = document.getElementById("settingsTabDot");
+          const band = document.getElementById("overviewPaymentsBand");
+          if (headChip) {
+            headChip.style.display = supabaseEnabled ? "" : "none";
+            headChip.className = "pay-head-chip " + (onNow ? "is-on" : "is-off");
+            headChip.innerHTML = '<span class="phc-dot"></span>Pagos PayPal: ' + (onNow ? "ACTIVADOS" : "DESACTIVADOS");
+          }
+          if (tabDot) {
+            tabDot.style.display = supabaseEnabled ? "" : "none";
+            tabDot.className = "tab-stdot " + (onNow ? "is-on" : "is-off");
+          }
+          if (band) {
+            band.style.display = supabaseEnabled ? "" : "none";
+            band.className = "ov-pay-band " + (onNow ? "is-on" : "is-off");
+            band.innerHTML =
+              '<div class="ovb-l"><span class="ovb-dot"></span><div>' +
+              '<div class="ovb-t">Pagos con PayPal: ' + (onNow ? "ACTIVADOS" : "DESACTIVADOS") + "</div>" +
+              '<div class="ovb-s">' + (onNow
+                ? "Cobros con dinero real habilitados. El control está en Ajustes."
+                : "Nadie puede pagar todavía. Actívalos en Ajustes cuando quieras cobrar.") + "</div></div></div>" +
+              '<button type="button" class="ovb-go" onclick="adminGoSettings()">Ir a Ajustes › Pagos</button>';
+          }
+        })();
         const chip = document.getElementById("paymentsStateChip");
         const desc = document.getElementById("paymentsStateDesc");
         const btn = document.getElementById("paymentsToggleBtn");
@@ -19245,6 +19385,7 @@
         setupDashboardViews();
         setupUserDashboardTabs();
         setupAdminPanelTabs();
+        setupAdminTabsReorg();
         // #17 Accesibilidad: anunciar avisos/errores a lectores de pantalla.
         document.querySelectorAll('.toast, [data-form-error], [data-account-error], #loginStatus, #mdStatus, #mdPassStatus, .md-status').forEach((el) => {
           if (!el.getAttribute("role")) el.setAttribute("role", "status");
