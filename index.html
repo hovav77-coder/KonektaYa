@@ -15675,10 +15675,12 @@
               b.classList.toggle("active", b.dataset.userVerticalFilter === "all"));
             let landingPane = "properties";
             try {
-              const nOffers = (typeof currentUserProperties === "function" ? currentUserProperties().length : 0)
-                + (typeof currentUserVehicleOffers === "function" ? currentUserVehicleOffers().length : 0);
-              const nSearches = (typeof currentUserSearches === "function" ? currentUserSearches().length : 0)
-                + (typeof currentUserVehicleSearches === "function" ? currentUserVehicleSearches().length : 0);
+              // Solo ACTIVAS: si todo lo del usuario está pausado, no aterrizamos
+              // en una pestaña como si tuviera contenido activo ahí.
+              const nOffers = (typeof currentUserProperties === "function" ? currentUserProperties().filter(isOfferAvailable).length : 0)
+                + (typeof currentUserVehicleOffers === "function" ? currentUserVehicleOffers().filter(isOfferAvailable).length : 0);
+              const nSearches = (typeof currentUserSearches === "function" ? currentUserSearches().filter(isSearchActive).length : 0)
+                + (typeof currentUserVehicleSearches === "function" ? currentUserVehicleSearches().filter(isSearchActive).length : 0);
               if (nOffers === 0 && nSearches > 0) landingPane = "searches";
             } catch (e) {}
             document.querySelectorAll("[data-user-dashboard-button]").forEach((b) =>
@@ -21173,11 +21175,15 @@
       }
 
       renderStats = function () {
-        const userProperties = currentUserProperties();
-        const userSearches = currentUserSearches();
-        const userVehicleOffers = currentUserVehicleOffers();
-        const userVehicleSearches = currentUserVehicleSearches();
-        const userMatches = currentUserMatches();
+        // Las stats y "Próxima mejor acción" cuentan SOLO lo activo: una
+        // publicación pausada ("No disponible") no es "activa" ni genera
+        // interés/resultados (vive en la pestaña Pausadas). Sin este filtro, el
+        // header contaría las pausadas como activas y podía disparar el aviso de
+        // "un cliente quiere que lo contactes" para una publicación pausada.
+        const userProperties = currentUserProperties().filter(isOfferAvailable);
+        const userSearches = currentUserSearches().filter(isSearchActive);
+        const userVehicleOffers = currentUserVehicleOffers().filter(isOfferAvailable);
+        const userVehicleSearches = currentUserVehicleSearches().filter(isSearchActive);
         const currentUserLabel = document.getElementById("currentUserLabel");
         const currentUserAvatar = document.getElementById("currentUserAvatar");
         const walletBalanceValue = document.getElementById("walletBalanceValue");
@@ -22396,10 +22402,14 @@
         if (!list.length) {
           const pane = document.querySelector('[data-user-dashboard-pane="paused"]');
           if (pane && pane.classList.contains("active")) {
+            // Volver a la pestaña con contenido activo (evita caer en un "Ofrezco"
+            // vacío si el usuario solo tenía búsquedas activas).
+            const hasActiveOffers = currentUserProperties().some(isOfferAvailable) || currentUserVehicleOffers().some(isOfferAvailable);
+            const dest = hasActiveOffers ? "properties" : "searches";
             document.querySelectorAll("[data-user-dashboard-button]").forEach((b) =>
-              b.classList.toggle("active", b.dataset.userDashboardButton === "properties"));
+              b.classList.toggle("active", b.dataset.userDashboardButton === dest));
             document.querySelectorAll("[data-user-dashboard-pane]").forEach((p) =>
-              p.classList.toggle("active", p.dataset.userDashboardPane === "properties"));
+              p.classList.toggle("active", p.dataset.userDashboardPane === dest));
           }
         }
         if (!target) return;
