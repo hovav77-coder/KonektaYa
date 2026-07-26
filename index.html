@@ -19054,7 +19054,13 @@
           // Perfil PRIMERO: así el trigger que marca owner_blocked ve el estado broker actualizado.
           await supaUpsertProfile(record);
           const { data } = splitContact(record);
-          const active = record.active !== false && record.available !== false;
+          // La columna `active` refleja SOLO el flag de disponibilidad propio de
+          // la entidad: las OFERTAS usan `available`, las BÚSQUEDAS usan `active`.
+          // (Antes hacía `active && available`, y como la carga vuelca la columna
+          // en record.active, una oferta pausada+reactivada quedaba trabada en
+          // false: la UI la mostraba disponible pero el servidor la rechazaba.)
+          const isOffer = entityKey === "properties" || entityKey === "vehicleOffers";
+          const active = isOffer ? record.available !== false : record.active !== false;
           const { data: res, error } = await supabaseClient
             .from(cfg.table)
             .upsert({ id: record.id, data, active })
@@ -19096,7 +19102,9 @@
       async function supaSetActive(entityKey, record) {
         if (!supabaseEnabled || !record || !record.id) return;
         const cfg = SUPA_ENTITIES[entityKey];
-        const active = record.active !== false && record.available !== false;
+        // Ofertas usan `available`; búsquedas usan `active`. Ver nota en supaUpsertPublication.
+        const isOffer = entityKey === "properties" || entityKey === "vehicleOffers";
+        const active = isOffer ? record.available !== false : record.active !== false;
         const { error } = await supabaseClient.from(cfg.table).update({ active, data: splitContact(record).data }).eq("id", record.id);
         if (error) console.warn("supaSetActive", cfg.table, error.message);
       }
@@ -19304,12 +19312,25 @@
         const searchId = match.search.id;
         const res = await supabaseClient.functions.invoke(UNLOCK_FN, { body: { vertical, offerId, searchId } });
         if (res.error || !res.data || !res.data.ok) {
+          // supabase-js entrega los 4xx/5xx de la Edge Function como res.error
+          // (FunctionsHttpError) con res.data = null; el mensaje REAL del servidor
+          // viene en res.error.context (un Response). Sin leerlo, CUALQUIER fallo
+          // se mostraba como "Revisa tu saldo" (engañoso: casi nunca es el saldo).
+          let serverMsg = (res.data && res.data.error) || "";
+          let serverBody = res.data || null;
+          try {
+            const ctx = res.error && res.error.context;
+            if (!serverMsg && ctx && typeof ctx.json === "function") {
+              serverBody = await (typeof ctx.clone === "function" ? ctx.clone() : ctx).json();
+              if (serverBody && serverBody.error) serverMsg = serverBody.error;
+            }
+          } catch (e) {}
           const warning = document.getElementById(`warn-${id}-${source}`);
           if (warning) {
-            warning.textContent = (res.data && res.data.error) || "No se pudo desbloquear. Revisa tu saldo.";
+            warning.textContent = serverMsg || "No se pudo desbloquear. Inténtalo de nuevo.";
             warning.classList.add("show");
           }
-          console.warn("supaUnlock", res.error || res.data);
+          console.warn("supaUnlock error →", serverMsg || res.error, serverBody);
           return;
         }
         const c = res.data.contact || {};
@@ -19388,9 +19409,10 @@
           const cfg = SUPA_ENTITIES[key];
           const { data: rows, error } = await supabaseClient.from(cfg.table).select("id,owner_id,data,active,owner_blocked,cycle_start");
           if (error) { console.warn("supaLoadAll", cfg.table, error.message); continue; }
+          const isOffer = key === "properties" || key === "vehicleOffers";
           const arr = (rows || []).map((r) => {
             const mine = r.owner_id === uid;
-            return {
+            const rec = {
               ...r.data,
               id: r.id,
               _sbId: r.id,
@@ -19399,8 +19421,15 @@
               ownerId: r.owner_id,
               owner_blocked: r.owner_blocked === true,
               email: mine ? currentUserEmail : r.data && r.data.email,
-              active: r.active !== false
             };
+            // La columna `active` es la fuente de verdad de la disponibilidad (el
+            // servidor la exige para desbloquear). Las OFERTAS la exponen como
+            // `available` (lo que lee isOfferAvailable); las BÚSQUEDAS como `active`.
+            // Volcarla siempre en `active` (como antes) dejaba las ofertas
+            // mostrándose disponibles aunque el servidor las tuviera inactivas.
+            if (isOffer) rec.available = r.active !== false;
+            else rec.active = r.active !== false;
+            return rec;
           });
           cfg.set(arr);
         }
