@@ -12127,6 +12127,7 @@
                 <div class="user-dashboard-tab-buttons" aria-label="Secciones del dashboard del cliente">
                   <button class="active" type="button" data-user-dashboard-button="properties">Ofrezco <span class="tab-count" id="offersTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="searches">Busco <span class="tab-count" id="searchesTabCount">0</span></button>
+                  <button type="button" data-user-dashboard-button="paused" id="pausedTabBtn" hidden>Pausadas <span class="tab-count" id="pausedTabCount">0</span></button>
                   <button type="button" data-user-dashboard-button="archived" id="archivedTabBtn" hidden>Archivadas <span class="tab-count" id="archivedTabCount">0</span></button>
                 </div>
                 <div class="vertical-switch" aria-label="Vertical del dashboard">
@@ -12148,6 +12149,13 @@
                   <span class="pane-heading-note" id="searchesPaneNote"></span>
                 </div>
                 <div class="data-list" id="userSearches"></div>
+              </div>
+              <div class="user-dashboard-pane" data-user-dashboard-pane="paused">
+                <div class="pane-heading">
+                  <h2>Publicaciones pausadas</h2>
+                  <span class="pane-heading-note">Las marcaste como "No disponible". No aparecen en tus resultados ni generan contactos; reactívalas cuando quieras.</span>
+                </div>
+                <div class="data-list" id="userPaused"></div>
               </div>
               <div class="user-dashboard-pane" data-user-dashboard-pane="archived">
                 <div class="pane-heading">
@@ -21556,6 +21564,23 @@
         return out;
       }
 
+      // Publicaciones PAUSADAS del usuario (para la pestaña "Pausadas"): las que
+      // marcó como "No disponible" y NO están archivadas. Cubre las 4 verticales
+      // (oferta/solicitud de inmueble y de vehículo). Las OFERTAS se pausan con
+      // available===false; las BÚSQUEDAS con active===false.
+      function currentUserPaused() {
+        const out = [];
+        const pushOffers = (arr, entityKey) =>
+          arr.filter((r) => isCurrentUserRecord(r) && !isArchivedRecord(r) && !isOfferAvailable(r)).forEach((record) => out.push({ entityKey, record }));
+        const pushSearches = (arr, entityKey) =>
+          arr.filter((r) => isCurrentUserRecord(r) && !isArchivedRecord(r) && !isSearchActive(r)).forEach((record) => out.push({ entityKey, record }));
+        pushOffers(properties, "properties");
+        pushSearches(searches, "searches");
+        pushOffers(vehicleOffers, "vehicleOffers");
+        pushSearches(vehicleSearches, "vehicleSearches");
+        return out;
+      }
+
       function currentUserMatches() {
         const propertyIds = new Set(currentUserProperties().map((property) => property.id));
         const searchIds = new Set(currentUserSearches().map((search) => search.id));
@@ -21847,10 +21872,13 @@
       }
 
       function renderDashboardLists() {
-        const userProperties = currentUserProperties();
-        const userSearches = currentUserSearches();
-        const userVehicleOffersAll = currentUserVehicleOffers();
-        const userVehicleSearchesAll = currentUserVehicleSearches();
+        // Las listas principales de Ofrezco/Busco muestran SOLO publicaciones
+        // activas. Las pausadas ("No disponible") se separan a la pestaña
+        // "Pausadas" (renderPausedPublications), igual que las archivadas.
+        const userProperties = currentUserProperties().filter(isOfferAvailable);
+        const userSearches = currentUserSearches().filter(isSearchActive);
+        const userVehicleOffersAll = currentUserVehicleOffers().filter(isOfferAvailable);
+        const userVehicleSearchesAll = currentUserVehicleSearches().filter(isSearchActive);
         const propertyRecordCount = userProperties.length + userSearches.length;
         const vehicleRecordCount = userVehicleOffersAll.length + userVehicleSearchesAll.length;
         // Re-aterrizar en la pestaña con contenido si el usuario NO tocó las pestañas.
@@ -22035,7 +22063,7 @@
               }</p><div class="empty-cta-row">${emptyPublishCta("propietario")}</div></article>`;
           }
 
-          const userVehicleOffers = currentUserVehicleOffers();
+          const userVehicleOffers = currentUserVehicleOffers().filter(isOfferAvailable);
           if (showUserVehiclesVertical && userVehicleOffers.length) {
             if (!userVehicleOffers.some((offer) => selectedUserPropertyId === `vehicle-${offer.id}`) && !userProperties.length) {
               selectedUserPropertyId = `vehicle-${userVehicleOffers[0].id}`;
@@ -22207,7 +22235,7 @@
               }</p><div class="empty-cta-row">${emptyPublishCta("busqueda")}</div></article>`;
           }
 
-          const userVehicleSearches = currentUserVehicleSearches();
+          const userVehicleSearches = currentUserVehicleSearches().filter(isSearchActive);
           if (showUserVehiclesVertical && userVehicleSearches.length) {
             if (!userVehicleSearches.some((search) => selectedUserSearchId === `vehicle-${search.id}`) && !userSearches.length) {
               selectedUserSearchId = `vehicle-${userVehicleSearches[0].id}`;
@@ -22294,6 +22322,7 @@
         }
 
         renderArchivedPublications();
+        renderPausedPublications();
         renderAdminRecords();
       }
 
@@ -22337,6 +22366,68 @@
                   <span class="arch-note">Se conserva por una interacción previa.</span>
                   <div class="oc2-foot-actions">
                     <button class="button small primary" type="button" onclick="unarchivePublication('${entityKey}', '${record.id}')">Restaurar</button>
+                  </div>
+                </div>
+              </div>`;
+          })
+          .join("")}</div>`;
+      }
+
+      // Pestaña "Pausadas": publicaciones marcadas "No disponible" (offers) o
+      // "de baja" (searches). Mismo patrón que Archivadas: cuenta + oculta la
+      // pestaña si no hay, y cada tarjeta trae "Reactivar" (usa el setter propio
+      // de cada entidad) para volver a activarla.
+      const PAUSED_ACTIONS = {
+        properties:      { fn: "setPropertyAvailable",   edit: "editProperty",      badge: "No disponible" },
+        vehicleOffers:   { fn: "setVehicleAvailable",    edit: "editVehicleOffer",  badge: "No disponible" },
+        searches:        { fn: "setSearchActive",        edit: "editSearch",        badge: "Dada de baja" },
+        vehicleSearches: { fn: "setVehicleSearchActive", edit: "editVehicleSearch", badge: "Dada de baja" }
+      };
+
+      function renderPausedPublications() {
+        const target = document.getElementById("userPaused");
+        const tabBtn = document.getElementById("pausedTabBtn");
+        const tabCount = document.getElementById("pausedTabCount");
+        const list = currentUserPaused();
+        if (tabCount) tabCount.textContent = list.length;
+        if (tabBtn) tabBtn.hidden = list.length === 0;
+        // Si se vació estando activa la pestaña (reactivaste la última), volver a
+        // "Ofrezco" para no quedar en una pestaña oculta con estado vacío.
+        if (!list.length) {
+          const pane = document.querySelector('[data-user-dashboard-pane="paused"]');
+          if (pane && pane.classList.contains("active")) {
+            document.querySelectorAll("[data-user-dashboard-button]").forEach((b) =>
+              b.classList.toggle("active", b.dataset.userDashboardButton === "properties"));
+            document.querySelectorAll("[data-user-dashboard-pane]").forEach((p) =>
+              p.classList.toggle("active", p.dataset.userDashboardPane === "properties"));
+          }
+        }
+        if (!target) return;
+        if (!list.length) {
+          target.innerHTML = `<article class="card empty"><h3>Sin publicaciones pausadas</h3><p>Cuando marques una publicación como "No disponible", aparecerá aquí para reactivarla cuando quieras.</p></article>`;
+          return;
+        }
+        target.innerHTML = `<div class="offer-list">${list
+          .map(({ entityKey, record }) => {
+            const meta = ARCHIVED_META[entityKey] || { type: "Publicación", title: () => "Publicación" };
+            const act = PAUSED_ACTIONS[entityKey] || { fn: "", edit: "", badge: "No disponible" };
+            let title = "Publicación";
+            try { title = meta.title(record) || title; } catch (e) {}
+            return `
+              <div class="offer-card2 oc2-unavailable arch-card">
+                <div class="rc2-head">
+                  <span class="oc2-num" aria-hidden="true">⏸️</span>
+                  <div class="rc2-head-main">
+                    <p class="rc2-title">${title}</p>
+                    <p class="rc2-subtitle">${meta.type} · ${publicationLabel(record.publishedAt)}</p>
+                  </div>
+                  <span class="oc2-avail off">${act.badge}</span>
+                </div>
+                <div class="oc2-foot">
+                  <span class="arch-note">Pausada · no genera contactos.</span>
+                  <div class="oc2-foot-actions">
+                    ${act.edit ? `<button class="button small ghost" type="button" onclick="${act.edit}('${record.id}')">Modificar</button>` : ""}
+                    ${act.fn ? `<button class="button small primary" type="button" onclick="${act.fn}('${record.id}', true)">Reactivar</button>` : ""}
                   </div>
                 </div>
               </div>`;
