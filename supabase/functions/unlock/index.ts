@@ -249,7 +249,7 @@ function unlockNoticeHtml(searcherName: string, ownerName: string, ownerPhone: s
   <div style="max-width:520px;margin:0 auto;padding:24px">
     <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,42,74,.08)">
       <div style="background:linear-gradient(135deg,#0a2f55,#0f2a4a);color:#fff;padding:26px 24px">
-        <div style="font-size:21px;font-weight:800">Un interesado desbloqueó tu contacto</div>
+        <div style="font-size:21px;font-weight:800">🔓 Un interesado desbloqueó tu contacto</div>
         <div style="color:#bcd4ee;font-size:14px;margin-top:4px">KonektaYa · Panamá</div>
       </div>
       <div style="padding:24px">
@@ -278,7 +278,7 @@ async function sendUnlockNotice(to: string, searcherName: string, ownerName: str
     body: JSON.stringify({
       from,
       to: [to],
-      subject: "Un interesado desbloqueó tu contacto en KonektaYa",
+      subject: "🔓 Un interesado desbloqueó tu contacto en KonektaYa",
       html: unlockNoticeHtml(searcherName, ownerName, ownerPhone, ownerEmail, vertical),
     }),
   });
