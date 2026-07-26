@@ -19256,6 +19256,13 @@
         if (!supabaseEnabled || !currentUserEmail) return;
         const { data: rows, error } = await supabaseClient.rpc("get_unlocked_contacts");
         if (error || !rows) return;
+        // Purga registros "fromServer" de una sesión anterior (p. ej. otro usuario en
+        // el MISMO navegador): el filtro del historial (myUnlockRecords) incluye todo
+        // lo fromServer sin importar quién esté logueado, así que se filtraban al
+        // usuario nuevo. Los reconstruimos SOLO con los del RPC del usuario actual.
+        Object.keys(machUnlocks).forEach((k) => {
+          if (machUnlocks[k] && machUnlocks[k].fromServer) delete machUnlocks[k];
+        });
         rows.forEach((r) => {
           const source = r.vertical === "vehiculo" ? "vehicleOffer" : "property";
           // reqKey agrega el prefijo "vehicle-" que usan los match.id de vehiculos
@@ -19272,6 +19279,7 @@
             contactEmail: r.email || ""
           };
         });
+        save();
       }
 
       // Desbloqueo seguro: llama a la Edge Function (recalcula precio, cobra en
