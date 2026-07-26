@@ -15656,6 +15656,7 @@
           // entrar SIEMPRE se ve lo publicado, nunca una pestaña vacía.
           if (target === "user") {
             userDashboardVerticalFilter = "all";
+            userDashboardTabTouched = false;
             document.querySelectorAll("[data-user-vertical-filter]").forEach((b) =>
               b.classList.toggle("active", b.dataset.userVerticalFilter === "all"));
             let landingPane = "properties";
@@ -15708,6 +15709,8 @@
         });
       };
 
+      // Marca si el usuario eligió una pestaña a mano (para no re-aterrizar encima).
+      let userDashboardTabTouched = false;
       function setupUserDashboardTabs() {
         const buttons = document.querySelectorAll("[data-user-dashboard-button]");
         const panes = document.querySelectorAll("[data-user-dashboard-pane]");
@@ -15723,7 +15726,7 @@
         };
 
         buttons.forEach((button) => {
-          button.addEventListener("click", () => showPane(button.dataset.userDashboardButton));
+          button.addEventListener("click", () => { userDashboardTabTouched = true; showPane(button.dataset.userDashboardButton); });
         });
       }
 
@@ -18180,7 +18183,11 @@
 
       // Camino clásico: redirect completo a Google (respaldo del selector).
       function googleRedirectFlow(reportError) {
-        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin, queryParams: { prompt: "select_account" } } })
+        // Sin `prompt=select_account`: forzarlo hacía que, al elegir una cuenta NUEVA
+        // por "Usar otra cuenta", Google invalidara la petición OAuth original → 400
+        // "malformed". Sin forzarlo: con 1 cuenta entra directo; con varias Google
+        // muestra el selector igual, pero evita ese camino que rompía.
+        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin } })
           .then((r) => { if (r && r.error) reportError(typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
           .catch(() => { reportError("No se pudo conectar con Google. Intenta de nuevo o usa tu email."); });
       }
@@ -21806,6 +21813,26 @@
         const userVehicleSearchesAll = currentUserVehicleSearches();
         const propertyRecordCount = userProperties.length + userSearches.length;
         const vehicleRecordCount = userVehicleOffersAll.length + userVehicleSearchesAll.length;
+        // Re-aterrizar en la pestaña con contenido si el usuario NO tocó las pestañas.
+        // El aterrizaje inicial (showDashboardView) corre antes de que carguen los datos
+        // de Supabase, así que podía quedar en "Ofertas" vacía aunque hubiera solicitudes.
+        // Aquí ya está la data cargada; solo cambiamos si la pestaña activa está vacía y
+        // la otra tiene contenido, sin pisar una elección manual del usuario.
+        if (!userDashboardTabTouched) {
+          const nOffers = userProperties.length + userVehicleOffersAll.length;
+          const nSearches = userSearches.length + userVehicleSearchesAll.length;
+          const activeBtn = document.querySelector("[data-user-dashboard-button].active");
+          const activePane = activeBtn ? activeBtn.dataset.userDashboardButton : "properties";
+          let want = null;
+          if (activePane === "properties" && nOffers === 0 && nSearches > 0) want = "searches";
+          else if (activePane === "searches" && nSearches === 0 && nOffers > 0) want = "properties";
+          if (want) {
+            document.querySelectorAll("[data-user-dashboard-button]").forEach((b) =>
+              b.classList.toggle("active", b.dataset.userDashboardButton === want));
+            document.querySelectorAll("[data-user-dashboard-pane]").forEach((p) =>
+              p.classList.toggle("active", p.dataset.userDashboardPane === want));
+          }
+        }
         const propertyPendingInterest = matches.filter(
           (m) =>
             userProperties.some((p) => p.id === m.property.id) &&
