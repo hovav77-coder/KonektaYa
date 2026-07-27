@@ -23606,6 +23606,9 @@
       }
 
       // ---- Auto-actualización: detecta si hay una versión nueva del sitio ----
+      // El chequeo se dispara al enfocar la ventana, al volver a la pestaña y cada
+      // 30 min; el reintento barato (sin red) corre cada 30 s mientras haya una
+      // actualización pendiente de mostrarse.
       // Compara la huella (ETag/Last-Modified) del HTML publicado con la de la página
       // cargada. Se revisa al volver a la pestaña y cada 30 min. Si cambió, muestra un
       // MODAL BLOQUEANTE (centrado, sin cerrar) que OBLIGA a actualizar: así todos
