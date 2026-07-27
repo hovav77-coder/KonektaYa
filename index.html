@@ -5327,41 +5327,72 @@
         }
       }
 
-      /* Barra "hay una versión nueva" (aparece solo cuando se detecta un deploy) */
-      #updateBanner {
+      /* Modal "hay una versión nueva": BLOQUEA la pantalla hasta actualizar,
+         para asegurar que todos queden en la última versión. */
+      #updateOverlay {
         align-items: center;
-        background: #0a2f55;
-        border-radius: 999px;
-        bottom: 18px;
-        box-shadow: 0 12px 30px rgba(10, 25, 45, 0.35);
-        color: #ffffff;
+        background: rgba(8, 26, 48, 0.72);
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
         display: flex;
-        font-size: 13.5px;
-        font-weight: 800;
-        gap: 10px;
-        left: 50%;
-        max-width: 92vw;
-        padding: 10px 12px 10px 16px;
+        inset: 0;
+        justify-content: center;
+        padding: 24px;
         position: fixed;
-        transform: translateX(-50%);
-        width: max-content;
-        z-index: 130;
+        z-index: 100000;
+        animation: updOverlayIn 160ms ease-out;
       }
-      #updateBanner button {
-        background: linear-gradient(90deg, #e05b2a, #f1883f);
+      @keyframes updOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+      #updateOverlay .upd-card {
+        background: #ffffff;
+        border-radius: 20px;
+        box-shadow: 0 24px 60px rgba(8, 26, 48, 0.45);
+        max-width: 380px;
+        padding: 28px 24px 24px;
+        text-align: center;
+        width: 100%;
+        animation: updCardIn 220ms cubic-bezier(0.2, 0.9, 0.3, 1.15);
+      }
+      @keyframes updCardIn {
+        from { opacity: 0; transform: translateY(12px) scale(0.96); }
+        to { opacity: 1; transform: none; }
+      }
+      #updateOverlay .upd-emoji {
+        background: #fdf1ea;
+        border-radius: 50%;
+        display: grid;
+        font-size: 30px;
+        height: 60px;
+        margin: 0 auto 14px;
+        place-items: center;
+        width: 60px;
+      }
+      #updateOverlay h3 {
+        color: #0a2f55;
+        font-size: 19px;
+        font-weight: 800;
+        margin: 0 0 8px;
+      }
+      #updateOverlay p {
+        color: #607086;
+        font-size: 14px;
+        line-height: 1.55;
+        margin: 0 0 20px;
+      }
+      #updateOverlay button {
+        background: linear-gradient(135deg, #e05b2a, #f1883f);
         border: none;
-        border-radius: 999px;
+        border-radius: 12px;
         color: #ffffff;
         cursor: pointer;
-        font-size: 13px;
-        font-weight: 900;
-        padding: 8px 14px;
-        white-space: nowrap;
+        font-size: 15px;
+        font-weight: 800;
+        padding: 14px 18px;
+        width: 100%;
       }
-      @media (max-width: 760px) {
-        #updateBanner {
-          bottom: calc(78px + env(safe-area-inset-bottom, 0px)); /* sobre la bottombar */
-        }
+      #updateOverlay button:disabled { opacity: 0.75; cursor: default; }
+      @media (prefers-reduced-motion: reduce) {
+        #updateOverlay, #updateOverlay .upd-card { animation: none; }
       }
 
       .result-row {
@@ -17005,6 +17036,10 @@
       function closePublishDone() {
         const m = document.getElementById("publishDoneModal");
         if (m) m.hidden = true;
+        // Embudo único de las 5 publicaciones: si había una actualización esperando
+        // a que terminaras, este es el momento seguro de mostrarla (ya se guardó
+        // todo). El retardo deja que termine la navegación a inicio / Mi panel.
+        setTimeout(() => { if (window.maybeShowUpdateModal) window.maybeShowUpdateModal(); }, 150);
       }
       function publishDoneGoHome() {
         closePublishDone();
@@ -17708,6 +17743,8 @@
         history.replaceState(null, "", `#${target}`);
         if (window.refineNavActive) window.refineNavActive();
         window.scrollTo({ top: 0, behavior: "auto" });
+        // Saliste del formulario: si había una actualización esperando, ya se puede.
+        if (window.maybeShowUpdateModal) window.maybeShowUpdateModal();
       }
 
       document.querySelectorAll("[data-tab]").forEach((link) => {
@@ -23570,8 +23607,10 @@
 
       // ---- Auto-actualización: detecta si hay una versión nueva del sitio ----
       // Compara la huella (ETag/Last-Modified) del HTML publicado con la de la página
-      // cargada. Se revisa al volver a la pestaña y cada 30 min. Si cambió, muestra la
-      // barra "Actualizar" (no recarga sola: no queremos perder un formulario a medias).
+      // cargada. Se revisa al volver a la pestaña y cada 30 min. Si cambió, muestra un
+      // MODAL BLOQUEANTE (centrado, sin cerrar) que OBLIGA a actualizar: así todos
+      // quedan en la última versión. El reload dispara pagehide→flushSave, que guarda
+      // el estado (save()) antes de recargar.
       let __verTag = null;
       let __verLastCheck = 0;
       async function fetchVersionTag() {
@@ -23587,18 +23626,115 @@
         const tag = await fetchVersionTag();
         if (!tag) return;
         if (__verTag === null) { __verTag = tag; return; }
-        if (tag !== __verTag) showUpdateBanner();
+        if (tag !== __verTag) {
+          if (!__updatePending) { __updatePending = true; __updatePendingSince = Date.now(); }
+          maybeShowUpdateModal();
+        }
       }
-      function showUpdateBanner() {
-        if (document.getElementById("updateBanner")) return;
-        const bar = document.createElement("div");
-        bar.id = "updateBanner";
-        bar.innerHTML = '<span>✨ Hay una versión nueva de KonektaYa</span><button type="button" onclick="window.location.reload()">Actualizar</button>';
-        document.body.appendChild(bar);
+
+      // ---- Salvaguarda: no interrumpir una publicación a medias ----
+      // El modal es imposible de cerrar, así que si cae mientras alguien llena el
+      // formulario de publicar, pierde lo escrito. Cuando hay versión nueva la
+      // dejamos PENDIENTE y la mostramos al terminar o al cambiar de pestaña.
+      // Dos topes evitan que alguien se quede sin actualizar nunca: si el
+      // formulario lleva rato sin tocarse (abandonado) o si la actualización
+      // lleva demasiado pendiente, se muestra igual.
+      let __updatePending = false;
+      let __updatePendingSince = 0;
+      const UPDATE_FORM_IDLE_MS = 10 * 60 * 1000; // form sin tocar → abandonado
+      const UPDATE_FORCE_AFTER_MS = 60 * 60 * 1000; // tope duro de seguridad
+      const UPDATE_GUARD_FORMS = ["propertyForm", "searchForm", "brokerForm", "vehicleOfferForm", "vehicleSearchForm"];
+
+      // Solo cuenta como "a medias" un formulario donde el usuario REALMENTE
+      // escribió. Mirar los valores no basta: los <select> traen valor por
+      // defecto y prefillFormForTab/rememberContactPhone autocompletan campos al
+      // abrir, lo que daría un falso positivo permanente (y nunca se mostraría).
+      let __formTouchedId = "";
+      let __formTouchedAt = 0;
+      document.addEventListener("input", (e) => {
+        const f = e.target && e.target.closest ? e.target.closest("form") : null;
+        if (f && UPDATE_GUARD_FORMS.indexOf(f.id) !== -1) {
+          __formTouchedId = f.id;
+          __formTouchedAt = Date.now();
+        }
+      }, true);
+
+      // ¿Sigue habiendo contenido escrito? Tras publicar, los handlers hacen
+      // form.reset() → vuelve a los valores por defecto → deja de bloquear solo.
+      function formStillHasInput(form) {
+        let dirty = false;
+        form.querySelectorAll("input, textarea").forEach((el) => {
+          if (dirty) return;
+          const t = String(el.type || "").toLowerCase();
+          if (t === "hidden" || t === "submit" || t === "button" || t === "file") return;
+          if (t === "checkbox" || t === "radio") { if (el.checked !== el.defaultChecked) dirty = true; return; }
+          if (String(el.value || "").trim() !== String(el.defaultValue || "").trim()) dirty = true;
+        });
+        return dirty;
       }
-      window.addEventListener("focus", checkForNewVersion);
-      document.addEventListener("visibilitychange", () => { if (!document.hidden) checkForNewVersion(); });
+
+      function updateBlockedByForm() {
+        if (!__formTouchedId) return false;
+        // Abandonado: lleva rato sin tocarse → ya no protegemos nada.
+        if (Date.now() - __formTouchedAt > UPDATE_FORM_IDLE_MS) return false;
+        const form = document.getElementById(__formTouchedId);
+        if (!form) return false;
+        const panel = form.closest(".tab-panel");
+        if (!panel || !panel.classList.contains("active")) return false; // ya no está a la vista
+        return formStillHasInput(form);
+      }
+
+      function maybeShowUpdateModal() {
+        if (!__updatePending) return;
+        if (document.getElementById("updateOverlay")) return; // ya visible
+        // Tope duro: pasado este tiempo se muestra sí o sí.
+        if (Date.now() - __updatePendingSince < UPDATE_FORCE_AFTER_MS) {
+          if (updateBlockedByForm()) return;
+          // Otros momentos delicados que la app ya modela: modal de pago abierto,
+          // publicación guardándose, carga masiva del broker, tecleando ahora.
+          try { if (typeof refreshUserBusy === "function" && refreshUserBusy()) return; } catch (e) {}
+        }
+        showUpdateModal();
+      }
+      window.maybeShowUpdateModal = maybeShowUpdateModal; // lo llama el otro <script> (navegación)
+      function showUpdateModal() {
+        if (document.getElementById("updateOverlay")) return;
+        const ov = document.createElement("div");
+        ov.id = "updateOverlay";
+        ov.setAttribute("role", "dialog");
+        ov.setAttribute("aria-modal", "true");
+        ov.setAttribute("aria-label", "Actualización disponible");
+        ov.innerHTML =
+          '<div class="upd-card">' +
+            '<div class="upd-emoji" aria-hidden="true">✨</div>' +
+            '<h3>Hay una versión nueva</h3>' +
+            '<p>Actualiza para seguir usando KonektaYa con las últimas mejoras. Solo toma un segundo.</p>' +
+            '<button type="button" id="updateReloadBtn">Actualizar ahora</button>' +
+          "</div>";
+        document.body.appendChild(ov);
+        // Bloquea el scroll de fondo (además del scrim de pantalla completa).
+        try { document.body.style.overflow = "hidden"; } catch (e) {}
+        const btn = document.getElementById("updateReloadBtn");
+        if (btn) {
+          btn.addEventListener("click", function () {
+            btn.disabled = true;
+            btn.textContent = "Actualizando…";
+            window.location.reload();
+          });
+          try { btn.focus(); } catch (e) {}
+        }
+        // Trampa de foco simple: si el teclado sale del modal, lo regresa al botón
+        // (refuerza el "no poder hacer nada más" hasta actualizar).
+        document.addEventListener("focusin", function (e) {
+          if (!ov.contains(e.target) && btn) { btn.focus(); }
+        });
+      }
+      window.addEventListener("focus", () => { checkForNewVersion(); maybeShowUpdateModal(); });
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) { checkForNewVersion(); maybeShowUpdateModal(); } });
       setInterval(checkForNewVersion, 30 * 60 * 1000);
+      // Reintento barato (sin red): si quedó pendiente por un formulario a medias,
+      // lo mostramos en cuanto se libere, sin esperar al chequeo de 30 min.
+      setInterval(() => { if (__updatePending) maybeShowUpdateModal(); }, 30 * 1000);
       fetchVersionTag().then((t) => { if (t) __verTag = t; }); // huella inicial al cargar
 
       // ============================================================
@@ -24930,6 +25066,10 @@
 
           if (window.refineNavActive) window.refineNavActive();
           window.scrollTo({ top: 0, behavior: "auto" });
+          // Segundo navegador de pestañas (bottombar / "Publicar"): mismo reintento
+          // que en showTab. maybeShowUpdateModal es idempotente, así que no importa
+          // que en un clic se disparen los dos.
+          if (window.maybeShowUpdateModal) window.maybeShowUpdateModal();
         }
 
         window.activatePropertyYaTab = activatePropertyYaTab;
