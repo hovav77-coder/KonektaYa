@@ -15834,7 +15834,13 @@
         };
 
         buttons.forEach((button) => {
-          button.addEventListener("click", () => { userDashboardTabTouched = true; showPane(button.dataset.userDashboardButton); });
+          button.addEventListener("click", () => {
+            userDashboardTabTouched = true;
+            showPane(button.dataset.userDashboardButton);
+            // Repintar: los chips de vertical (Inmuebles/Vehículos) cuentan lo de la
+            // pestaña activa, así que al cambiar de pestaña tienen que recalcularse.
+            if (typeof renderDashboardLists === "function") renderDashboardLists();
+          });
         });
       }
 
@@ -22013,8 +22019,28 @@
         const userSearches = currentUserSearches().filter(isSearchActive);
         const userVehicleOffersAll = currentUserVehicleOffers().filter(isOfferAvailable);
         const userVehicleSearchesAll = currentUserVehicleSearches().filter(isSearchActive);
-        const propertyRecordCount = userProperties.length + userSearches.length;
-        const vehicleRecordCount = userVehicleOffersAll.length + userVehicleSearchesAll.length;
+        // Los chips de vertical deben contar LO MISMO que la pestaña donde estás.
+        // Antes sumaban ofertas + búsquedas siempre, sin mirar la pestaña activa:
+        // estando en "Ofrezco" el chip podía decir "Inmuebles 1" cuando ese 1 era
+        // una BÚSQUEDA, así que al tocarlo la lista salía vacía. El chip prometía
+        // algo que el filtro no podía mostrar.
+        const paneActivo = (document.querySelector("[data-user-dashboard-button].active") || {}).dataset;
+        const paneKey = (paneActivo && paneActivo.userDashboardButton) || "properties";
+        let propertyRecordCount, vehicleRecordCount;
+        if (paneKey === "searches") {
+          propertyRecordCount = userSearches.length;
+          vehicleRecordCount = userVehicleSearchesAll.length;
+        } else if (paneKey === "paused" || paneKey === "archived") {
+          // En Pausadas/Archivadas el filtro de vertical no aplica (esas listas se
+          // pintan completas), así que se muestra el total de esa pestaña por vertical.
+          const lista = paneKey === "paused" ? currentUserPaused() : currentUserArchived();
+          const esVeh = (e) => e === "vehicleOffers" || e === "vehicleSearches";
+          propertyRecordCount = lista.filter((x) => !esVeh(x.entityKey)).length;
+          vehicleRecordCount = lista.filter((x) => esVeh(x.entityKey)).length;
+        } else {
+          propertyRecordCount = userProperties.length;
+          vehicleRecordCount = userVehicleOffersAll.length;
+        }
         // Re-aterrizar en la pestaña con contenido si el usuario NO tocó las pestañas.
         // El aterrizaje inicial (showDashboardView) corre antes de que carguen los datos
         // de Supabase, así que podía quedar en "Ofertas" vacía aunque hubiera solicitudes.
