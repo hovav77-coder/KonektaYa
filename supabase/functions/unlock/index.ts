@@ -396,12 +396,19 @@ Deno.serve(async (req) => {
       }
     }
 
-    const { data: prof } = await admin.from("profiles").select("name,phone,email,notify_matches").eq("id", search.owner_id).maybeSingle();
+    const { data: prof } = await admin.from("profiles").select("name,phone,email").eq("id", search.owner_id).maybeSingle();
 
-    // Aviso al BUSCADOR (transparencia + revelado mutuo): SOLO en desbloqueos nuevos
-    // (no re-avisa si ya estaba desbloqueado), no bloquea la respuesta si el email
-    // falla, y respeta la preferencia notify_matches del buscador.
-    if (!existing && prof?.email && prof.notify_matches !== false) {
+    // Aviso al BUSCADOR: SOLO en desbloqueos nuevos (no re-avisa si ya estaba
+    // desbloqueado) y no bloquea la respuesta si el email falla.
+    //
+    // NO respeta `notify_matches`, a propósito. Ese interruptor es para los avisos
+    // de coincidencia (marketing del producto); este correo es otra cosa: es la
+    // ÚNICA forma en que una persona se entera de que alguien pagó por sus datos
+    // de contacto. Es una comunicación de transparencia, no comercial, y por eso
+    // se envía siempre. Antes iba condicionado a `notify_matches !== false`, así
+    // que justo el usuario más celoso de su privacidad era el que se quedaba sin
+    // enterarse. (notify-matches/index.ts sí sigue respetando la preferencia.)
+    if (!existing && prof?.email) {
       try {
         const { data: ownerProf } = await admin.from("profiles").select("name,phone,email").eq("id", user.id).maybeSingle();
         await sendUnlockNotice(
