@@ -1,0 +1,28 @@
+# Qué NO se publica en konektaya.com
+# ---------------------------------------------------------------
+# vercel.json usa outputDirectory "." → sin este archivo se publica
+# el repositorio COMPLETO. Así quedaron públicos los SQL, las Edge
+# Functions y la guía de despliegue (verificado: respondían 200).
+#
+# REGLA: lista NEGRA explícita. Nunca usar "*" con excepciones (!),
+# porque un patrón mal puesto deja fuera index.html y tumba el sitio.
+#
+# NO agregar aquí (el sitio y los correos los necesitan):
+#   index.html · logo-email.png (lo usa el correo de bienvenida por
+#   URL absoluta) · inmueble.jpg · vehiculo.jpg
+
+# Backend: esquema, políticas RLS, funciones de seguridad y la
+# lógica de cobro con la fórmula de precios completa.
+supabase/
+
+# Documentación interna (DEPLOY.md tenía la guía de despliegue).
+*.md
+
+# Herramientas locales: servidor de desarrollo y config de Claude Code.
+.claude/
+
+# Plantilla de variables de entorno.
+.env.example
+
+# La fórmula de matching en hoja de cálculo.
+*.xlsx
