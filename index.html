@@ -4,8 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- Rendimiento: adelantar DNS+TLS de los dominios que la app usará.
-         El SDK de Supabase se carga al FINAL del body (antes era bloqueante aquí). -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+         El SDK de Supabase se carga al FINAL del body (antes era bloqueante aquí)
+         y ya NO viene de un CDN: está auto-hospedado en /vendor/.
+         jsdelivr queda solo para la librería de Excel de la carga masiva de
+         brokers, que se pide bajo demanda → basta dns-prefetch, no preconnect. -->
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
     <link rel="preconnect" href="https://agjzczxxawojicpxbiuu.supabase.co" crossorigin />
     <link rel="dns-prefetch" href="https://maps.googleapis.com" />
     <link rel="dns-prefetch" href="https://www.paypal.com" />
@@ -12668,7 +12671,13 @@
 
     <!-- Supabase SDK: aquí (fin del body) el HTML/CSS ya pintó; solo retrasa la
          ejecución de los scripts siguientes, que de todos modos lo necesitan. -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- AUTO-HOSPEDADO a propósito. Antes: cdn.jsdelivr.net/npm/@supabase/supabase-js@2
+         — versión FLOTANTE, o sea que nos servían cualquier release nuevo de la línea 2
+         sin avisar, y si el CDN se caía o lo bloqueaban, el login y el publicar dejaban
+         de funcionar. Este archivo es byte por byte el mismo código que servía jsdelivr
+         el 27/07/2026 (2.111.0, sha256 7396012594aa6d23…). Para actualizarlo: bajar la
+         nueva versión, probar login + publicar + desbloquear, y cambiar el nombre aquí. -->
+    <script src="/vendor/supabase-js-2.111.0.js"></script>
 
     <script>
       const money = new Intl.NumberFormat("es-PA", {
