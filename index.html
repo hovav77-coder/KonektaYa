@@ -5329,7 +5329,8 @@
 
       /* Modal "hay una versión nueva": BLOQUEA la pantalla hasta actualizar,
          para asegurar que todos queden en la última versión. */
-      #updateOverlay {
+      #updateOverlay,
+      #backendDownOverlay {
         align-items: center;
         background: rgba(8, 26, 48, 0.72);
         -webkit-backdrop-filter: blur(3px);
@@ -5343,7 +5344,8 @@
         animation: updOverlayIn 160ms ease-out;
       }
       @keyframes updOverlayIn { from { opacity: 0; } to { opacity: 1; } }
-      #updateOverlay .upd-card {
+      #updateOverlay .upd-card,
+      #backendDownOverlay .upd-card {
         background: #ffffff;
         border-radius: 20px;
         box-shadow: 0 24px 60px rgba(8, 26, 48, 0.45);
@@ -5357,7 +5359,8 @@
         from { opacity: 0; transform: translateY(12px) scale(0.96); }
         to { opacity: 1; transform: none; }
       }
-      #updateOverlay .upd-emoji {
+      #updateOverlay .upd-emoji,
+      #backendDownOverlay .upd-emoji {
         background: #fdf1ea;
         border-radius: 50%;
         display: grid;
@@ -5367,19 +5370,22 @@
         place-items: center;
         width: 60px;
       }
-      #updateOverlay h3 {
+      #updateOverlay h3,
+      #backendDownOverlay h3 {
         color: #0a2f55;
         font-size: 19px;
         font-weight: 800;
         margin: 0 0 8px;
       }
-      #updateOverlay p {
+      #updateOverlay p,
+      #backendDownOverlay p {
         color: #607086;
         font-size: 14px;
         line-height: 1.55;
         margin: 0 0 20px;
       }
-      #updateOverlay button {
+      #updateOverlay button,
+      #backendDownOverlay button {
         background: linear-gradient(135deg, #e05b2a, #f1883f);
         border: none;
         border-radius: 12px;
@@ -5390,9 +5396,11 @@
         padding: 14px 18px;
         width: 100%;
       }
-      #updateOverlay button:disabled { opacity: 0.75; cursor: default; }
+      #updateOverlay button:disabled,
+      #backendDownOverlay button:disabled { opacity: 0.75; cursor: default; }
       @media (prefers-reduced-motion: reduce) {
-        #updateOverlay, #updateOverlay .upd-card { animation: none; }
+        #updateOverlay, #updateOverlay .upd-card,
+        #backendDownOverlay, #backendDownOverlay .upd-card { animation: none; }
       }
 
       .result-row {
@@ -14217,9 +14225,50 @@
         key: "sb_publishable_GuCV4qK816F3rqlFGrqeDQ_dODhasiu",
         adminEmails: ["hovav@saidacpa.com", "asistencia.gerencia@saidacpa.com"]
       };
-      const supabaseEnabled = Boolean(SUPABASE.url && SUPABASE.key && window.supabase && window.supabase.createClient);
+      // Se separan las dos condiciones porque significan cosas MUY distintas:
+      //  - sin url/key  = modo demo legítimo (nadie configuró backend).
+      //  - con url/key pero SIN SDK = FALLO (el CDN no cargó). Antes ambos casos
+      //    caían en "modo demo" en silencio: el usuario creía publicar contra el
+      //    servidor y escribía en localStorage, y isAdminEmail abría el panel de
+      //    admin a cualquiera. Ahora ese caso se avisa y se bloquea la página.
+      const supabaseConfigured = Boolean(SUPABASE.url && SUPABASE.key);
+      const supabaseSdkReady = Boolean(window.supabase && window.supabase.createClient);
+      const supabaseEnabled = supabaseConfigured && supabaseSdkReady;
       // experimental.passkey habilita registerPasskey()/signInWithPasskey() (Face ID / huella).
       const supabaseClient = supabaseEnabled ? window.supabase.createClient(SUPABASE.url, SUPABASE.key, { auth: { experimental: { passkey: true } } }) : null;
+
+      // Pantalla bloqueante cuando el backend está configurado pero su SDK no
+      // cargó (CDN caído o bloqueado). Sin esto la app "funciona" pero no guarda
+      // nada en el servidor, que es peor que no abrir.
+      function showBackendDownScreen() {
+        if (document.getElementById("backendDownOverlay")) return;
+        const ov = document.createElement("div");
+        ov.id = "backendDownOverlay";
+        ov.setAttribute("role", "alertdialog");
+        ov.setAttribute("aria-modal", "true");
+        ov.setAttribute("aria-label", "No se pudo cargar KonektaYa");
+        ov.innerHTML =
+          '<div class="upd-card">' +
+            '<div class="upd-emoji" aria-hidden="true">📡</div>' +
+            "<h3>No pudimos cargar KonektaYa</h3>" +
+            "<p>Parece un problema de conexión. Revisa tu internet y vuelve a intentar: no publiques nada hasta que la página cargue bien.</p>" +
+            '<button type="button" id="backendRetryBtn">Reintentar</button>' +
+          "</div>";
+        document.body.appendChild(ov);
+        try { document.body.style.overflow = "hidden"; } catch (e) {}
+        const btn = document.getElementById("backendRetryBtn");
+        if (btn) {
+          btn.addEventListener("click", function () {
+            btn.disabled = true;
+            btn.textContent = "Reintentando…";
+            window.location.reload();
+          });
+        }
+      }
+      if (supabaseConfigured && !supabaseSdkReady) {
+        if (document.body) showBackendDownScreen();
+        else document.addEventListener("DOMContentLoaded", showBackendDownScreen);
+      }
       // Passkeys solo si el navegador soporta WebAuthn y la API está en el SDK.
       function passkeysSupported() {
         return supabaseEnabled && typeof window.PublicKeyCredential !== "undefined"
@@ -14405,7 +14454,10 @@
       let myProfile = null; // perfil (contacto + estado broker) del usuario actual (Fase 2D)
 
       function isAdminEmail(email) {
-        if (!supabaseEnabled) return true; // modo demo: admin abierto para pruebas locales
+        // FALLA CERRADO. Antes devolvía true aquí "para pruebas locales", pero
+        // supabaseEnabled también es false cuando el SDK no carga en PRODUCCIÓN
+        // (CDN caído/bloqueado) → el panel de admin se abría a cualquier visitante.
+        if (!supabaseEnabled) return false;
         const norm = normalize(email || "");
         return Boolean(norm) && SUPABASE.adminEmails.some((e) => normalize(e) === norm);
       }
