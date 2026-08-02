@@ -19036,6 +19036,14 @@
               supaLoadPaymentsFlag().catch(warn("supaLoadPaymentsFlag")),
               supaLoadRequests().catch(warn("supaLoadRequests"))
             ]);
+            // supaLoadAll REEMPLAZÓ los arrays. Sin esto, los matches podían quedar
+            // calculados sobre los datos de ANTES del login: el save() del arranque
+            // marca los datos como sucios, pero cualquier render intermedio (p.ej. el
+            // refresco barato por temporizador o al volver a la pestaña) consume esa
+            // marca, y entonces el render final de aquí abajo no recalcula nada y el
+            // panel muestra "No hay matches todavía" con los datos nuevos ya cargados.
+            // El refresco pesado (~23880) ya hacía esto; al login se le había olvidado.
+            if (window.forceMatchRecalc) window.forceMatchRecalc();
             // Bienvenida (una sola vez por cuenta, Google o email): si el perfil
             // no tiene la marca, se lo pedimos al servidor — welcome-email hace
             // el reclamo atómico y deduplica; aquí es fire-and-forget.
@@ -19207,14 +19215,36 @@
         } catch (e) {}
       }
 
-      async function supaSetActive(entityKey, record) {
-        if (!supabaseEnabled || !record || !record.id) return;
+      // Cambia el estado (pausar / reactivar / dar de baja) de UNA publicación.
+      // Devuelve {ok:boolean, reason?:string} — quien la llama DEBE mirarlo y
+      // revertir el cambio local si falló: antes esto era fire-and-forget con un
+      // console.warn, así que la pantalla decía "Disponible" aunque el servidor
+      // hubiera rechazado el cambio, y el desbloqueo seguía fallando sin motivo
+      // visible. Se comprueba también que el update tocara alguna fila: PostgREST
+      // devuelve 204 sin error cuando RLS filtra todo, indistinguible del éxito.
+      async function supaSetActive(entityKey, record, opts) {
+        if (!supabaseEnabled || !record || !record.id) return { ok: false, reason: "no-record" };
         const cfg = SUPA_ENTITIES[entityKey];
         // Ofertas usan `available`; búsquedas usan `active`. Ver nota en supaUpsertPublication.
         const isOffer = entityKey === "properties" || entityKey === "vehicleOffers";
         const active = isOffer ? record.available !== false : record.active !== false;
-        const { error } = await supabaseClient.from(cfg.table).update({ active, data: splitContact(record).data }).eq("id", record.id);
-        if (error) console.warn("supaSetActive", cfg.table, error.message);
+        // Cambiar de estado NO necesita tocar `data`, y reenviarlo es dañino:
+        // (a) lo vuelve a pasar por el trigger anti-contacto, que puede ABORTAR la
+        // reactivación de una publicación válida, y (b) pisa el servidor con la
+        // foto en memoria, que puede estar incompleta y perder campos del score.
+        // Solo desarchivar necesita reescribir el jsonb (quitar data.archived).
+        const payload = { active };
+        if (opts && opts.withData) payload.data = splitContact(record).data;
+        pendingPublishUpserts++; // que el refresco silencioso no aterrice encima
+        try {
+          const { data, error } = await supabaseClient
+            .from(cfg.table).update(payload).eq("id", record.id).select("id");
+          if (error) { console.warn("supaSetActive", cfg.table, error.message); return { ok: false, reason: error.message }; }
+          if (!data || !data.length) { console.warn("supaSetActive", cfg.table, "0 filas (RLS o id inexistente)"); return { ok: false, reason: "no-rows" }; }
+          return { ok: true };
+        } finally {
+          pendingPublishUpserts--;
+        }
       }
 
       async function supaDeletePublication(entityKey, id) {
@@ -23076,8 +23106,19 @@
           })
         );
         save();
-        if (supabaseEnabled) supaSetActive(entityKey, cfg.get().find((r) => r.id === id));
         render();
+        // Único caso que SÍ necesita reescribir el jsonb: hay que quitar
+        // data.archived. Si falla, se revierte para no dejar la pantalla
+        // diciendo "restaurada" con el servidor todavía archivándola.
+        if (supabaseEnabled) {
+          supaSetActive(entityKey, cfg.get().find((r) => r.id === id), { withData: true }).then((res) => {
+            if (res && res.ok) return;
+            cfg.set(cfg.get().map((r) => (r.id === id ? { ...r, archived: true } : r)));
+            save();
+            render();
+            showStateError("No se pudo restaurar la publicación. Inténtalo de nuevo.");
+          });
+        }
       }
 
       function openRemoveResult(outcome) {
@@ -23115,20 +23156,60 @@
         return Boolean(search) && search.active !== false;
       }
 
-      function setSearchActive(id, value) {
-        id = coerceId(id);
-        searches = searches.map((s) => (s.id === id ? { ...s, active: value } : s));
+      // Aviso flotante para errores de cambio de estado. Autocontenido (estilos
+      // en línea) para no depender de CSS ni de un elemento que exista en el DOM.
+      function showStateError(msg) {
+        const old = document.getElementById("stateErrorToast");
+        if (old) old.remove();
+        const el = document.createElement("div");
+        el.id = "stateErrorToast";
+        el.setAttribute("role", "alert");
+        el.textContent = msg;
+        el.style.cssText =
+          "position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));" +
+          "max-width:min(92vw,420px);background:#8e1b1b;color:#fff;border-radius:12px;padding:12px 16px;" +
+          "font-size:14px;font-weight:600;line-height:1.45;text-align:center;z-index:99999;" +
+          "box-shadow:0 12px 30px rgba(10,25,45,.35)";
+        document.body.appendChild(el);
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 5000);
+      }
+
+      // Patrón común de los interruptores de estado: cambio OPTIMISTA (la UI
+      // responde al instante) y REVERSIÓN si el servidor lo rechaza. Sin esto, un
+      // fallo dejaba la pantalla diciendo "Disponible" con el servidor en false:
+      // el dueño creía que su publicación estaba activa y no recibía contactos.
+      async function applyStateChange(entityKey, id, field, value) {
+        const cfg = SUPA_ENTITIES[entityKey];
+        if (!cfg) return;
+        const before = (cfg.get().find((r) => r.id === id) || {})[field];
+        cfg.set(cfg.get().map((r) => (r.id === id ? { ...r, [field]: value } : r)));
         save();
-        if (supabaseEnabled) supaSetActive("searches", searches.find((s) => s.id === id));
         render();
+        if (!supabaseEnabled) return;
+        const res = await supaSetActive(entityKey, cfg.get().find((r) => r.id === id));
+        if (res && res.ok) {
+          // Al REACTIVAR, avisar a las contrapartes: mientras estuvo pausada, el
+          // servidor la excluía de notify-matches (filtra por active=true), así que
+          // las búsquedas creadas en ese lapso nunca supieron de ella.
+          const reactivada = (field === "available" || field === "active") && value !== false;
+          if (reactivada) {
+            const rec = cfg.get().find((r) => r.id === id);
+            if (rec) notifyMatchesForPublication(entityKey, rec._sbId || rec.id);
+          }
+          return;
+        }
+        cfg.set(cfg.get().map((r) => (r.id === id ? { ...r, [field]: before } : r)));
+        save();
+        render();
+        showStateError("No se pudo cambiar el estado. Revisa tu conexión e inténtalo de nuevo.");
+      }
+
+      function setSearchActive(id, value) {
+        applyStateChange("searches", coerceId(id), "active", value);
       }
 
       function setVehicleSearchActive(id, value) {
-        id = coerceId(id);
-        vehicleSearches = vehicleSearches.map((s) => (s.id === id ? { ...s, active: value } : s));
-        save();
-        if (supabaseEnabled) supaSetActive("vehicleSearches", vehicleSearches.find((s) => s.id === id));
-        render();
+        applyStateChange("vehicleSearches", coerceId(id), "active", value);
       }
 
       function searchActiveSwitch(id, active, fn) {
@@ -23212,34 +23293,27 @@
         </div>`;
       }
 
+      // Faltaba coerceId: los onclick pasan el id como STRING y estas comparaban
+      // con === estricto, así que con ids numéricos (registros demo) el clic no
+      // hacía nada y sin error visible.
       function togglePropertyAvailable(id) {
-        properties = properties.map((p) => (p.id === id ? { ...p, available: p.available === false } : p));
-        save();
-        if (supabaseEnabled) supaSetActive("properties", properties.find((p) => p.id === id));
-        render();
+        id = coerceId(id);
+        const p = properties.find((x) => x.id === id);
+        if (p) applyStateChange("properties", id, "available", p.available === false);
       }
 
       function toggleVehicleAvailable(id) {
-        vehicleOffers = vehicleOffers.map((o) => (o.id === id ? { ...o, available: o.available === false } : o));
-        save();
-        if (supabaseEnabled) supaSetActive("vehicleOffers", vehicleOffers.find((o) => o.id === id));
-        render();
+        id = coerceId(id);
+        const o = vehicleOffers.find((x) => x.id === id);
+        if (o) applyStateChange("vehicleOffers", id, "available", o.available === false);
       }
 
       function setPropertyAvailable(id, value) {
-        id = coerceId(id);
-        properties = properties.map((p) => (p.id === id ? { ...p, available: value } : p));
-        save();
-        if (supabaseEnabled) supaSetActive("properties", properties.find((p) => p.id === id));
-        render();
+        applyStateChange("properties", coerceId(id), "available", value);
       }
 
       function setVehicleAvailable(id, value) {
-        id = coerceId(id);
-        vehicleOffers = vehicleOffers.map((o) => (o.id === id ? { ...o, available: value } : o));
-        save();
-        if (supabaseEnabled) supaSetActive("vehicleOffers", vehicleOffers.find((o) => o.id === id));
-        render();
+        applyStateChange("vehicleOffers", coerceId(id), "available", value);
       }
 
       function availabilitySwitch(id, available, fn) {
