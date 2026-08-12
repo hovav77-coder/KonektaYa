@@ -6,6 +6,11 @@ data/*.db-shm
 data/*.db-wal
 .next
 
+# Respaldos de la base de datos (scripts/backup.js).
+# NUNCA subir: traen nombres, teléfonos y correos de personas reales,
+# más el historial de billeteras y desbloqueos.
+backups/
+
 # Kit de redes sociales (assets, no forma parte de la app)
 kit-redes-konektaya/
 promo-coming-soon.html

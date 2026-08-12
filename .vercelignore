@@ -26,3 +26,10 @@ supabase/
 
 # La fórmula de matching en hoja de cálculo.
 *.xlsx
+
+# Herramientas de mantenimiento (respaldo de la base). No son parte del sitio.
+scripts/
+
+# Respaldos de la base: datos personales reales. Publicarlos sería una brecha.
+# (También están en .gitignore, así que no deberían llegar aquí — doble red.)
+backups/
