@@ -2527,6 +2527,32 @@
         color: #c6431b;
       }
 
+      /* En celular las 3 celdas iguales quedaban desbalanceadas: "PRESUPUESTO"
+         apretado contra el divisor y "SUV Toyota" partido en dos líneas. La
+         columna del medio (la etiqueta más larga) recibe más ancho, y el
+         padding/tipografía bajan para que los valores quepan en una línea. */
+      @media (max-width: 600px) {
+        .qf-stats {
+          grid-template-columns: 1fr 1.35fr 1fr;
+        }
+        .qf-stat {
+          min-width: 0;
+          padding: 11px 8px;
+        }
+        .qf-stat span {
+          font-size: 10px;
+          letter-spacing: 0.05em;
+        }
+        .qf-stat strong {
+          /* Una sola línea siempre: el tamaño cede un poco en pantallas muy
+             angostas y, como último recurso, elipsis antes que romper la fila. */
+          font-size: clamp(12px, 3.2vw, 14px);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+
       .qf-example-foot {
         align-items: center;
         border-top: 1px solid #edf1f7;
@@ -11998,7 +12024,7 @@
                       <span class="qf-example-label">Ejemplo</span>
                     </div>
                     <h3>Apartamento en San Francisco</h3>
-                    <span class="qf-example-sub">PH Vista del Sol · Cliente final</span>
+                    <span class="qf-example-sub">PH Bella Vista · Cliente final</span>
                   </div>
                   <div class="qf-ring">
                     <svg width="72" height="72" viewBox="0 0 72 72">
@@ -24359,7 +24385,7 @@
           label: "Inmuebles", entityKey: "properties", sheet: "Propiedades",
           filename: "KonektaYa-plantilla-inmuebles.xlsx", columns: PROP_COLS,
           validate: bulkValidateProperty,
-          example: ["Alquiler", "Apartamento", "Panamá", "Costa del Este", "PH Vista del Sol", "120", "", "1200", "Amueblado", "2", "Sí", "Inmediata", "2 recámaras, vista al mar"],
+          example: ["Alquiler", "Apartamento", "Panamá", "Costa del Este", "PH Bella Vista", "120", "", "1200", "Amueblado", "2", "Sí", "Inmediata", "2 recámaras, vista al mar"],
           instrucciones: [
             ["KonektaYa · Carga masiva de inmuebles"],
             ['Llena la hoja "Propiedades" (una fila por propiedad) y sube el archivo. No cambies los encabezados.'],
