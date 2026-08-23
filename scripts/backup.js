@@ -14,6 +14,15 @@
  *
  *   SUPABASE_URL=https://agjzczxxawojicpxbiuu.supabase.co
  *   SUPABASE_SERVICE_ROLE_KEY=<la service_role key>
+ *   BACKUP_DEST=G:\Mi unidad\KonektaYa-Respaldos
+ *
+ * BACKUP_DEST manda el respaldo FUERA de esta computadora (a la carpeta
+ * de Google Drive, que lo sincroniza solo). Es lo que lo convierte en un
+ * respaldo de verdad: una copia en el mismo disco donde trabajas se
+ * pierde con el disco. Si no la pones, escribe en `backups/` del proyecto.
+ * Si la pones y la carpeta no existe o no se puede escribir, el script
+ * FALLA en vez de guardar en otro sitio: un respaldo que crees que está
+ * en la nube y no está es peor que no tenerlo.
  *
  * La key se saca de Supabase → Project Settings → API Keys →
  * `service_role`. OJO: esa key salta TODAS las reglas de seguridad
@@ -142,11 +151,34 @@ async function bajarCuentas(base, key) {
   const headers = { apikey: key, Authorization: "Bearer " + key, Accept: "application/json" };
   const ahora = new Date();
   const sello = ahora.toISOString().slice(0, 16).replace("T", "_").replace(":", "");
-  const destino = path.join(RAIZ, "backups", sello);
+
+  // Carpeta base: la de BACKUP_DEST (fuera del disco de trabajo) o `backups/`.
+  const fuera = (env.BACKUP_DEST || "").trim();
+  const base_dir = fuera ? fuera : path.join(RAIZ, "backups");
+  if (fuera) {
+    // Falla RUIDOSAMENTE: si Drive no está montado, guardar en local sin avisar
+    // daría un respaldo que el usuario cree sincronizado y no lo está.
+    if (!fs.existsSync(base_dir)) {
+      console.error("\n✘ BACKUP_DEST no existe: " + base_dir);
+      console.error("  ¿Está Google Drive montado y sincronizando? No se guardó nada.\n");
+      process.exit(1);
+    }
+    try {
+      const t = path.join(base_dir, ".konektaya-escritura-ok");
+      fs.writeFileSync(t, "ok"); fs.unlinkSync(t);
+    } catch (e) {
+      console.error("\n✘ No se puede escribir en BACKUP_DEST: " + base_dir);
+      console.error("  " + e.message + "\n");
+      process.exit(1);
+    }
+  }
+  const destino = path.join(base_dir, sello);
   fs.mkdirSync(destino, { recursive: true });
 
   console.log("\nKonektaYa · respaldo");
-  console.log("destino: backups/" + sello + "\n");
+  console.log("destino: " + destino);
+  console.log(fuera ? "        (fuera de esta computadora ✔)" : "        (LOCAL — considera poner BACKUP_DEST para sacarlo del disco)");
+  console.log("");
 
   const resumen = { fecha: ahora.toISOString(), origen: base, tablas: {}, errores: {} };
   let totalFilas = 0;
@@ -179,7 +211,7 @@ async function bajarCuentas(base, key) {
   fs.writeFileSync(path.join(destino, "_resumen.json"), JSON.stringify(resumen, null, 2));
 
   const fallos = Object.keys(resumen.errores).length;
-  console.log("\n" + (fallos ? "⚠ " : "✔ ") + totalFilas + " registros guardados en backups/" + sello);
+  console.log("\n" + (fallos ? "⚠ " : "✔ ") + totalFilas + " registros guardados en " + destino);
   if (fallos) {
     console.log("  " + fallos + " tabla(s) con error — revisa _resumen.json antes de confiar en este respaldo.");
     process.exit(1);
