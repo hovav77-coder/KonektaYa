@@ -19315,10 +19315,15 @@
       // (supaLoadAll REEMPLAZA los arrays — si aterriza entre el push local y el
       // upsert confirmado, el aviso recién enviado "desaparecería" un momento).
       let pendingPublishUpserts = 0;
+      // Devuelve {ok, reason} para que quien llama pueda saber si el servidor
+      // ACEPTÓ el registro (la carga masiva lo necesita: antes un rechazo del
+      // trigger anti-contacto se tragaba con console.warn y el broker veía
+      // "✓ creadas" con filas que desaparecían en la siguiente recarga).
+      // Los llamadores viejos que ignoran el retorno siguen funcionando igual.
       async function supaUpsertPublication(entityKey, record, opts) {
-        if (!supabaseEnabled || !currentUserEmail || !record) return;
+        if (!supabaseEnabled || !currentUserEmail || !record) return { ok: true, local: true };
         const cfg = SUPA_ENTITIES[entityKey];
-        if (!cfg) return;
+        if (!cfg) return { ok: false, reason: "entidad desconocida" };
         pendingPublishUpserts++;
         try {
           // Perfil PRIMERO: así el trigger que marca owner_blocked ve el estado broker actualizado.
@@ -19336,13 +19341,14 @@
             .upsert({ id: record.id, data, active })
             .select("id")
             .single();
-          if (error) { console.warn("supaUpsertPublication", cfg.table, error.message); return; }
+          if (error) { console.warn("supaUpsertPublication", cfg.table, error.message); return { ok: false, reason: error.message }; }
           record._sbId = res.id;
           // Avisar por email a la contraparte que hace match (ambas direcciones).
           // Fire-and-forget: no debe frenar ni afectar la publicación. La carga
           // masiva de brokers pasa skipNotify=true para no disparar cientos de
           // correos de golpe (protege la reputación del dominio).
           if (!(opts && opts.skipNotify)) notifyMatchesForPublication(entityKey, res.id);
+          return { ok: true };
         } finally {
           pendingPublishUpserts--;
         }
@@ -24270,34 +24276,35 @@
       // ==================== Carga masiva por Excel (solo brokers) — 2 verticales ====================
       // Columnas de cada plantilla (encabezado visible → campo interno).
       const PROP_COLS = [
-        { header: "Operación", field: "operation", required: true },
-        { header: "Tipo de inmueble", field: "propertyType", required: true },
-        { header: "Provincia", field: "province", required: true },
-        { header: "Zona / corregimiento", field: "zone", required: true },
-        { header: "Ubicación (calle, barriada o PH)", field: "streetOrNeighborhood" },
-        { header: "Metros cuadrados", field: "sizeM2" },
-        { header: "Precio venta (USD)", field: "salePrice" },
-        { header: "Precio alquiler (USD)", field: "rentalPrice" },
-        { header: "Equipamiento", field: "equipment" },
-        { header: "Estacionamientos", field: "parkingSpaces" },
-        { header: "Depósito/bodega", field: "storage" },
-        { header: "Disponibilidad", field: "availabilityNeed" },
-        { header: "Comentarios", field: "comments" }
+        { header: "Operación", field: "operation", required: true, guia: "Alquiler | Venta | Ambos" },
+        { header: "Tipo de inmueble", field: "propertyType", required: true, guia: "Apartamento | Casa | Local | Oficina | Galera | Terreno" },
+        { header: "Provincia", field: "province", required: true, guia: "Ej. Panamá" },
+        { header: "Zona / corregimiento", field: "zone", required: true, guia: "Ej. Costa del Este" },
+        { header: "Ubicación (calle, barriada o PH)", field: "streetOrNeighborhood", guia: "Calle, barriada o PH (sin teléfonos)" },
+        { header: "Metros cuadrados", field: "sizeM2", guia: "Número (ej. 120)" },
+        { header: "Precio venta (USD)", field: "salePrice", guia: "Número (ej. 185000) — si es Venta o Ambos" },
+        { header: "Precio alquiler (USD)", field: "rentalPrice", guia: "Número (ej. 1200) — si es Alquiler o Ambos" },
+        { header: "Equipamiento", field: "equipment", guia: "Sin muebles | Línea blanca | Amueblado" },
+        { header: "Estacionamientos", field: "parkingSpaces", guia: "0 a 4, o 5+" },
+        { header: "Depósito/bodega", field: "storage", guia: "Sí | No" },
+        { header: "Disponibilidad", field: "availabilityNeed", guia: "Inmediata | 15 días | 30 días | 45 días | 60 días" },
+        { header: "Comentarios", field: "comments", guia: "Texto libre (sin datos de contacto)" }
       ];
       const VEH_COLS = [
-        { header: "Tipo de vehículo", field: "vehicleType", required: true },
-        { header: "Marca", field: "brand", required: true },
-        { header: "Modelo", field: "model", required: true },
-        { header: "Año", field: "year", required: true },
-        { header: "Precio (USD)", field: "salePrice", required: true },
-        { header: "Kilometraje", field: "mileage" },
-        { header: "Transmisión", field: "transmission" },
-        { header: "Combustible", field: "fuel" },
-        { header: "Estado", field: "status" },
-        { header: "Provincia", field: "province", required: true },
-        { header: "Zona", field: "zone", required: true },
-        { header: "Color", field: "color" },
-        { header: "Comentarios", field: "vehicleComments" }
+        { header: "Tipo de vehículo", field: "vehicleType", required: true, guia: "Carro | SUV | Pickup | Moto | Camión | Bus | Busito" },
+        { header: "Marca", field: "brand", required: true, guia: "Del catálogo (ej. Toyota)" },
+        { header: "Modelo", field: "model", required: true, guia: "Ej. RAV4" },
+        { header: "Año", field: "year", required: true, guia: "Número (ej. 2021)" },
+        { header: "Precio (USD)", field: "salePrice", required: true, guia: "Número (ej. 28500)" },
+        { header: "Kilometraje", field: "mileage", guia: "Número en km (ej. 45000)" },
+        { header: "Dueños que ha tenido", field: "previousOwners", guia: "Primera mano | Segunda | Tercera | Más de tres" },
+        { header: "Transmisión", field: "transmission", guia: "Automático | Manual" },
+        { header: "Combustible", field: "fuel", guia: "Gasolina | Diesel | Híbrido | Eléctrico" },
+        { header: "Estado", field: "status", guia: "Disponible ahora | Próximamente" },
+        { header: "Provincia", field: "province", required: true, guia: "Ej. Panamá" },
+        { header: "Zona", field: "zone", required: true, guia: "Ej. Costa del Este" },
+        { header: "Color", field: "color", guia: "Ej. Blanco" },
+        { header: "Comentarios", field: "vehicleComments", guia: "Texto libre (sin datos de contacto)" }
       ];
       // Mapas de valor (claves ya normalizadas: sin acentos, minúsculas) → valor interno.
       const PROP_ENUMS = {
@@ -24311,12 +24318,30 @@
         vehicleType: { "carro": "carro", "auto": "carro", "sedan": "carro", "suv": "suv", "pickup": "pickup", "pick up": "pickup", "moto": "moto", "motocicleta": "moto", "camion": "camion", "bus": "bus", "busito": "busito" },
         transmission: { "automatico": "automatico", "automatica": "automatico", "auto": "automatico", "manual": "manual", "mecanico": "manual", "mecanica": "manual" },
         fuel: { "gasolina": "gasolina", "diesel": "diesel", "hibrido": "hibrido", "electrico": "electrico" },
-        status: { "disponible ahora": "disponible_ahora", "disponible": "disponible_ahora", "ahora": "disponible_ahora", "proximamente": "proximamente_30_dias", "proximo": "proximamente_30_dias", "disponible proximamente": "proximamente_30_dias" }
+        status: { "disponible ahora": "disponible_ahora", "disponible": "disponible_ahora", "ahora": "disponible_ahora", "proximamente": "proximamente_30_dias", "proximo": "proximamente_30_dias", "disponible proximamente": "proximamente_30_dias" },
+        previousOwners: {
+          "1": "primera_mano", "primera": "primera_mano", "primera mano": "primera_mano", "primer dueno": "primera_mano", "unico dueno": "primera_mano", "unico": "primera_mano",
+          "2": "segunda_mano", "segunda": "segunda_mano", "segunda mano": "segunda_mano", "segundo dueno": "segunda_mano",
+          "3": "tercera_mano", "tercera": "tercera_mano", "tercera mano": "tercera_mano", "tercer dueno": "tercera_mano",
+          "4": "mas_de_tres", "5": "mas_de_tres", "4+": "mas_de_tres", "mas de 3": "mas_de_tres", "mas de tres": "mas_de_tres", "cuarta": "mas_de_tres", "varios": "mas_de_tres", "varios duenos": "mas_de_tres"
+        }
       };
 
       // Helpers compartidos de validación.
       function bulkTxt(v) { return String(v == null ? "" : v).trim(); }
-      function bulkNum(v) { const n = Number(String(v == null ? "" : v).replace(/[^0-9.\-]/g, "")); return isFinite(n) ? n : 0; }
+      // Números tolerantes al formato latino: "15.000" y "15,000" son QUINCE MIL.
+      // Regla: separador (punto o coma) seguido SIEMPRE de grupos de 3 dígitos =
+      // separador de miles y se elimina; en el resto de casos el punto es decimal.
+      // Antes, "15.000" pasaba como 15 y se publicaba un carro a quince dólares.
+      function bulkNum(v) {
+        if (typeof v === "number") return isFinite(v) ? v : 0;
+        let s = String(v == null ? "" : v).replace(/[^0-9.,\-]/g, "");
+        if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+        else if (/^-?\d{1,3}(,\d{3})+$/.test(s)) s = s.replace(/,/g, "");
+        else s = s.replace(/,/g, "");
+        const n = Number(s);
+        return isFinite(n) ? n : 0;
+      }
       function bulkColLabel(cols, field) { const c = cols.find((x) => x.field === field); return c ? c.header : field; }
       function bulkMapEnum(enums, field, v, label, required, errors) {
         const t = bulkTxt(v);
@@ -24326,18 +24351,95 @@
         return val;
       }
 
+      // Distancia de edición (Levenshtein) para sugerir "¿Quisiste decir…?" en
+      // marcas/provincias/zonas con error de tipeo. Textos cortos y listas de
+      // ~100 entradas: el costo es despreciable.
+      function bulkEditDistance(a, b) {
+        const m = a.length, n = b.length;
+        if (!m) return n; if (!n) return m;
+        let prev = Array.from({ length: n + 1 }, (_, j) => j);
+        for (let i = 1; i <= m; i++) {
+          const cur = [i];
+          for (let j = 1; j <= n; j++) {
+            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+          }
+          prev = cur;
+        }
+        return prev[n];
+      }
+      // Devuelve {exact} si el valor está en el catálogo (canonicalizado con la
+      // grafía oficial, ej. "toyota"→"Toyota") o {suggestion} si hay un match a
+      // 1-2 errores de tipeo. Si no, {}.
+      function bulkSuggest(value, options) {
+        const nv = normalize(value);
+        let best = null, bestD = 3;
+        for (const opt of options) {
+          const d = bulkEditDistance(nv, normalize(opt));
+          if (d === 0) return { exact: opt };
+          if (d < bestD) { bestD = d; best = opt; }
+        }
+        return best ? { suggestion: best } : {};
+      }
+      function bulkAllBrands() {
+        return Object.keys(vehicleBrandModels).concat(Object.keys(motoBrandModels));
+      }
+
+      // Espejo del trigger anti-contacto del SERVIDOR (2l-block-contact-info):
+      // mejor marcar la fila en la vista previa que perderla al publicar. Los
+      // comentarios van en modo laxo (igual que el trigger); el resto de textos
+      // libres en modo estricto: ≥4 grupos de números = teléfono troceado.
+      function bulkContactErrors(fields, errors) {
+        fields.forEach((f) => {
+          const t = bulkTxt(f.value);
+          if (!t) return;
+          if (typeof detectContactInText === "function" && detectContactInText(t, f.label)) {
+            errors.push(f.label + ": no incluyas teléfono, email ni redes (el contacto se entrega solo al desbloquear)");
+            return;
+          }
+          if (!f.comment && (t.match(/[0-9]+/g) || []).length >= 4) {
+            errors.push(f.label + ': demasiados números sueltos ("' + t + '") — el sistema lo bloquea por parecer un teléfono; simplifica el texto');
+          }
+        });
+      }
+
       function bulkValidateProperty(raw) {
         const errors = [];
         const lbl = (f) => bulkColLabel(PROP_COLS, f);
         const mapEnum = (f, v, req) => bulkMapEnum(PROP_ENUMS, f, v, lbl(f), req, errors);
         const operation = mapEnum("operation", raw.operation, true);
         const propertyType = mapEnum("propertyType", raw.propertyType, true);
-        const province = bulkTxt(raw.province); if (!province) errors.push("Provincia vacía");
-        const zone = bulkTxt(raw.zone); if (!zone) errors.push("Zona vacía");
+        // Provincia contra el catálogo (lista cerrada): un tipeo aquí deja la
+        // publicación sin matches por ubicación, en silencio. Zona es lista
+        // abierta (el flujo con Google produce barrios arbitrarios): solo se
+        // corrige/sugiere cuando hay un match cercano en el catálogo.
+        let province = bulkTxt(raw.province);
+        if (!province) errors.push("Provincia vacía");
+        else {
+          const rp = bulkSuggest(province, Object.keys(locationOptions));
+          if (rp.exact) province = rp.exact;
+          else if (rp.suggestion) errors.push('Provincia "' + province + '" no existe. ¿Quisiste decir "' + rp.suggestion + '"?');
+          else errors.push('Provincia "' + province + '" no está en el catálogo');
+        }
+        let zone = bulkTxt(raw.zone);
+        if (!zone) errors.push("Zona vacía");
+        else {
+          const rz = bulkSuggest(zone, locationOptions[province] || []);
+          if (rz.exact) zone = rz.exact;
+          else if (rz.suggestion) errors.push('Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?');
+          // sin match cercano: se acepta tal cual (barrios fuera del catálogo son válidos)
+        }
         const salePrice = bulkNum(raw.salePrice);
         const rentalPrice = bulkNum(raw.rentalPrice);
         if ((operation === "venta" || operation === "ambos") && salePrice <= 0) errors.push("Falta precio de venta");
         if ((operation === "alquiler" || operation === "ambos") && rentalPrice <= 0) errors.push("Falta precio de alquiler");
+        // Pisos anti-error de dedo: un precio real nunca es tan bajo; casi siempre
+        // es un separador de miles mal puesto o un cero de menos.
+        if (salePrice > 0 && salePrice < 1000) errors.push("Precio de venta sospechosamente bajo (" + salePrice + ") — revisa el número");
+        if (rentalPrice > 0 && rentalPrice < 50) errors.push("Precio de alquiler sospechosamente bajo (" + rentalPrice + ") — revisa el número");
+        bulkContactErrors([
+          { label: lbl("streetOrNeighborhood"), value: raw.streetOrNeighborhood },
+          { label: lbl("comments"), value: raw.comments, comment: true }
+        ], errors);
         let parkingSpaces;
         const pk = bulkTxt(raw.parkingSpaces);
         if (pk) { const pn = Number(pk.replace(/[^0-9]/g, "")); parkingSpaces = (pn > 4 || /mas|más|\+/i.test(pk)) ? "mas" : String(Math.max(0, pn || 0)); }
@@ -24362,19 +24464,51 @@
         let vehicleType = bulkTxt(raw.vehicleType);
         if (!vehicleType) errors.push("Tipo de vehículo vacío");
         else vehicleType = VEH_ENUMS.vehicleType[normalize(vehicleType)] || vehicleType.toLowerCase(); // permite "otro" como texto libre
-        const brand = bulkTxt(raw.brand); if (!brand) errors.push("Marca vacía");
+        // Marca contra el catálogo: el matching exige igualdad exacta, así que
+        // "Toyotta" publicaría un carro INVISIBLE para las búsquedas. Si está en
+        // el catálogo se canonicaliza la grafía ("toyota"→"Toyota"); con tipeo
+        // cercano se sugiere; desconocida del todo, se pide usar el formulario
+        // individual (que tiene la opción "Otro" a propósito).
+        let brand = bulkTxt(raw.brand);
+        if (!brand) errors.push("Marca vacía");
+        else {
+          const rb = bulkSuggest(brand, bulkAllBrands());
+          if (rb.exact) brand = rb.exact;
+          else if (rb.suggestion) errors.push('Marca "' + brand + '" no reconocida. ¿Quisiste decir "' + rb.suggestion + '"?');
+          else errors.push('Marca "' + brand + '" no está en el catálogo — para una marca poco común usa el formulario individual (opción "Otro")');
+        }
         const model = bulkTxt(raw.model); if (!model) errors.push("Modelo vacío");
         const year = bulkNum(raw.year); if (!year || year < 1950 || year > 2100) errors.push("Año inválido");
         const salePrice = bulkNum(raw.salePrice); if (salePrice <= 0) errors.push("Falta precio");
-        const province = bulkTxt(raw.province); if (!province) errors.push("Provincia vacía");
-        const zone = bulkTxt(raw.zone); if (!zone) errors.push("Zona vacía");
+        if (salePrice > 0 && salePrice < 200) errors.push("Precio sospechosamente bajo (" + salePrice + ") — revisa el número");
+        let province = bulkTxt(raw.province);
+        if (!province) errors.push("Provincia vacía");
+        else {
+          const rp = bulkSuggest(province, Object.keys(locationOptions));
+          if (rp.exact) province = rp.exact;
+          else if (rp.suggestion) errors.push('Provincia "' + province + '" no existe. ¿Quisiste decir "' + rp.suggestion + '"?');
+          else errors.push('Provincia "' + province + '" no está en el catálogo');
+        }
+        let zone = bulkTxt(raw.zone);
+        if (!zone) errors.push("Zona vacía");
+        else {
+          const rz = bulkSuggest(zone, locationOptions[province] || []);
+          if (rz.exact) zone = rz.exact;
+          else if (rz.suggestion) errors.push('Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?');
+        }
         const transmission = bulkTxt(raw.transmission) ? mapEnum("transmission", raw.transmission, false) : "automatico";
         const fuel = bulkTxt(raw.fuel) ? mapEnum("fuel", raw.fuel, false) : "gasolina";
         const status = bulkTxt(raw.status) ? mapEnum("status", raw.status, false) : "disponible_ahora";
+        const previousOwners = bulkTxt(raw.previousOwners) ? mapEnum("previousOwners", raw.previousOwners, false) : "";
+        bulkContactErrors([
+          { label: lbl("model"), value: raw.model },
+          { label: lbl("color"), value: raw.color },
+          { label: lbl("vehicleComments"), value: raw.vehicleComments, comment: true }
+        ], errors);
         const record = {
           operation: "vehiculo", vehicleType, brand, model,
           year, mileage: bulkNum(raw.mileage), salePrice, rentalPrice: 0,
-          transmission, fuel, status: status || "disponible_ahora",
+          transmission, fuel, status: status || "disponible_ahora", previousOwners,
           province, zone, color: bulkTxt(raw.color), vehicleComments: bulkTxt(raw.vehicleComments)
         };
         return { record, errors };
@@ -24389,6 +24523,7 @@
           instrucciones: [
             ["KonektaYa · Carga masiva de inmuebles"],
             ['Llena la hoja "Propiedades" (una fila por propiedad) y sube el archivo. No cambies los encabezados.'],
+            ["Las columnas marcadas con * son OBLIGATORIAS; el resto son opcionales."],
             [""],
             ["Columna", "Obligatorio", "Valores válidos / formato"],
             ["Operación", "Sí", "Alquiler | Venta | Ambos"],
@@ -24417,10 +24552,11 @@
           label: "Vehículos", entityKey: "vehicleOffers", sheet: "Vehículos",
           filename: "KonektaYa-plantilla-vehiculos.xlsx", columns: VEH_COLS,
           validate: bulkValidateVehicle,
-          example: ["SUV", "Toyota", "RAV4", "2021", "28500", "45000", "Automático", "Gasolina", "Disponible ahora", "Panamá", "Costa del Este", "Blanco", "Full extras, único dueño"],
+          example: ["SUV", "Toyota", "RAV4", "2021", "28500", "45000", "Primera mano", "Automático", "Gasolina", "Disponible ahora", "Panamá", "Costa del Este", "Blanco", "Full extras, único dueño"],
           instrucciones: [
             ["KonektaYa · Carga masiva de vehículos"],
             ['Llena la hoja "Vehículos" (una fila por vehículo) y sube el archivo. No cambies los encabezados.'],
+            ["Las columnas marcadas con * son OBLIGATORIAS; el resto son opcionales."],
             [""],
             ["Columna", "Obligatorio", "Valores válidos / formato"],
             ["Tipo de vehículo", "Sí", "Carro | SUV | Pickup | Moto | Camión | Bus | Busito (u otro texto)"],
@@ -24429,6 +24565,7 @@
             ["Año", "Sí", "Número (ej. 2021)"],
             ["Precio (USD)", "Sí", "Número (ej. 28500)"],
             ["Kilometraje", "No", "Número en km (ej. 45000)"],
+            ["Dueños que ha tenido", "No", "Primera mano | Segunda mano | Tercera mano | Más de tres (o 1 / 2 / 3 / 4)"],
             ["Transmisión", "No", "Automático | Manual"],
             ["Combustible", "No", "Gasolina | Diesel | Híbrido | Eléctrico"],
             ["Estado", "No", "Disponible ahora | Próximamente"],
@@ -24468,10 +24605,20 @@
         const spec = bulkSpec();
         let XLSX;
         try { XLSX = await ensureXLSX(); } catch (e) { alert(e.message); return; }
-        const headers = spec.columns.map((c) => c.header);
+        // Formato pedido por el dueño: la guía va DE FRENTE en la hoja principal,
+        // no solo en la pestaña Instrucciones. Fila 1 = valores válidos/formato,
+        // fila 2 = OBLIGATORIA/opcional, fila 3 = encabezados (con " *" en las
+        // obligatorias), fila 4+ = datos. El parser BUSCA la fila de encabezados,
+        // así que estas filas de guía no se leen como datos y las plantillas
+        // viejas (encabezado en la fila 1) siguen funcionando.
+        // Límite conocido: SheetJS Community no escribe colores/negritas — la
+        // guía sale como texto plano.
+        const headers = spec.columns.map((c) => c.header + (c.required ? " *" : ""));
+        const guiaRow = spec.columns.map((c) => c.guia || "");
+        const obligRow = spec.columns.map((c) => (c.required ? "OBLIGATORIA" : "opcional"));
         const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet([headers]);
-        ws["!cols"] = headers.map((h) => ({ wch: Math.max(14, h.length + 2) }));
+        const ws = XLSX.utils.aoa_to_sheet([guiaRow, obligRow, headers]);
+        ws["!cols"] = spec.columns.map((c, i) => ({ wch: Math.min(38, Math.max(16, headers[i].length + 2, Math.ceil((guiaRow[i] || "").length * 0.72))) }));
         XLSX.utils.book_append_sheet(wb, ws, spec.sheet);
         const inst = spec.instrucciones.concat([headers, spec.example]);
         const wsInst = XLSX.utils.aoa_to_sheet(inst);
@@ -24483,11 +24630,26 @@
 
       // Convierte la hoja (matriz de filas) en objetos crudos por columna reconocida.
       function bulkParseRows(aoa, spec) {
-        const header = (aoa[0] || []).map((h) => normalize(h));
+        // La fila de encabezados puede NO ser la primera: la plantilla nueva trae
+        // 2 filas de guía encima (valores válidos + OBLIGATORIA/opcional). Se
+        // busca en las primeras 6 filas la que MÁS encabezados conocidos tenga
+        // (mínimo 3); los datos empiezan justo después. Con encabezado en la
+        // fila 1 (plantillas viejas) el resultado es idéntico al de antes.
+        // Se tolera el " *" de obligatoria y espacios extra.
+        const clean = (h) => normalize(h).replace(/\*/g, "").trim();
+        const wanted = spec.columns.map((c) => clean(c.header));
+        let headerRow = 0, best = -1;
+        for (let i = 0; i < Math.min(6, aoa.length); i++) {
+          const cells = (aoa[i] || []).map(clean);
+          const hits = wanted.filter((w) => cells.indexOf(w) !== -1).length;
+          if (hits > best) { best = hits; headerRow = i; }
+        }
+        if (best < 3) headerRow = 0;
+        const header = (aoa[headerRow] || []).map(clean);
         const idx = {};
-        spec.columns.forEach((c) => { idx[c.field] = header.indexOf(normalize(c.header)); });
+        spec.columns.forEach((c) => { idx[c.field] = header.indexOf(clean(c.header)); });
         const out = [];
-        for (let i = 1; i < aoa.length; i++) {
+        for (let i = headerRow + 1; i < aoa.length; i++) {
           const r = aoa[i] || [];
           if (!r.some((v) => String(v == null ? "" : v).trim() !== "")) continue; // fila vacía
           const raw = {};
@@ -24608,14 +24770,31 @@
       }
       window.cancelBulkImport = cancelBulkImport;
 
+      // Traduce el rechazo del servidor a un mensaje que el broker entienda.
+      function bulkServerReason(msg) {
+        const m = String(msg || "");
+        if (m.includes("CONTACTO_NO_PERMITIDO")) {
+          const campo = /el campo "([^"]+)"/.exec(m);
+          return "El servidor la rechazó: " + (campo ? 'el campo "' + campo[1] + '" parece contener' : "contiene") + " datos de contacto (teléfono, email o redes). Simplifica ese texto.";
+        }
+        return m || "el servidor no respondió";
+      }
+
       async function confirmBulkImport() {
         const spec = bulkSpec();
-        const rows = (bulkState.rows || []).filter((r) => r.errors.length === 0);
+        // Conservar el número de fila de la vista previa para reportar fallos.
+        const rows = (bulkState.rows || []).map((r, i) => ({ ...r, n: i + 1 })).filter((r) => r.errors.length === 0);
         if (!rows.length) return;
-        const broker = getBrokerAccount(currentUserEmail);
-        if (!broker || broker.status !== "aprobado") { alert("Solo brokers aprobados pueden usar la carga masiva."); return; }
+        // Broker aprobado por CUALQUIERA de las dos vías: ficha local (demo) o
+        // perfil del servidor (isBrokerApproved lee myProfile). Antes solo se
+        // miraba la ficha local y un broker aprobado desde el admin de Supabase
+        // quedaba bloqueado aquí con "Solo brokers aprobados".
+        const local = getBrokerAccount(currentUserEmail);
+        const aprobado = (local && local.status === "aprobado") || (typeof isBrokerApproved === "function" && isBrokerApproved(currentUserEmail));
+        if (!aprobado) { alert("Solo brokers aprobados pueden usar la carga masiva."); return; }
         const prof = (typeof myProfile !== "undefined" && myProfile) ? myProfile : {};
-        const phone = String(prof.phone || "").trim();
+        const broker = local || { license: prof.broker_license || "", company: prof.broker_company || "", independent: false, name: prof.name || "" };
+        const phone = String(prof.phone || (local && local.phone) || "").trim();
         if (!phone) { alert('Antes de la carga masiva completa tu teléfono en "Mis datos": se usa como contacto de todas las publicaciones.'); return; }
         const nm = prof.name || broker.name || "Broker";
         const email = currentUserEmail || prof.email || "";
@@ -24624,7 +24803,8 @@
         const box = document.getElementById("bulkPreview");
         if (box) box.innerHTML = '<p style="font-size:14px;font-weight:700">Publicando ' + rows.length + '…</p>';
         const targetArr = spec.entityKey === "vehicleOffers" ? vehicleOffers : properties;
-        let done = 0, failed = 0;
+        let done = 0;
+        const fallidas = [];
         for (const r of rows) {
           const rec = {
             id: newRecordId(), publishedAt: new Date().toISOString(),
@@ -24634,16 +24814,39 @@
             ...r.record
           };
           if (spec.entityKey === "properties") rec.acceptsBroker = true;
+          targetArr.push(rec);
+          let res = { ok: true };
           try {
-            targetArr.push(rec);
-            if (supabaseEnabled) await supaUpsertPublication(spec.entityKey, rec, { skipNotify: true });
+            if (supabaseEnabled) res = (await supaUpsertPublication(spec.entityKey, rec, { skipNotify: true })) || { ok: false, reason: "sin respuesta" };
+          } catch (e) { res = { ok: false, reason: (e && e.message) || String(e) }; }
+          if (res.ok) {
             done++;
-          } catch (e) { failed++; }
+          } else {
+            // Revertir el alta local: si se queda, el broker la ve como publicada
+            // y "desaparece sola" en la próxima recarga (el bug de confianza).
+            const k = targetArr.indexOf(rec);
+            if (k >= 0) targetArr.splice(k, 1);
+            fallidas.push({ ...r, errors: [bulkServerReason(res.reason)] });
+          }
         }
         save();
         render();
-        bulkState.rows = [];
-        if (box) box.innerHTML = '<div style="background:#eaf7ee;border:1px solid #cce8cc;border-radius:10px;padding:12px;font-size:14px;font-weight:700;color:#166534">✓ ' + done + ' publicación(es) creada(s)' + (failed ? ' · ' + failed + ' fallaron' : '') + '. Ya aparecen en "Mis ofertas".</div>';
+        // Las filas rechazadas por el SERVIDOR se quedan en la vista previa con su
+        // motivo, listas para corregir en Excel y resubir. Nada se pierde en silencio.
+        bulkState.rows = fallidas;
+        renderBulkCard();
+        const status = document.getElementById("bulkStatus");
+        if (status) {
+          status.textContent = "";
+        }
+        const preview = document.getElementById("bulkPreview");
+        if (preview) {
+          const okBanner = '<div style="background:#eaf7ee;border:1px solid #cce8cc;border-radius:10px;padding:12px;font-size:14px;font-weight:700;color:#166534">✓ ' + done + ' publicación(es) creada(s). Ya aparecen en "Mis ofertas".</div>';
+          const badBanner = fallidas.length
+            ? '<div style="background:#fdecec;border:1px solid #f3b4b4;border-radius:10px;padding:12px;font-size:13.5px;font-weight:700;color:#991b1b;margin-top:8px">⛔ ' + fallidas.length + " fila(s) NO se publicaron — el servidor las rechazó. Abajo está el motivo de cada una (fila " + fallidas.map((f) => f.n).join(", ") + " del archivo)." + "</div>"
+            : "";
+          preview.insertAdjacentHTML("afterbegin", okBanner + badBanner);
+        }
       }
       window.confirmBulkImport = confirmBulkImport;
       // ==================== fin carga masiva ====================
