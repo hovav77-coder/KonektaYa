@@ -11679,6 +11679,16 @@
                 <label class="field" data-vehicle-status-other hidden>En cuántos días estará disponible<input name="vehicleStatusOther" type="number" min="1" max="999" inputmode="numeric" /></label>
                 <label class="field">Kilometraje<input name="mileage" type="text" inputmode="numeric" data-thousands data-max="999999" required /></label>
                 <label class="field">
+                  Dueños que ha tenido
+                  <select name="previousOwners">
+                    <option value="">Prefiero no indicar</option>
+                    <option value="primera_mano">Primera mano (único dueño)</option>
+                    <option value="segunda_mano">Segunda mano</option>
+                    <option value="tercera_mano">Tercera mano</option>
+                    <option value="mas_de_tres">Más de tres dueños</option>
+                  </select>
+                </label>
+                <label class="field">
                   Precio
                   <select name="salePrice" data-price-select="vehicleOffer" required></select>
                 </label>
@@ -14723,6 +14733,10 @@
           hibrido: "Híbrido",
           electrico: "Eléctrico",
           disponible_ahora: "Disponible ahora",
+          primera_mano: "Primera mano",
+          segunda_mano: "Segunda mano",
+          tercera_mano: "Tercera mano",
+          mas_de_tres: "Más de 3 dueños",
           disponible_proximamente: "Disponible próximamente",
           reservado: "Reservado",
           cliente_final: "Cliente final",
@@ -15430,7 +15444,15 @@
         "Vino"
       ];
       const vehiclePriceOptions = Array.from({ length: 100 }, (_, index) => (index + 1) * 1000);
-      const vehicleYearOptions = Array.from({ length: 16 }, (_, index) => new Date().getFullYear() - index);
+      // Año modelo: los concesionarios venden el año SIGUIENTE desde mitad de año
+      // (en agosto ya circulan modelos del año próximo). Desde JUNIO se ofrece el
+      // año que viene como primera opción; de enero a mayo, solo hasta el actual.
+      // El fondo de la lista se mantiene fijo en (año actual − 15).
+      const vehicleYearNewest = new Date().getFullYear() + (new Date().getMonth() >= 5 ? 1 : 0);
+      const vehicleYearOptions = Array.from(
+        { length: vehicleYearNewest - (new Date().getFullYear() - 15) + 1 },
+        (_, index) => vehicleYearNewest - index
+      );
 
       function fillVehicleSelect(select, options, placeholder = "Selecciona una opción", selectedValue = "") {
         if (!select) return;
@@ -19007,8 +19029,22 @@
         currentUserEmail = email;
         save();
         // Diferido: el listener puede dispararse durante el arranque, antes de que
-        // exista la versión final de render(). setTimeout garantiza que corra después.
+        // exista la versión final de render(). OJO: setTimeout(0) NO lo garantiza —
+        // el HTML es grande y llega por partes, así que un timer puede dispararse
+        // ENTRE bloques <script>, cuando render/save todavía son las versiones
+        // viejas del demo (bloque 1) → ReferenceError (statusLabel) y pintado con
+        // código muerto. Por eso además se espera la bandera __konektayaBootDone,
+        // que pone el ÚLTIMO bloque de script (reintento cada 60 ms, tope ~10 s).
         setTimeout(async () => {
+          if (!window.__konektayaBootDone) {
+            applySupabaseSession.__waits = (applySupabaseSession.__waits || 0) + 1;
+            if (applySupabaseSession.__waits < 160) {
+              setTimeout(() => applySupabaseSession(session, redirect), 60);
+              return;
+            }
+            // tope alcanzado: el arranque se rompió en otro lado; seguir igual
+            // es mejor que dejar al usuario sin sesión para siempre.
+          }
           if (email && changed) {
             lastAuthEmail = email;
             // La sesión llegó: cerrar los popups de registro/confirmación si siguen
@@ -21790,6 +21826,7 @@
               ["neutral", "Transmisión", vehicleLabel(match.offer.transmission)],
               ["neutral", "Combustible", vehicleLabel(match.offer.fuel)],
               ["neutral", "Estado", vehicleLabel(match.offer.status)],
+              ...(match.offer.previousOwners ? [["neutral", "Dueños", vehicleLabel(match.offer.previousOwners)]] : []),
               ["neutral", "Zona", `${match.offer.zone}, ${match.offer.province}`]
             ];
         return `<div class="ai-factor-grid">${rows.map(([kind, rowLabel, value]) => aiFactorCard(kind, rowLabel, value)).join("")}</div>`;
@@ -21967,6 +22004,7 @@
               ["Año / km", `${match.offer.year} · ${Number(match.offer.mileage || 0).toLocaleString("es-PA")} km`],
               ["Transmisión", vehicleLabel(match.offer.transmission)],
               ["Combustible", vehicleLabel(match.offer.fuel)],
+              ...(match.offer.previousOwners ? [["Dueños", vehicleLabel(match.offer.previousOwners)]] : []),
               ["Comentarios", match.offer.vehicleComments || "Sin comentarios"]
             ];
         const cName = unlockInfo.contactName || fullName(contact);
@@ -22271,6 +22309,7 @@
                             <span class="criteria-chip">${Number(offer.mileage || 0).toLocaleString("es-PA")} km</span>
                             <span class="criteria-chip">${vehicleLabel(offer.transmission)}</span>
                             <span class="criteria-chip">${vehicleLabel(offer.fuel)}</span>
+                            ${offer.previousOwners ? `<span class="criteria-chip">${vehicleLabel(offer.previousOwners)}</span>` : ""}
                           </div>
                           ${publicationStatusHtml(offer)}
                         </div>
@@ -25045,7 +25084,7 @@
             sections: [
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "registeredBy"] },
               { title: "El vehículo", fields: ["vehicleType", "brand", "brandOther", "model", "modelOther", "year", "yearOther"] },
-              { title: "Características", fields: ["transmission", "fuel", "status", "vehicleStatusOther", "mileage", "color", "colorOther"] },
+              { title: "Características", fields: ["transmission", "fuel", "status", "vehicleStatusOther", "mileage", "previousOwners", "color", "colorOther"] },
               { title: "Ubicación y precio", fields: ["province", "zone", "salePrice", "salePriceOther", "photos", "vehicleComments"] }
             ]
           },
@@ -25365,6 +25404,12 @@
           queueMicrotask(() => { renderRanThisTick = false; });
           renderNow();
         };
+
+        // Última línea del último bloque: el arranque terminó y TODAS las
+        // funciones globales (render/save/recalculateMatches) ya son las
+        // definitivas. applySupabaseSession espera esta bandera antes de tocar
+        // la UI — ver el comentario en su setTimeout.
+        window.__konektayaBootDone = true;
       })();
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
