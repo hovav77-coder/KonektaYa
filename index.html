@@ -11840,6 +11840,15 @@
                 <label class="field" data-year-other-field="vehicleSearch" hidden>Especifica el año mínimo<input name="minYearOther" type="number" min="1950" max="2026" /></label>
                 <label class="field">Kilometraje máximo<input name="maxMileage" type="text" inputmode="numeric" data-thousands data-max="999999" required /></label>
                 <label class="field">
+                  Dueños que haya tenido
+                  <select name="desiredPreviousOwners">
+                    <option value="">Indiferente</option>
+                    <option value="solo_primera_mano">Solo primera mano</option>
+                    <option value="hasta_segunda_mano">Hasta segunda mano</option>
+                    <option value="hasta_tercera_mano">Hasta tercera mano</option>
+                  </select>
+                </label>
+                <label class="field">
                   Presupuesto máximo
                   <select name="maxBudget" data-price-select="vehicleSearch" required></select>
                 </label>
@@ -13361,6 +13370,18 @@
         return `<div class="comp-list">${rows.join("")}</div>`;
       }
 
+      // Compatibilidad de "manos" (INFORMATIVO, no afecta el matching ni el
+      // precio): compara lo que declaró el dueño con la preferencia del buscador.
+      // ok = cumple · diff = no cumple · warn = el dueño no lo indicó ·
+      // neutral = al buscador le es indiferente.
+      const OWNER_HAND_RANK = { primera_mano: 1, segunda_mano: 2, tercera_mano: 3, mas_de_tres: 4 };
+      const DESIRED_HAND_MAX = { solo_primera_mano: 1, hasta_segunda_mano: 2, hasta_tercera_mano: 3 };
+      function ownersHandStatus(offerHand, desiredHand) {
+        if (!desiredHand) return "neutral";
+        if (!offerHand) return "warn";
+        return OWNER_HAND_RANK[offerHand] <= DESIRED_HAND_MAX[desiredHand] ? "ok" : "diff";
+      }
+
       function vehicleMatchComparison(match, perspective = "owner") {
         const labels = perspective === "client"
           ? { offer: "El vehículo ofrece", search: "Tú buscas" }
@@ -13411,6 +13432,17 @@
             f.transmission && f.fuel ? "ok" : "warn"
           )
         );
+        // Dueños que ha tenido (informativo): solo si algún lado lo indicó.
+        if (offer.previousOwners || search.desiredPreviousOwners) {
+          rows.push(
+            compRowP(
+              "Dueños que ha tenido",
+              offer.previousOwners ? vehicleLabel(offer.previousOwners) : "No indicado",
+              search.desiredPreviousOwners ? vehicleLabel(search.desiredPreviousOwners) : "Indiferente",
+              ownersHandStatus(offer.previousOwners, search.desiredPreviousOwners)
+            )
+          );
+        }
         return `<div class="comp-list">${rows.join("")}</div>`;
       }
 
@@ -14788,6 +14820,9 @@
           segunda_mano: "Segunda mano",
           tercera_mano: "Tercera mano",
           mas_de_tres: "Más de 3 dueños",
+          solo_primera_mano: "Solo primera mano",
+          hasta_segunda_mano: "Hasta segunda mano",
+          hasta_tercera_mano: "Hasta tercera mano",
           disponible_proximamente: "Disponible próximamente",
           reservado: "Reservado",
           cliente_final: "Cliente final",
@@ -21867,6 +21902,7 @@
               [match.factors.price ? "ok" : "warn", "Presupuesto", money.format(match.search.maxBudget)],
               [match.factors.year ? "ok" : "warn", "Año mínimo", match.search.minYear || "No definido"],
               [match.factors.mileage ? "ok" : "warn", "Km máximo", `${Number(match.search.maxMileage || 0).toLocaleString("es-PA")} km`],
+              ...(match.search.desiredPreviousOwners ? [[({ok:"ok",diff:"warn"}[ownersHandStatus(match.offer.previousOwners, match.search.desiredPreviousOwners)] || "neutral"), "Dueños pedidos", vehicleLabel(match.search.desiredPreviousOwners)]] : []),
               [match.factors.zone ? "ok" : "neutral", "Zona", `${match.search.zone}, ${match.search.province}`],
               ["neutral", "Urgencia", vehicleLabel(match.search.urgency)]
             ]
@@ -22046,6 +22082,7 @@
               ["Presupuesto", money.format(match.search.maxBudget)],
               ["Año / km", `${match.search.minYear || "N/A"} mínimo · ${Number(match.search.maxMileage || 0).toLocaleString("es-PA")} km máx.`],
               ["Uso", vehicleLabel(match.search.useCase)],
+              ...(match.search.desiredPreviousOwners ? [["Dueños pedidos", vehicleLabel(match.search.desiredPreviousOwners)]] : []),
               ["Urgencia", vehicleLabel(match.search.urgency)],
               ["Comentarios", match.search.vehicleSearchComments || "Sin comentarios"]
             ]
@@ -22532,6 +22569,7 @@
                             <span class="criteria-chip">≤ ${Number(search.maxMileage || 0).toLocaleString("es-PA")} km</span>
                             <span class="criteria-chip">${vehicleLabel(search.transmission)}</span>
                             <span class="criteria-chip">${vehicleLabel(search.fuel)}</span>
+                            ${search.desiredPreviousOwners ? `<span class="criteria-chip">${vehicleLabel(search.desiredPreviousOwners)}</span>` : ""}
                             <span class="criteria-chip muted">${vehicleLabel(search.useCase)} · ${vehicleLabel(search.urgency)}</span>
                           </div>
                         </div>
@@ -25150,7 +25188,7 @@
             note: "Tu búsqueda queda protegida; no incluyas datos de contacto en campos libres.",
             sections: [
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "role", "useCase"] },
-              { title: "Vehículo buscado", fields: ["vehicleType", "desiredBrand", "desiredBrandOther", "desiredModel", "desiredModelOther", "minYear", "minYearOther", "maxMileage"] },
+              { title: "Vehículo buscado", fields: ["vehicleType", "desiredBrand", "desiredBrandOther", "desiredModel", "desiredModelOther", "minYear", "minYearOther", "maxMileage", "desiredPreviousOwners"] },
               { title: "Preferencias", fields: ["maxBudget", "maxBudgetOther", "transmission", "fuel", "desiredColor", "desiredColorOther", "urgency"] },
               { title: "Ubicación y detalles", fields: ["province", "zone", "vehicleSearchComments"] }
             ]
