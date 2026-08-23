@@ -6,6 +6,12 @@ data/*.db-shm
 data/*.db-wal
 .next
 
+# Red de seguridad: la hoja de secretos de RECUPERACION.md se rellena en un
+# gestor de contraseñas, NO aquí. Si alguien crea el archivo por comodidad,
+# que al menos no se pueda subir a GitHub.
+SECRETOS*
+secretos*
+
 # Respaldos de la base de datos (scripts/backup.js).
 # NUNCA subir: traen nombres, teléfonos y correos de personas reales,
 # más el historial de billeteras y desbloqueos.
