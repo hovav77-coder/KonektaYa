@@ -3532,7 +3532,7 @@
       .form-hero-modern {
         align-items: center;
         background:
-          linear-gradient(135deg, rgba(18, 47, 83, 0.97), rgba(37, 81, 125, 0.94)),
+          linear-gradient(125deg, rgba(10, 47, 85, 0.98) 55%, rgba(21, 74, 128, 0.95)),
           var(--navy);
         border-radius: 28px 28px 0 0;
         color: #ffffff;
@@ -3540,7 +3540,58 @@
         gap: 24px;
         justify-content: space-between;
         min-height: 150px;
+        overflow: hidden;
         padding: clamp(28px, 4vw, 46px);
+        position: relative;
+      }
+
+      /* Brillo naranja decorativo (opción C aprobada) */
+      .form-hero-modern::after {
+        background: rgba(224, 91, 42, 0.2);
+        border-radius: 50%;
+        content: "";
+        height: 190px;
+        pointer-events: none;
+        position: absolute;
+        right: -46px;
+        top: -46px;
+        width: 190px;
+      }
+
+      .form-hero-modern > * {
+        position: relative; /* el contenido siempre por encima del brillo */
+        z-index: 1;
+      }
+
+      /* Palabra clave del título en naranja */
+      .form-hero-modern h2 .fh-accent {
+        color: #f1883f;
+      }
+
+      /* Indicador "Paso X de N" con barritas de progreso */
+      .form-hero-steps {
+        align-items: center;
+        color: #9fb4cc;
+        display: inline-flex;
+        font-size: 13px;
+        font-weight: 700;
+        gap: 8px;
+        white-space: nowrap;
+      }
+      .fh-bars {
+        display: inline-flex;
+        gap: 5px;
+      }
+      .fh-bar {
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 3px;
+        display: inline-block;
+        height: 5px;
+        transition: background 200ms ease;
+        width: 16px;
+      }
+      .fh-bar.on {
+        background: #f1883f;
       }
 
       .form-hero-modern .form-hero-copy {
@@ -25047,6 +25098,7 @@
           propertyForm: {
             eyebrow: "Oferta",
             title: "Publicar inmueble",
+            heroIntro: "2 minutos. Gratis. La IA hace el resto.",
             note: "Solo compartimos tu contacto cuando tú lo apruebas.",
             sections: [
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "registeredBy"] },
@@ -25058,6 +25110,7 @@
           searchForm: {
             eyebrow: "Demanda",
             title: "Buscar inmueble",
+            heroIntro: "Cuenta qué buscas, gratis. La IA te avisa cuando aparezca.",
             note: "Tu búsqueda se guarda gratis y tu contacto permanece protegido.",
             sections: [
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "role", "searchFor"] },
@@ -25069,6 +25122,7 @@
           brokerForm: {
             eyebrow: "Broker",
             title: "Registra búsqueda como broker",
+            heroIntro: "Registra lo que busca tu cliente. La IA te avisa cuando aparezca.",
             note: "Registra necesidades reales de tus clientes con contacto protegido.",
             sections: [
               { title: "Datos del broker", fields: ["firstName", "lastName", "email", "phone", "role", "searchFor"] },
@@ -25080,6 +25134,7 @@
           vehicleOfferForm: {
             eyebrow: "Oferta vehículos",
             title: "Publicar vehículo",
+            heroIntro: "2 minutos. Gratis. La IA hace el resto.",
             note: "Solo compartimos tu contacto cuando tú lo apruebas.",
             sections: [
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "registeredBy"] },
@@ -25091,6 +25146,7 @@
           vehicleSearchForm: {
             eyebrow: "Demanda vehículos",
             title: "Buscar vehículo",
+            heroIntro: "Cuenta qué buscas, gratis. La IA te avisa cuando aparezca.",
             note: "Tu búsqueda queda protegida; no incluyas datos de contacto en campos libres.",
             sections: [
               { title: "Tus datos", fields: ["firstName", "lastName", "email", "phone", "role", "useCase"] },
@@ -25149,10 +25205,22 @@
           if (eyebrow) eyebrow.remove(); // el distintivo reemplaza al eyebrow
 
           if (title) {
-            title.textContent = config.title;
+            // Título con la palabra clave en naranja (opción C aprobada por el
+            // dueño): "Publicar vehículo" → "Publicar <naranja>vehículo</>".
+            const words = String(config.title).trim().split(" ");
+            const last = words.pop();
+            title.textContent = words.length ? words.join(" ") + " " : "";
+            const acc = document.createElement("span");
+            acc.className = "fh-accent";
+            acc.textContent = last;
+            title.appendChild(acc);
             copy.appendChild(title);
           }
-          if (intro) copy.appendChild(intro);
+          if (intro) {
+            // Subtítulo corto y vendedor (el intro largo del HTML se reemplaza).
+            if (config.heroIntro) intro.textContent = config.heroIntro;
+            copy.appendChild(intro);
+          }
           const badge = document.createElement("span");
           badge.className = "form-privacy-badge";
           badge.innerHTML = `${lockIcon()} Contacto protegido`;
@@ -25171,6 +25239,37 @@
                 : null;
           if (!element) return null;
           return element.closest(".field") || element;
+        }
+
+        // Indicador "Paso X de N" del hero (opción C). Los pasos se muestran
+        // apilados (no es un wizard), así que el indicador refleja EN QUÉ paso
+        // está escribiendo el usuario: se actualiza al enfocar cualquier campo.
+        function setupHeroSteps(form, totalSteps) {
+          const block = form.closest(".form-block");
+          const tags = block && block.querySelector(".form-hero-tags");
+          if (!tags || !totalSteps || tags.querySelector(".form-hero-steps")) return;
+          const wrap = document.createElement("span");
+          wrap.className = "form-hero-steps";
+          const label = document.createElement("span");
+          label.textContent = "Paso 1 de " + totalSteps;
+          const bars = document.createElement("span");
+          bars.className = "fh-bars";
+          for (let i = 0; i < totalSteps; i++) {
+            const bar = document.createElement("i");
+            bar.className = "fh-bar" + (i === 0 ? " on" : "");
+            bars.appendChild(bar);
+          }
+          wrap.append(label, bars);
+          tags.appendChild(wrap);
+          form.addEventListener("focusin", (event) => {
+            const step = event.target && event.target.closest ? event.target.closest(".form-step") : null;
+            if (!step) return;
+            const steps = Array.from(form.querySelectorAll(".form-step"));
+            const idx = steps.indexOf(step);
+            if (idx < 0) return;
+            label.textContent = "Paso " + (idx + 1) + " de " + steps.length;
+            Array.from(bars.children).forEach((bar, i) => bar.classList.toggle("on", i <= idx));
+          });
         }
 
         function buildStep(index, title) {
@@ -25225,6 +25324,7 @@
             }
           });
           sourceGrid.remove();
+          setupHeroSteps(form, createdSteps.length);
           const submit = directChild(form, 'button[type="submit"]');
           if (submit && !form.querySelector(".form-submit-row")) {
             const row = document.createElement("div");
