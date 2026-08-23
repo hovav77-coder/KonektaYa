@@ -24343,11 +24343,18 @@
         return isFinite(n) ? n : 0;
       }
       function bulkColLabel(cols, field) { const c = cols.find((x) => x.field === field); return c ? c.header : field; }
+      // Los errores son OBJETOS {f, m, sug?}: f = campo (para saber qué celda se
+      // puede corregir en la vista previa), m = mensaje, sug = sugerencia de
+      // catálogo lista para preseleccionar. f vacío = no corregible en línea
+      // (ej. rechazo del servidor).
+      function bulkErr(errors, field, msg, sug) {
+        errors.push({ f: field || "", m: msg, sug: sug || "" });
+      }
       function bulkMapEnum(enums, field, v, label, required, errors) {
         const t = bulkTxt(v);
-        if (!t) { if (required) errors.push(label + " vacío"); return ""; }
+        if (!t) { if (required) bulkErr(errors, field, label + " vacío"); return ""; }
         const val = enums[field][normalize(t)];
-        if (!val) { errors.push(label + ' inválido: "' + t + '"'); return ""; }
+        if (!val) { bulkErr(errors, field, label + ' inválido: "' + t + '"'); return ""; }
         return val;
       }
 
@@ -24393,11 +24400,11 @@
           const t = bulkTxt(f.value);
           if (!t) return;
           if (typeof detectContactInText === "function" && detectContactInText(t, f.label)) {
-            errors.push(f.label + ": no incluyas teléfono, email ni redes (el contacto se entrega solo al desbloquear)");
+            bulkErr(errors, f.field, f.label + ": no incluyas teléfono, email ni redes (el contacto se entrega solo al desbloquear)");
             return;
           }
           if (!f.comment && (t.match(/[0-9]+/g) || []).length >= 4) {
-            errors.push(f.label + ': demasiados números sueltos ("' + t + '") — el sistema lo bloquea por parecer un teléfono; simplifica el texto');
+            bulkErr(errors, f.field, f.label + ': demasiados números sueltos ("' + t + '") — el sistema lo bloquea por parecer un teléfono; simplifica el texto');
           }
         });
       }
@@ -24413,32 +24420,32 @@
         // abierta (el flujo con Google produce barrios arbitrarios): solo se
         // corrige/sugiere cuando hay un match cercano en el catálogo.
         let province = bulkTxt(raw.province);
-        if (!province) errors.push("Provincia vacía");
+        if (!province) bulkErr(errors, "province", "Provincia vacía");
         else {
           const rp = bulkSuggest(province, Object.keys(locationOptions));
           if (rp.exact) province = rp.exact;
-          else if (rp.suggestion) errors.push('Provincia "' + province + '" no existe. ¿Quisiste decir "' + rp.suggestion + '"?');
-          else errors.push('Provincia "' + province + '" no está en el catálogo');
+          else if (rp.suggestion) bulkErr(errors, "province", 'Provincia "' + province + '" no existe. ¿Quisiste decir "' + rp.suggestion + '"?', rp.suggestion);
+          else bulkErr(errors, "province", 'Provincia "' + province + '" no está en el catálogo');
         }
         let zone = bulkTxt(raw.zone);
-        if (!zone) errors.push("Zona vacía");
+        if (!zone) bulkErr(errors, "zone", "Zona vacía");
         else {
           const rz = bulkSuggest(zone, locationOptions[province] || []);
           if (rz.exact) zone = rz.exact;
-          else if (rz.suggestion) errors.push('Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?');
+          else if (rz.suggestion) bulkErr(errors, "zone", 'Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?', rz.suggestion);
           // sin match cercano: se acepta tal cual (barrios fuera del catálogo son válidos)
         }
         const salePrice = bulkNum(raw.salePrice);
         const rentalPrice = bulkNum(raw.rentalPrice);
-        if ((operation === "venta" || operation === "ambos") && salePrice <= 0) errors.push("Falta precio de venta");
-        if ((operation === "alquiler" || operation === "ambos") && rentalPrice <= 0) errors.push("Falta precio de alquiler");
+        if ((operation === "venta" || operation === "ambos") && salePrice <= 0) bulkErr(errors, "salePrice", "Falta precio de venta");
+        if ((operation === "alquiler" || operation === "ambos") && rentalPrice <= 0) bulkErr(errors, "rentalPrice", "Falta precio de alquiler");
         // Pisos anti-error de dedo: un precio real nunca es tan bajo; casi siempre
         // es un separador de miles mal puesto o un cero de menos.
-        if (salePrice > 0 && salePrice < 1000) errors.push("Precio de venta sospechosamente bajo (" + salePrice + ") — revisa el número");
-        if (rentalPrice > 0 && rentalPrice < 50) errors.push("Precio de alquiler sospechosamente bajo (" + rentalPrice + ") — revisa el número");
+        if (salePrice > 0 && salePrice < 1000) bulkErr(errors, "salePrice", "Precio de venta sospechosamente bajo (" + salePrice + ") — revisa el número");
+        if (rentalPrice > 0 && rentalPrice < 50) bulkErr(errors, "rentalPrice", "Precio de alquiler sospechosamente bajo (" + rentalPrice + ") — revisa el número");
         bulkContactErrors([
-          { label: lbl("streetOrNeighborhood"), value: raw.streetOrNeighborhood },
-          { label: lbl("comments"), value: raw.comments, comment: true }
+          { field: "streetOrNeighborhood", label: lbl("streetOrNeighborhood"), value: raw.streetOrNeighborhood },
+          { field: "comments", label: lbl("comments"), value: raw.comments, comment: true }
         ], errors);
         let parkingSpaces;
         const pk = bulkTxt(raw.parkingSpaces);
@@ -24462,7 +24469,7 @@
         const lbl = (f) => bulkColLabel(VEH_COLS, f);
         const mapEnum = (f, v, req) => bulkMapEnum(VEH_ENUMS, f, v, lbl(f), req, errors);
         let vehicleType = bulkTxt(raw.vehicleType);
-        if (!vehicleType) errors.push("Tipo de vehículo vacío");
+        if (!vehicleType) bulkErr(errors, "vehicleType", "Tipo de vehículo vacío");
         else vehicleType = VEH_ENUMS.vehicleType[normalize(vehicleType)] || vehicleType.toLowerCase(); // permite "otro" como texto libre
         // Marca contra el catálogo: el matching exige igualdad exacta, así que
         // "Toyotta" publicaría un carro INVISIBLE para las búsquedas. Si está en
@@ -24470,40 +24477,40 @@
         // cercano se sugiere; desconocida del todo, se pide usar el formulario
         // individual (que tiene la opción "Otro" a propósito).
         let brand = bulkTxt(raw.brand);
-        if (!brand) errors.push("Marca vacía");
+        if (!brand) bulkErr(errors, "brand", "Marca vacía");
         else {
           const rb = bulkSuggest(brand, bulkAllBrands());
           if (rb.exact) brand = rb.exact;
-          else if (rb.suggestion) errors.push('Marca "' + brand + '" no reconocida. ¿Quisiste decir "' + rb.suggestion + '"?');
-          else errors.push('Marca "' + brand + '" no está en el catálogo — para una marca poco común usa el formulario individual (opción "Otro")');
+          else if (rb.suggestion) bulkErr(errors, "brand", 'Marca "' + brand + '" no reconocida. ¿Quisiste decir "' + rb.suggestion + '"?', rb.suggestion);
+          else bulkErr(errors, "brand", 'Marca "' + brand + '" no está en el catálogo — elígela abajo, o usa el formulario individual (opción "Otro") si es poco común');
         }
-        const model = bulkTxt(raw.model); if (!model) errors.push("Modelo vacío");
-        const year = bulkNum(raw.year); if (!year || year < 1950 || year > 2100) errors.push("Año inválido");
-        const salePrice = bulkNum(raw.salePrice); if (salePrice <= 0) errors.push("Falta precio");
-        if (salePrice > 0 && salePrice < 200) errors.push("Precio sospechosamente bajo (" + salePrice + ") — revisa el número");
+        const model = bulkTxt(raw.model); if (!model) bulkErr(errors, "model", "Modelo vacío");
+        const year = bulkNum(raw.year); if (!year || year < 1950 || year > 2100) bulkErr(errors, "year", "Año inválido");
+        const salePrice = bulkNum(raw.salePrice); if (salePrice <= 0) bulkErr(errors, "salePrice", "Falta precio");
+        if (salePrice > 0 && salePrice < 200) bulkErr(errors, "salePrice", "Precio sospechosamente bajo (" + salePrice + ") — revisa el número");
         let province = bulkTxt(raw.province);
-        if (!province) errors.push("Provincia vacía");
+        if (!province) bulkErr(errors, "province", "Provincia vacía");
         else {
           const rp = bulkSuggest(province, Object.keys(locationOptions));
           if (rp.exact) province = rp.exact;
-          else if (rp.suggestion) errors.push('Provincia "' + province + '" no existe. ¿Quisiste decir "' + rp.suggestion + '"?');
-          else errors.push('Provincia "' + province + '" no está en el catálogo');
+          else if (rp.suggestion) bulkErr(errors, "province", 'Provincia "' + province + '" no existe. ¿Quisiste decir "' + rp.suggestion + '"?', rp.suggestion);
+          else bulkErr(errors, "province", 'Provincia "' + province + '" no está en el catálogo');
         }
         let zone = bulkTxt(raw.zone);
-        if (!zone) errors.push("Zona vacía");
+        if (!zone) bulkErr(errors, "zone", "Zona vacía");
         else {
           const rz = bulkSuggest(zone, locationOptions[province] || []);
           if (rz.exact) zone = rz.exact;
-          else if (rz.suggestion) errors.push('Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?');
+          else if (rz.suggestion) bulkErr(errors, "zone", 'Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?', rz.suggestion);
         }
         const transmission = bulkTxt(raw.transmission) ? mapEnum("transmission", raw.transmission, false) : "automatico";
         const fuel = bulkTxt(raw.fuel) ? mapEnum("fuel", raw.fuel, false) : "gasolina";
         const status = bulkTxt(raw.status) ? mapEnum("status", raw.status, false) : "disponible_ahora";
         const previousOwners = bulkTxt(raw.previousOwners) ? mapEnum("previousOwners", raw.previousOwners, false) : "";
         bulkContactErrors([
-          { label: lbl("model"), value: raw.model },
-          { label: lbl("color"), value: raw.color },
-          { label: lbl("vehicleComments"), value: raw.vehicleComments, comment: true }
+          { field: "model", label: lbl("model"), value: raw.model },
+          { field: "color", label: lbl("color"), value: raw.color },
+          { field: "vehicleComments", label: lbl("vehicleComments"), value: raw.vehicleComments, comment: true }
         ], errors);
         const record = {
           operation: "vehiculo", vehicleType, brand, model,
@@ -24723,6 +24730,70 @@
       }
       window.setBulkVertical = setBulkVertical;
 
+      // ===== Corrección INLINE en la vista previa =====
+      // Cada error sabe su campo (bulkErr), así que la celda ofensora se puede
+      // corregir AQUÍ MISMO: un <select> con las opciones válidas (la sugerencia
+      // de catálogo ya preseleccionada) o una casilla para números/texto. Al
+      // cambiar, la fila entera se revalida con el MISMO validador y se repinta.
+      // Fin del ciclo "volver a Excel, guardar y resubir" por cada celda mala.
+      const BULK_FIX_OPTIONS = {
+        property: {
+          operation: ["Alquiler", "Venta", "Ambos"],
+          propertyType: ["Apartamento", "Casa", "Local", "Oficina", "Galera", "Terreno"],
+          equipment: ["Sin muebles", "Línea blanca", "Amueblado"],
+          storage: ["Sí", "No"],
+          availabilityNeed: ["Inmediata", "15 días", "30 días", "45 días", "60 días"]
+        },
+        vehicle: {
+          vehicleType: ["Carro", "SUV", "Pickup", "Moto", "Camión", "Bus", "Busito"],
+          transmission: ["Automático", "Manual"],
+          fuel: ["Gasolina", "Diesel", "Híbrido", "Eléctrico"],
+          status: ["Disponible ahora", "Próximamente"],
+          previousOwners: ["Primera mano", "Segunda mano", "Tercera mano", "Más de tres"]
+        }
+      };
+      const BULK_NUM_FIELDS = ["salePrice", "rentalPrice", "sizeM2", "year", "mileage"];
+
+      function bulkFixOptionsFor(field, raw) {
+        if (field === "brand") return bulkAllBrands();
+        if (field === "province") return Object.keys(locationOptions);
+        if (field === "zone") {
+          const rp = bulkSuggest(bulkTxt(raw.province), Object.keys(locationOptions));
+          return locationOptions[rp.exact || bulkTxt(raw.province)] || [];
+        }
+        const porVertical = BULK_FIX_OPTIONS[bulkState.vertical] || {};
+        return porVertical[field] || null;
+      }
+
+      function bulkFieldControlHtml(rowIndex, field, raw, sug) {
+        const attrs = 'data-bulkfix onchange="bulkFixCell(' + rowIndex + ", '" + field + "', this.value)\"";
+        const st = "font-size:12.5px;border:1.5px solid #e05b2a;border-radius:8px;padding:4px 8px;max-width:220px";
+        const opciones = bulkFixOptionsFor(field, raw);
+        if (opciones && opciones.length) {
+          const actual = bulkTxt(raw[field]);
+          const opts = ['<option value="">Elige…</option>'].concat(opciones.map((o) => {
+            const sel = sug && normalize(o) === normalize(sug) ? " selected" : "";
+            return '<option value="' + escapeHtml(o) + '"' + sel + ">" + escapeHtml(o) + "</option>";
+          }));
+          return '<select ' + attrs + ' style="' + st + '">' + opts.join("") + "</select>";
+        }
+        if (BULK_NUM_FIELDS.indexOf(field) !== -1) {
+          return '<input type="number" min="0" ' + attrs + ' value="' + escapeHtml(bulkTxt(raw[field])) + '" placeholder="Número" style="' + st + ';width:120px" />';
+        }
+        return '<input type="text" ' + attrs + ' value="' + escapeHtml(bulkTxt(raw[field])) + '" style="' + st + ';width:200px" />';
+      }
+
+      function bulkFixCell(rowIndex, field, value) {
+        const row = (bulkState.rows || [])[rowIndex];
+        if (!row) return;
+        row.raw[field] = value;
+        const v = bulkSpec().validate(row.raw);
+        row.record = v.record;
+        row.errors = v.errors;
+        renderBulkPreview();
+      }
+      window.bulkFixCell = bulkFixCell;
+
       function renderBulkPreview() {
         const box = document.getElementById("bulkPreview");
         if (!box) return;
@@ -24736,13 +24807,27 @@
         const trs = rows.map((r, i) => {
           const ok = r.errors.length === 0;
           const s = spec.summary(r.record);
+          // Mensajes + un control de corrección por campo con error (sin repetir
+          // campo). Los errores sin campo (f vacío, ej. rechazo del servidor)
+          // solo se muestran.
+          const msgs = r.errors.map((e) => escapeHtml(e.m || String(e))).join(" · ");
+          const vistos = {};
+          const controles = r.errors
+            .filter((e) => e.f && !vistos[e.f] && (vistos[e.f] = true))
+            .map((e) => {
+              const etiqueta = bulkColLabel(spec.columns, e.f);
+              return '<div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
+                '<span style="font-size:11px;font-weight:800;color:#5b6b82;text-transform:uppercase;letter-spacing:.04em">' + escapeHtml(etiqueta) + ':</span>' +
+                bulkFieldControlHtml(i, e.f, r.raw || {}, e.sug) +
+              "</div>";
+            }).join("");
           return `<tr style="background:${ok ? "transparent" : "#fff5f5"}">
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${i + 1}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${ok ? "✅" : "⛔"}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.tipo || "—")}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.zona || "—")}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${s.precio ? money.format(s.precio) : "—"}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;color:#b91c1c;font-size:12px">${escapeHtml(r.errors.join(" · "))}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;font-size:12px"><span style="color:#b91c1c">${msgs}</span>${controles}</td>
           </tr>`;
         }).join("");
         box.innerHTML = `
@@ -24826,7 +24911,7 @@
             // y "desaparece sola" en la próxima recarga (el bug de confianza).
             const k = targetArr.indexOf(rec);
             if (k >= 0) targetArr.splice(k, 1);
-            fallidas.push({ ...r, errors: [bulkServerReason(res.reason)] });
+            fallidas.push({ ...r, errors: [{ f: "", m: bulkServerReason(res.reason) }] });
           }
         }
         save();
