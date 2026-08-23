@@ -112,6 +112,32 @@ async function bajarTabla(base, headers, tabla) {
   return filas;
 }
 
+// Copia el esquema (supabase/*.sql) y las Edge Functions dentro del respaldo.
+// Así cada carpeta de respaldo es AUTOCONTENIDA: con ella sola se puede
+// reconstruir la base (esquema) y rellenarla (datos), sin depender de que
+// GitHub siga accesible ese día.
+function copiarEsquema(destino) {
+  const origen = path.join(RAIZ, "supabase");
+  let n = 0;
+  const copiar = (dir, rel) => {
+    for (const item of fs.readdirSync(dir, { withFileTypes: true })) {
+      const abs = path.join(dir, item.name);
+      const relPath = path.join(rel, item.name);
+      if (item.isDirectory()) { copiar(abs, relPath); continue; }
+      if (!/\.(sql|ts|html)$/.test(item.name)) continue;
+      const out = path.join(destino, "esquema", relPath);
+      fs.mkdirSync(path.dirname(out), { recursive: true });
+      fs.copyFileSync(abs, out);
+      n++;
+    }
+  };
+  copiar(origen, "");
+  // El manual de restauración también viaja con cada respaldo.
+  const manual = path.join(RAIZ, "RECUPERACION.md");
+  if (fs.existsSync(manual)) { fs.copyFileSync(manual, path.join(destino, "RECUPERACION.md")); n++; }
+  return n;
+}
+
 // Las cuentas viven en auth.users, que NO se puede leer por PostgREST.
 async function bajarCuentas(base, key) {
   const cuentas = [];
@@ -205,6 +231,15 @@ async function bajarCuentas(base, key) {
   } catch (e) {
     resumen.errores._auth_users = String(e.message);
     console.log("  ✘ _auth_users          ERROR: " + String(e.message).slice(0, 90));
+  }
+
+  try {
+    const nEsquema = copiarEsquema(destino);
+    resumen.archivosDeEsquema = nEsquema;
+    console.log("  ✔ " + "esquema + funciones".padEnd(20) + String(nEsquema).padStart(6) + " archivos");
+  } catch (e) {
+    resumen.errores.esquema = String(e.message);
+    console.log("  ✘ esquema              ERROR: " + String(e.message).slice(0, 90));
   }
 
   resumen.totalFilas = totalFilas;
