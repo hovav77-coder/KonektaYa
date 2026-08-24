@@ -14714,6 +14714,7 @@
           "Parque Lefevre",
           "Punta Pacífica",
           "San Francisco",
+          "San Miguelito",
           "Tocumen"
         ],
         "Panamá Oeste": [
@@ -24375,7 +24376,16 @@
         const t = bulkTxt(v);
         if (!t) { if (required) bulkErr(errors, field, label + " vacío"); return ""; }
         const val = enums[field][normalize(t)];
-        if (!val) { bulkErr(errors, field, label + ' inválido: "' + t + '"'); return ""; }
+        if (!val) {
+          // Mismo "¿quisiste decir?" que en marca, provincia y zona: una errata
+          // de una o dos letras ("apartament") no debería obligar al broker a
+          // volver al Excel, y así entra en el botón de aplicar todas.
+          const lista = (BULK_FIX_OPTIONS[bulkState.vertical] || {})[field] || [];
+          const r = lista.length ? bulkSuggest(t, lista) : {};
+          if (r.suggestion) bulkErr(errors, field, label + ' inválido: "' + t + '". ¿Quisiste decir "' + r.suggestion + '"?', r.suggestion);
+          else bulkErr(errors, field, label + ' inválido: "' + t + '"');
+          return "";
+        }
         return val;
       }
 
@@ -24398,9 +24408,9 @@
       // Devuelve {exact} si el valor está en el catálogo (canonicalizado con la
       // grafía oficial, ej. "toyota"→"Toyota") o {suggestion} si hay un match a
       // 1-2 errores de tipeo. Si no, {}.
-      function bulkSuggest(value, options) {
+      function bulkSuggest(value, options, maxDist) {
         const nv = normalize(value);
-        let best = null, bestD = 3;
+        let best = null, bestD = (maxDist || 2) + 1;
         for (const opt of options) {
           const d = bulkEditDistance(nv, normalize(opt));
           if (d === 0) return { exact: opt };
@@ -24490,7 +24500,20 @@
         const mapEnum = (f, v, req) => bulkMapEnum(VEH_ENUMS, f, v, lbl(f), req, errors);
         let vehicleType = bulkTxt(raw.vehicleType);
         if (!vehicleType) bulkErr(errors, "vehicleType", "Tipo de vehículo vacío");
-        else vehicleType = VEH_ENUMS.vehicleType[normalize(vehicleType)] || vehicleType.toLowerCase(); // permite "otro" como texto libre
+        else {
+          const conocido = VEH_ENUMS.vehicleType[normalize(vehicleType)];
+          if (conocido) vehicleType = conocido;
+          else {
+            // El tipo admite texto libre a propósito (el formulario tiene "Otro":
+            // cuatriciclo, van de carga, grúa…). Pero una errata como "Pickop"
+            // crea un tipo nuevo que NUNCA hará match con quien busca "Pickup",
+            // el mismo agujero que se tapó en las marcas. Umbral de 1 sola letra
+            // para no estorbar a un tipo legítimo parecido (ej. "Buseta").
+            const r = bulkSuggest(vehicleType, (BULK_FIX_OPTIONS.vehicle || {}).vehicleType || [], 1);
+            if (r.suggestion) bulkErr(errors, "vehicleType", 'Tipo de vehículo "' + vehicleType + '" no existe. ¿Quisiste decir "' + r.suggestion + '"?', r.suggestion);
+            else vehicleType = vehicleType.toLowerCase();
+          }
+        }
         // Marca contra el catálogo: el matching exige igualdad exacta, así que
         // "Toyotta" publicaría un carro INVISIBLE para las búsquedas. Si está en
         // el catálogo se canonicaliza la grafía ("toyota"→"Toyota"); con tipeo
