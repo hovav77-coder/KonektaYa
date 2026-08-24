@@ -11096,6 +11096,98 @@
         }
         .pmap-node.hot::before, .pmap-node.pm-go::before { background: #e05b2a; border-color: #e05b2a; }
       }
+
+      /* ===== Admin "centro de mando": riel konekta fijo + contenido al lado.
+         En móvil (≤860px) se conserva la tira horizontal de pastillas que ya
+         existía — es exactamente el comportamiento buscado — con el riel
+         degradado como subrayado. ===== */
+      .admin-vitals { display: grid; gap: 10px; grid-template-columns: 1.5fr 1fr 1fr 1fr; margin: 0 0 6px; }
+      .av-card { background: #fff; border: 1px solid #dce5ef; border-radius: 13px; display: flex; flex-direction: column; gap: 2px; padding: 11px 13px; }
+      .av-card span { color: #5b6b82; font-size: 10.5px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+      .av-card strong { color: #0a2f55; font-size: 20px; }
+      .av-card small { color: #12a150; font-size: 11px; font-weight: 700; }
+      .av-card.navy { background: linear-gradient(125deg, rgba(10, 47, 85, 0.98) 55%, rgba(21, 74, 128, 0.95)); border: none; overflow: hidden; position: relative; }
+      .av-card.navy::after { background: rgba(224, 91, 42, 0.25); border-radius: 50%; content: ""; height: 74px; position: absolute; right: -22px; top: -22px; width: 74px; }
+      .av-card.navy span { color: #9fb4cc; }
+      .av-card.navy strong { color: #fff; }
+      .av-card.alert { border: 1.5px solid #f1883f; }
+      .av-card.alert span, .av-card.alert strong { color: #a23c18; }
+      .rail-badge { background: #e05b2a; border-radius: 999px; color: #fff; font-size: 10.5px; font-weight: 800; padding: 1px 7px; }
+      .rail-badge[hidden] { display: none; }
+      .admin-content { display: flex; flex-direction: column; min-width: 0; }
+      @media (min-width: 861px) {
+        .admin-workspace { align-items: start; display: grid; gap: 18px; grid-template-columns: 236px minmax(0, 1fr); }
+        .admin-panel-tabs {
+          border-bottom: none;
+          flex-direction: column;
+          flex-wrap: nowrap;
+          gap: 7px;
+          overflow: visible;
+          padding: 6px 0 6px 20px;
+          /* Sin sticky: un ancestro con overflow lo dejaba clavado 84px abajo
+             (nunca se libera) y desalineaba el riel de los signos vitales. */
+          position: relative;
+        }
+        .admin-panel-tabs::before {
+          background: linear-gradient(#e05b2a, #f1883f, #0a2f55);
+          border-radius: 2px;
+          bottom: 16px;
+          content: "";
+          left: 7px;
+          position: absolute;
+          top: 16px;
+          width: 3px;
+        }
+        .admin-panel-tabs button {
+          align-items: center;
+          background: #fff;
+          border: 1px solid #dce5ef;
+          border-radius: 11px;
+          color: #0a2f55;
+          display: flex;
+          font-size: 13px;
+          font-weight: 800;
+          gap: 8px;
+          padding: 9px 12px;
+          position: relative;
+          text-align: left;
+          transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .admin-panel-tabs button::before {
+          background: #fff;
+          border: 2.5px solid #0a2f55;
+          border-radius: 50%;
+          content: "";
+          height: 8px;
+          left: -18px;
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 8px;
+        }
+        .admin-panel-tabs button:hover { border-color: #b9cde2; box-shadow: 0 8px 18px rgba(16, 32, 51, 0.1); }
+        .admin-panel-tabs button.active {
+          background: linear-gradient(125deg, rgba(10, 47, 85, 0.98) 55%, rgba(21, 74, 128, 0.95));
+          border-color: transparent;
+          box-shadow: 0 10px 22px rgba(10, 47, 85, 0.25);
+          color: #fff;
+        }
+        .admin-panel-tabs button.active::before { background: #e05b2a; border-color: #e05b2a; }
+      }
+      @media (max-width: 860px) {
+        .admin-panel-tabs { position: relative; }
+        .admin-panel-tabs::after {
+          background: linear-gradient(90deg, #e05b2a, #f1883f, #0a2f55);
+          border-radius: 2px;
+          bottom: 3px;
+          content: "";
+          height: 3px;
+          left: 6px;
+          position: absolute;
+          right: 6px;
+        }
+        .admin-vitals { grid-template-columns: 1fr 1fr; }
+      }
     </style>
   </head>
   <body>
@@ -12569,10 +12661,19 @@
                   <button type="button" data-admin-panel-button="clients">Clientes y créditos</button>
                   <button type="button" data-admin-panel-button="records">Registros</button>
                   <button type="button" data-admin-panel-button="unlocks">Desbloqueos</button>
-                  <button type="button" data-admin-panel-button="validation">Validación</button>
+                  <button type="button" data-admin-panel-button="validation">Validación <span class="rail-badge" id="validationTabBadge" hidden>0</span></button>
                   <button type="button" data-admin-panel-button="coupons">Cupones</button>
                   <button type="button" data-admin-panel-button="payments">Pagos <span id="settingsTabDot" class="tab-stdot"></span></button>
                   <button type="button" data-admin-panel-button="matchlab">Laboratorio</button>
+                </div>
+
+                <div class="admin-content">
+                <!-- Signos vitales: SIEMPRE visibles, en cualquier sección. -->
+                <div class="admin-vitals" id="adminVitals">
+                  <div class="av-card navy"><span>Ingresos estimados</span><strong id="avIngresos">USD 0.00</strong><small id="avPaypal"></small></div>
+                  <div class="av-card"><span>Clientes</span><strong id="avClientes">0</strong></div>
+                  <div class="av-card"><span>Desbloqueos</span><strong id="avDesbloqueos">0</strong></div>
+                  <div class="av-card" id="avRevisarCard"><span>Por revisar</span><strong id="avRevisar">0</strong></div>
                 </div>
 
                 <section class="admin-panel-pane active" data-admin-panel-pane="overview">
@@ -12696,6 +12797,7 @@
                   </div>
                   <div id="matchLabRoot"></div>
                 </section>
+                </div>
               </div>
             </div>
           </div>
@@ -22122,6 +22224,9 @@
         const clientesNoAdmin = usaSupaUsers ? adminUsersData.filter((u) => !isAdminEmail(u.email)) : [];
         const clientesRegistrados = usaSupaUsers ? clientesNoAdmin.length : allAdminClients().length;
         const usuariosBloqueados = usaSupaUsers ? clientesNoAdmin.filter((u) => u.blocked).length : Object.keys(blockedUsers).length;
+        const porRevisar =
+          validationReports.length +
+          searches.filter((search) => classifyInterested(search) === "pendiente_validacion").length;
         const adminStats = [
           ["Ofertas publicadas", kpiOffers],
           ["Solicitudes creadas", kpiSearches],
@@ -22129,11 +22234,7 @@
           ["Contactos desbloqueados", unlockedCount],
           ["Clientes registrados", clientesRegistrados],
           ["Usuarios bloqueados", usuariosBloqueados],
-          [
-            "Reportes / validación",
-            validationReports.length +
-              searches.filter((search) => classifyInterested(search) === "pendiente_validacion").length
-          ]
+          ["Reportes / validación", porRevisar]
         ];
         const adminStatsTarget = document.getElementById("adminStats");
         if (adminStatsTarget) {
@@ -22151,6 +22252,17 @@
             <div class="admin-money orange"><span>Promedio por desbloqueo</span><strong>${money.format(avg)}</strong></div>
           `;
         }
+        // Signos vitales del centro de mando (siempre visibles) + badge del riel.
+        const avSet = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        avSet("avIngresos", money.format(totalSpent));
+        avSet("avClientes", String(clientesRegistrados));
+        avSet("avDesbloqueos", String(unlockedCount));
+        avSet("avRevisar", String(porRevisar));
+        avSet("avPaypal", !supabaseEnabled ? "modo demo" : (typeof paymentsEnabled !== "undefined" && paymentsEnabled ? "● PayPal activado" : "PayPal apagado"));
+        const avCard = document.getElementById("avRevisarCard");
+        if (avCard) avCard.classList.toggle("alert", porRevisar > 0);
+        const vBadge = document.getElementById("validationTabBadge");
+        if (vBadge) { vBadge.hidden = porRevisar <= 0; vBadge.textContent = String(porRevisar); }
         renderAdminMaintenance();
       };
 
