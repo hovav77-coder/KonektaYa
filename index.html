@@ -24485,7 +24485,15 @@
           else bulkErr(errors, "brand", 'Marca "' + brand + '" no está en el catálogo — elígela abajo, o usa el formulario individual (opción "Otro") si es poco común');
         }
         const model = bulkTxt(raw.model); if (!model) bulkErr(errors, "model", "Modelo vacío");
-        const year = bulkNum(raw.year); if (!year || year < 1950 || year > 2100) bulkErr(errors, "year", "Año inválido");
+        // El año se valida contra el MISMO rango que ofrece el formulario (año
+        // actual −15, y el siguiente desde junio). Antes aceptaba 1950-2100: por
+        // Excel entraban años que el formulario ni puede mostrar al editar la
+        // publicación. El mensaje dice el rango para no dejar al broker adivinando.
+        const yearMax = (typeof vehicleYearOptions !== "undefined" && vehicleYearOptions.length) ? vehicleYearOptions[0] : new Date().getFullYear() + 1;
+        const yearMin = (typeof vehicleYearOptions !== "undefined" && vehicleYearOptions.length) ? vehicleYearOptions[vehicleYearOptions.length - 1] : new Date().getFullYear() - 15;
+        const year = bulkNum(raw.year);
+        if (!year) bulkErr(errors, "year", "Año vacío o no es un número: debe estar entre " + yearMin + " y " + yearMax);
+        else if (year < yearMin || year > yearMax) bulkErr(errors, "year", "Año " + year + " fuera de rango: debe estar entre " + yearMin + " y " + yearMax);
         const salePrice = bulkNum(raw.salePrice); if (salePrice <= 0) bulkErr(errors, "salePrice", "Falta precio");
         if (salePrice > 0 && salePrice < 200) bulkErr(errors, "salePrice", "Precio sospechosamente bajo (" + salePrice + ") — revisa el número");
         let province = bulkTxt(raw.province);
@@ -24707,6 +24715,7 @@
           return `<button type="button" onclick="setBulkVertical('${v}')" ${on ? "disabled" : ""} style="border:none;padding:8px 16px;font-size:13px;font-weight:800;cursor:${on ? "default" : "pointer"};background:${on ? "#0a2f55" : "#fff"};color:${on ? "#fff" : "#0a2f55"}">${txt}</button>`;
         };
         card.innerHTML = `
+          <div ondragover="bulkDragOver(event)" ondragleave="bulkDragLeave(event)" ondrop="bulkDropFile(event)">
           <div class="b2b-title">Carga masiva (Excel) · solo para publicar</div>
           <p class="b2b-desc">Publica muchas ofertas de una vez: elige el tipo, descarga la plantilla, complétala y súbela. Se publican a tu nombre de broker. <strong>Ojo:</strong> esta carga es solo para <strong>publicar</strong> (ofertas); las búsquedas de clientes se registran una por una desde «Buscar».</p>
           <div style="display:inline-flex;align-self:flex-start;border:1px solid #d5dee9;border-radius:10px;overflow:hidden;margin:6px 0 10px">${seg("property", "Inmuebles")}${seg("vehicle", "Vehículos")}</div>
@@ -24717,10 +24726,78 @@
             </label>
             <span id="bulkStatus" style="font-size:12.5px;color:#5b6b82"></span>
           </div>
-          <div id="bulkPreview" style="margin-top:12px"></div>`;
+          <div id="bulkDrop" style="margin-top:12px;border:2px dashed #c9dcf0;border-radius:12px;background:#f8fbff;color:#5b6b82;padding:15px;text-align:center;font-size:13px;font-weight:700;transition:background .12s,border-color .12s,color .12s">Arrastra aquí tu Excel lleno (.xlsx) — o usa el botón «Subir Excel lleno»</div>
+          <div id="bulkPreview" style="margin-top:12px"></div>
+          </div>`;
         renderBulkPreview();
       }
       window.renderBulkCard = renderBulkCard;
+
+      // ===== Arrastrar y soltar el Excel encima de la tarjeta =====
+      // Además del botón: se suelta el archivo en cualquier parte de la tarjeta.
+      // Como es el ÚNICO input de archivo de la app, se puede blindar el resto
+      // del documento sin pisar otra función: soltar un Excel fuera del área
+      // haría que el navegador lo abriera y el broker perdería la página (y el
+      // trabajo de corrección que llevara hecho en la vista previa).
+      function bulkDragTraeArchivos(ev) {
+        const dt = ev.dataTransfer;
+        if (!dt) return false;
+        if (dt.types && Array.prototype.indexOf.call(dt.types, "Files") === -1) return false;
+        return true;
+      }
+      function bulkDragPaint(on) {
+        const z = document.getElementById("bulkDrop");
+        if (!z) return;
+        z.style.background = on ? "#fff3ea" : "#f8fbff";
+        z.style.borderColor = on ? "#e05b2a" : "#c9dcf0";
+        z.style.color = on ? "#c2410c" : "#5b6b82";
+      }
+      function bulkDragOver(ev) {
+        if (!bulkDragTraeArchivos(ev)) return;
+        ev.preventDefault();
+        try { ev.dataTransfer.dropEffect = "copy"; } catch (e) {}
+        bulkDragPaint(true);
+      }
+      function bulkDragLeave(ev) {
+        // Sin esto parpadea: dragleave salta también al pasar entre los hijos.
+        const to = ev.relatedTarget;
+        if (to && ev.currentTarget && ev.currentTarget.contains && ev.currentTarget.contains(to)) return;
+        bulkDragPaint(false);
+      }
+      function bulkDropFile(ev) {
+        if (!bulkDragTraeArchivos(ev)) return;
+        ev.preventDefault();
+        bulkDragPaint(false);
+        const status = document.getElementById("bulkStatus");
+        const files = (ev.dataTransfer && ev.dataTransfer.files) || [];
+        const f = files[0];
+        if (!f) return;
+        if (!/\.(xlsx|xls)$/i.test(f.name)) {
+          if (status) status.textContent = 'Eso no es un Excel (.xlsx o .xls): "' + f.name + '".';
+          return;
+        }
+        if (status) status.textContent = files.length > 1 ? "Subiendo solo el primer archivo: " + f.name : "";
+        handleBulkFile({ files: [f], value: "" });
+      }
+      window.bulkDragOver = bulkDragOver;
+      window.bulkDragLeave = bulkDragLeave;
+      window.bulkDropFile = bulkDropFile;
+
+      (function blindajeArrastre() {
+        const activo = () => !!document.getElementById("bulkDrop");
+        document.addEventListener("dragover", (ev) => {
+          if (activo() && bulkDragTraeArchivos(ev)) ev.preventDefault();
+        });
+        document.addEventListener("drop", (ev) => {
+          if (!activo() || !bulkDragTraeArchivos(ev)) return;
+          ev.preventDefault();
+          const dentro = ev.target && ev.target.closest && ev.target.closest("#bulkCard");
+          if (dentro) return; // ya lo atendió la tarjeta
+          bulkDragPaint(false);
+          const status = document.getElementById("bulkStatus");
+          if (status) status.textContent = "Suelta el archivo dentro del área de carga masiva.";
+        });
+      })();
 
       function setBulkVertical(v) {
         if (!BULK_SPECS[v]) return;
