@@ -13583,6 +13583,26 @@
         render();
       }
 
+      // Validación de FORMATO del teléfono de contacto (gratis, sin SMS):
+      // celular panameño = 8 dígitos empezando por 6, con o sin +507 y con
+      // guiones/espacios. Números de otros países se aceptan con el prefijo +
+      // (10-15 dígitos): hay dueños extranjeros con WhatsApp de su país.
+      // Solo valida la FORMA — que el número exista y tenga WhatsApp requiere
+      // el código de verificación (proyecto pendiente). Ataja el error de dedo
+      // más común: dígitos de menos/de más, o un fijo donde va un celular.
+      const CELL_PHONE_MSG = "Revisa el teléfono: debe ser un celular panameño de 8 dígitos que empiece por 6 (ej. 6123-4567). Si es de otro país, escríbelo con el prefijo + (ej. +1 305 555 1234). Es el número que verá quien desbloquee tu publicación — si está mal, no podrán contactarte por WhatsApp.";
+      function validCellPhone(phone) {
+        const raw = String(phone || "").trim();
+        let d = raw.replace(/\D/g, "");
+        if (d.slice(0, 3) === "507") d = d.slice(3);
+        if (/^6\d{7}$/.test(d)) return true;                 // celular panameño
+        if (raw.charAt(0) === "+" && raw.replace(/\D/g, "").slice(0, 3) !== "507") {
+          const intl = raw.replace(/\D/g, "");
+          return intl.length >= 10 && intl.length <= 15;      // internacional con +
+        }
+        return false;
+      }
+
       function normalizePhoneForWa(phone) {
         let digits = String(phone || "").replace(/\D/g, "");
         if (!digits) return "";
@@ -17036,6 +17056,12 @@
           if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
           return false;
         }
+        if (!validCellPhone(phone)) {
+          alert(CELL_PHONE_MSG);
+          const el = form && form.querySelector('[name="phone"]');
+          if (el) { el.focus(); el.scrollIntoView({ behavior: "smooth", block: "center" }); }
+          return false;
+        }
         data.phone = phone;
         rememberContactPhone(phone);
         if (supabaseEnabled) {
@@ -17898,6 +17924,15 @@
         const phone = document.getElementById("mdPhoneInput").value.trim();
         const name = [first, last].filter(Boolean).join(" ");
         const st = document.getElementById("mdStatus");
+        // Mismo control de formato que al publicar: este teléfono es el contacto
+        // que se entrega al desbloquear.
+        if (phone && !validCellPhone(phone)) {
+          if (st) { st.textContent = CELL_PHONE_MSG; st.style.color = "#b91c1c"; }
+          const el = document.getElementById("mdPhoneInput");
+          if (el) el.focus();
+          return;
+        }
+        if (st) st.style.color = "";
         if (typeof myProfile !== "undefined") { myProfile = myProfile || {}; myProfile.name = name; myProfile.phone = phone; }
         rememberContactPhone(phone);
         if (supabaseEnabled && supabaseClient) {
