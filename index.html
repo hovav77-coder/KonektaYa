@@ -24291,7 +24291,12 @@
         { header: "Tipo de inmueble", field: "propertyType", required: true, guia: "Apartamento | Casa | Local | Oficina | Galera | Terreno" },
         { header: "Provincia", field: "province", required: true, guia: "Ej. Panamá" },
         { header: "Zona / corregimiento", field: "zone", required: true, guia: "Ej. Costa del Este" },
-        { header: "Ubicación (calle, barriada o PH)", field: "streetOrNeighborhood", guia: "Calle, barriada o PH (sin teléfonos)" },
+        { header: "Ubicación (calle o barriada)", field: "streetOrNeighborhood", alias: ["Ubicación (calle, barriada o PH)"], guia: "Calle o barriada (sin teléfonos)" },
+        // El PH en su propia columna, no mezclado con la calle: el matching da su
+        // mayor bonificación al mismo PH (puntosPh) y quien busca un PH concreto
+        // es el interesado más calificado. Mezclado en el texto de la calle, esa
+        // bonificación se perdía SIEMPRE en las publicaciones por Excel.
+        { header: "PH / edificio", field: "phName", guia: "Nombre del PH o edificio (ej. PH Bella Vista) — mejora mucho el match" },
         { header: "Metros cuadrados", field: "sizeM2", guia: "Número (ej. 120)" },
         { header: "Precio venta (USD)", field: "salePrice", guia: "Número (ej. 185000) — si es Venta o Ambos" },
         { header: "Precio alquiler (USD)", field: "rentalPrice", guia: "Número (ej. 1200) — si es Alquiler o Ambos" },
@@ -24497,6 +24502,10 @@
         if (rentalPrice > 0 && rentalPrice < 50) bulkErr(errors, "rentalPrice", "Precio de alquiler sospechosamente bajo (" + rentalPrice + ") — revisa el número");
         bulkContactErrors([
           { field: "streetOrNeighborhood", label: lbl("streetOrNeighborhood"), value: raw.streetOrNeighborhood },
+          // El PH también se escana en el servidor (no está en la lista de campos
+          // exentos del trigger), así que se revisa aquí para no perder la fila al
+          // publicar.
+          { field: "phName", label: lbl("phName"), value: raw.phName },
           { field: "comments", label: lbl("comments"), value: raw.comments, comment: true }
         ], errors);
         const pkCanon = bulkParkingCanon(raw.parkingSpaces);
@@ -24507,6 +24516,7 @@
         const record = {
           operation, propertyType, province, zone,
           streetOrNeighborhood: bulkTxt(raw.streetOrNeighborhood),
+          phName: bulkTxt(raw.phName),
           sizeM2: bulkNum(raw.sizeM2), rentalPrice, salePrice,
           expectedPrice: operation === "venta" ? salePrice : (rentalPrice || salePrice),
           equipment, parkingSpaces: parkingSpaces || "0", storage, availabilityNeed,
@@ -24604,7 +24614,7 @@
           label: "Inmuebles", entityKey: "properties", sheet: "Propiedades",
           filename: "KonektaYa-plantilla-inmuebles.xlsx", columns: PROP_COLS,
           validate: bulkValidateProperty,
-          example: ["Alquiler", "Apartamento", "Panamá", "Costa del Este", "PH Bella Vista", "120", "", "1200", "Amueblado", "2", "Sí", "Inmediata", "2 recámaras, vista al mar"],
+          example: ["Alquiler", "Apartamento", "Panamá", "Costa del Este", "Calle Primera", "PH Bella Vista", "120", "", "1200", "Amueblado", "2", "Sí", "Inmediata", "2 recámaras, vista al mar"],
           instrucciones: [
             ["KonektaYa · Carga masiva de inmuebles"],
             ['Llena la hoja "Propiedades" (una fila por propiedad) y sube el archivo. No cambies los encabezados.'],
@@ -24615,7 +24625,8 @@
             ["Tipo de inmueble", "Sí", "Apartamento | Casa | Local | Oficina | Galera | Terreno"],
             ["Provincia", "Sí", "Texto (ej. Panamá)"],
             ["Zona / corregimiento", "Sí", "Texto (ej. Costa del Este)"],
-            ["Ubicación (calle, barriada o PH)", "No", "Texto libre"],
+            ["Ubicación (calle o barriada)", "No", "Texto libre"],
+            ["PH / edificio", "No", "Nombre del PH o edificio. Súbelo: el match premia el mismo PH y quien busca un PH concreto es el interesado mejor calificado."],
             ["Metros cuadrados", "No", "Número (ej. 120)"],
             ["Precio venta (USD)", "Si es Venta o Ambos", "Número (ej. 185000)"],
             ["Precio alquiler (USD)", "Si es Alquiler o Ambos", "Número (ej. 1200)"],
@@ -24722,17 +24733,23 @@
         // fila 1 (plantillas viejas) el resultado es idéntico al de antes.
         // Se tolera el " *" de obligatoria y espacios extra.
         const clean = (h) => normalize(h).replace(/\*/g, "").trim();
-        const wanted = spec.columns.map((c) => clean(c.header));
+        // Cada columna puede traer encabezados ANTIGUOS (alias): así renombrar un
+        // encabezado no vacía esa columna en los Excel ya descargados.
+        const nombresDe = (c) => [c.header].concat(c.alias || []).map(clean);
         let headerRow = 0, best = -1;
         for (let i = 0; i < Math.min(6, aoa.length); i++) {
           const cells = (aoa[i] || []).map(clean);
-          const hits = wanted.filter((w) => cells.indexOf(w) !== -1).length;
+          const hits = spec.columns.filter((c) => nombresDe(c).some((n) => cells.indexOf(n) !== -1)).length;
           if (hits > best) { best = hits; headerRow = i; }
         }
         if (best < 3) headerRow = 0;
         const header = (aoa[headerRow] || []).map(clean);
         const idx = {};
-        spec.columns.forEach((c) => { idx[c.field] = header.indexOf(clean(c.header)); });
+        spec.columns.forEach((c) => {
+          let j = -1;
+          nombresDe(c).some((n) => { const k = header.indexOf(n); if (k !== -1) { j = k; return true; } return false; });
+          idx[c.field] = j;
+        });
         const out = [];
         for (let i = headerRow + 1; i < aoa.length; i++) {
           const r = aoa[i] || [];
