@@ -18482,11 +18482,22 @@
 
       // Camino clásico: redirect completo a Google (respaldo del selector).
       function googleRedirectFlow(reportError) {
-        // Sin `prompt=select_account`: forzarlo hacía que, al elegir una cuenta NUEVA
-        // por "Usar otra cuenta", Google invalidara la petición OAuth original → 400
-        // "malformed". Sin forzarlo: con 1 cuenta entra directo; con varias Google
-        // muestra el selector igual, pero evita ese camino que rompía.
-        supabaseClient.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin } })
+        // Sin `prompt=select_account` POR DEFECTO: forzarlo hacía que, al elegir
+        // una cuenta NUEVA por "Usar otra cuenta", Google invalidara la petición
+        // OAuth original → 400 "malformed" (fix 8d7fc59). Sin forzarlo: con 1
+        // cuenta entra directo — que es justo el problema TRAS CERRAR SESIÓN en
+        // el celular: Google re-loguea al mismo usuario y no hay cómo cambiar.
+        // Término medio: el selector se pide SOLO si el usuario acaba de salir
+        // (bandera puesta por logoutUser). La bandera NO se consume aquí sino al
+        // llegar la sesión (applySupabaseSession): si Google falla y reintenta,
+        // el selector se sigue mostrando.
+        const opts = { redirectTo: location.origin };
+        try {
+          if (localStorage.getItem("konektaya_show_picker") === "1") {
+            opts.queryParams = { prompt: "select_account" };
+          }
+        } catch (e) {}
+        supabaseClient.auth.signInWithOAuth({ provider: "google", options: opts })
           .then((r) => { if (r && r.error) reportError(typeof traduceAuthError === "function" ? traduceAuthError(r.error.message) : r.error.message); })
           .catch(() => { reportError("No se pudo conectar con Google. Intenta de nuevo o usa tu email."); });
       }
@@ -19179,6 +19190,10 @@
       let lastAuthEmail = null; // evita recargar todo dos veces (arranque, token refresh)
       function applySupabaseSession(session, redirect) {
         const email = session && session.user ? (session.user.email || "") : "";
+        // Sesión establecida = ya no hace falta el selector de cuentas de Google
+        // que pidió logoutUser (la bandera sobrevive a reintentos fallidos, pero
+        // muere en cuanto alguien entra de verdad, por Google o por email).
+        if (email) { try { localStorage.removeItem("konektaya_show_picker"); } catch (e) {} }
         // ¿Cambió realmente el estado de sesión? supabase-js re-emite SIGNED_IN al
         // recuperar el foco (ej. volver de WhatsApp en el celular); sin este guard
         // eso re-renderizaba todo y te sacaba al panel a mitad de un formulario.
@@ -23234,6 +23249,12 @@
       }
 
       function logoutUser() {
+        // Tras "Salir", el próximo "Entrar con Google" debe MOSTRAR el selector
+        // de cuentas: en el celular (una sola cuenta de Google) el flujo directo
+        // vuelve a meter al mismo usuario y no hay forma de cambiar de cuenta.
+        // Solo tras salir: en los demás logins se mantiene la entrada directa,
+        // que es el camino que evita el 400 de "Usar otra cuenta" (fix 8d7fc59).
+        try { localStorage.setItem("konektaya_show_picker", "1"); } catch (e) {}
         if (supabaseEnabled && supabaseClient) {
           supabaseClient.auth.signOut().finally(() => {
             currentUserEmail = "";
