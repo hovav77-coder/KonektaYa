@@ -3273,6 +3273,16 @@
         font-size: 24px;
       }
 
+      /* Confirmación de que la corrección entró: la fila destella en verde. */
+      @keyframes bulkFlash {
+        from { background: #d7f5e3; }
+        to { background: transparent; }
+      }
+
+      .bulk-flash {
+        animation: bulkFlash 1.1s ease-out;
+      }
+
       .b2b-title {
         color: var(--navy);
         font-size: 13px;
@@ -24608,7 +24618,7 @@
           })
         }
       };
-      const bulkState = { vertical: "property", rows: [], truncated: 0, editRow: -1 };
+      const bulkState = { vertical: "property", rows: [], truncated: 0, editRow: -1, soloErrores: false };
       function bulkSpec() { return BULK_SPECS[bulkState.vertical] || BULK_SPECS.property; }
 
       // Carga diferida de la librería de Excel (SheetJS): solo cuando se usa.
@@ -24705,6 +24715,7 @@
           bulkState.truncated = raws.length > CAP ? raws.length - CAP : 0;
           if (bulkState.truncated) raws = raws.slice(0, CAP);
           bulkState.editRow = -1;
+          bulkState.soloErrores = false;
           bulkState.rows = raws.map((raw) => { const v = spec.validate(raw); return { record: v.record, errors: v.errors, raw }; });
           if (status) status.textContent = bulkState.rows.length ? "" : 'No se encontraron filas en la hoja "' + spec.sheet + '".';
           renderBulkCard();
@@ -24822,6 +24833,7 @@
         bulkState.rows = [];
         bulkState.truncated = 0;
         bulkState.editRow = -1;
+        bulkState.soloErrores = false;
         renderBulkCard();
       }
       window.setBulkVertical = setBulkVertical;
@@ -24951,16 +24963,80 @@
         "</div>";
       }
 
+      // Revalida una fila con el MISMO validador y marca el destello verde si
+      // acabó de quedar limpia (confirmación visual de que la corrección entró).
+      function bulkRevalidar(row) {
+        const teniaErrores = row.errors.length > 0;
+        const v = bulkSpec().validate(row.raw);
+        row.record = v.record;
+        row.errors = v.errors;
+        if (teniaErrores && !v.errors.length) row.flash = true;
+      }
+
       function bulkFixCell(rowIndex, field, value) {
         const row = (bulkState.rows || [])[rowIndex];
         if (!row) return;
         row.raw[field] = value;
-        const v = bulkSpec().validate(row.raw);
-        row.record = v.record;
-        row.errors = v.errors;
+        bulkRevalidar(row);
         renderBulkPreview();
       }
       window.bulkFixCell = bulkFixCell;
+
+      // Cuenta las sugerencias aplicables (una por campo, sin repetir campo).
+      function bulkSugerenciasDe(row) {
+        const vistos = {};
+        return row.errors.filter((e) => e.f && e.sug && !vistos[e.f] && (vistos[e.f] = true));
+      }
+
+      // Con 200 filas y 30 erratas, corregir de una en una es inviable: esto
+      // aplica de golpe todas las sugerencias de catálogo. Se revalida fila por
+      // fila, así que lo que quede mal sigue marcado.
+      function bulkApplyAllSuggestions() {
+        const rows = bulkState.rows || [];
+        let aplicadas = 0;
+        // Varias pasadas a propósito: con la provincia mal, la zona no se llega a
+        // validar (su catálogo depende de la provincia). Al corregir la provincia
+        // aparece la sugerencia de zona, así que una sola pasada obligaría a
+        // pulsar el botón dos veces. El tope evita cualquier vuelta infinita.
+        for (let vuelta = 0; vuelta < 4; vuelta++) {
+          let enEstaVuelta = 0;
+          rows.forEach((row) => {
+            const sugs = bulkSugerenciasDe(row);
+            if (!sugs.length) return;
+            sugs.forEach((e) => { row.raw[e.f] = e.sug; enEstaVuelta++; });
+            bulkRevalidar(row);
+          });
+          aplicadas += enEstaVuelta;
+          if (!enEstaVuelta) break;
+        }
+        const status = document.getElementById("bulkStatus");
+        if (status) status.textContent = !aplicadas ? "" : aplicadas === 1 ? "Se aplicó 1 sugerencia." : "Se aplicaron " + aplicadas + " sugerencias.";
+        renderBulkPreview();
+      }
+      window.bulkApplyAllSuggestions = bulkApplyAllSuggestions;
+
+      function bulkRemoveErrorRows() {
+        const rows = bulkState.rows || [];
+        const conError = rows.filter((r) => r.errors.length).length;
+        if (!conError) return;
+        if (!confirm("¿Quitar " + conError + (conError === 1 ? " fila con error" : " filas con error") + "? No se publicarán. Puedes volver a subir el Excel cuando quieras.")) return;
+        bulkState.rows = rows.filter((r) => !r.errors.length);
+        bulkState.editRow = -1;
+        bulkState.soloErrores = false;
+        const status = document.getElementById("bulkStatus");
+        if (status) status.textContent = !bulkState.rows.length
+          ? "Quitaste todas las filas. Sube otro Excel cuando quieras."
+          : conError === 1 ? "Se quitó 1 fila." : "Se quitaron " + conError + " filas.";
+        renderBulkPreview();
+      }
+      window.bulkRemoveErrorRows = bulkRemoveErrorRows;
+
+      function bulkToggleSoloErrores() {
+        bulkState.soloErrores = !bulkState.soloErrores;
+        bulkState.editRow = -1;
+        renderBulkPreview();
+      }
+      window.bulkToggleSoloErrores = bulkToggleSoloErrores;
 
       function renderBulkPreview() {
         const box = document.getElementById("bulkPreview");
@@ -24972,7 +25048,11 @@
         const badCount = rows.length - okCount;
         const singular = spec.entityKey === "vehicleOffers" ? "vehículo" : "propiedad";
         const plural = spec.entityKey === "vehicleOffers" ? "vehículos" : "propiedades";
-        const trs = rows.map((r, i) => {
+        // El filtro "solo con error" conserva el índice ORIGINAL de cada fila:
+        // los controles indexan bulkState.rows, y el "#" debe seguir siendo el
+        // número de fila del Excel.
+        const visibles = rows.map((r, i) => ({ r, i })).filter((x) => !bulkState.soloErrores || x.r.errors.length);
+        const trs = visibles.map(({ r, i }) => {
           const ok = r.errors.length === 0;
           const s = spec.summary(r.record);
           // Mensajes + un control de corrección por campo con error (sin repetir
@@ -24984,9 +25064,12 @@
             .filter((e) => e.f && !vistos[e.f] && (vistos[e.f] = true))
             .map((e) => {
               const etiqueta = bulkColLabel(spec.columns, e.f);
-              return '<div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
-                '<span style="font-size:11px;font-weight:800;color:#5b6b82;text-transform:uppercase;letter-spacing:.04em">' + escapeHtml(etiqueta) + ':</span>' +
-                bulkSugButtonHtml(i, e.f, e.sug) +
+              const sug = bulkSugButtonHtml(i, e.f, e.sug);
+              // La sugerencia manda; la lista queda como alternativa ("o …"),
+              // para que no parezcan dos controles compitiendo por lo mismo.
+              return '<div style="margin-top:6px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">' +
+                '<span style="font-size:11px;font-weight:800;color:#5b6b82;text-transform:uppercase;letter-spacing:.04em">' + escapeHtml(etiqueta) + '</span>' +
+                sug + (sug ? '<span style="font-size:11.5px;color:#5b6b82">o</span>' : "") +
                 bulkFieldControlHtml(i, e.f, r.raw || {}, true) +
               "</div>";
             }).join("");
@@ -24996,7 +25079,9 @@
               ';border-radius:8px;padding:5px 10px;cursor:pointer;background:' + (editando ? "#0a2f55" : "#fff") + ";color:" + (editando ? "#fff" : "#0a2f55") + '">' +
               (editando ? "Cerrar" : "Editar") + "</button>" +
             '<button type="button" onclick="bulkRemoveRow(' + i + ')" title="No publicar esta fila" style="font-size:12px;font-weight:800;border:1px solid #fecdd3;border-radius:8px;padding:5px 10px;background:#fff1f2;color:#b91c1c;cursor:pointer;margin-left:6px">Quitar</button>';
-          const fila = `<tr style="background:${ok ? "transparent" : "#fff5f5"}">
+          const destello = r.flash ? ' class="bulk-flash"' : "";
+          if (r.flash) delete r.flash;
+          const fila = `<tr${destello} style="background:${ok ? "transparent" : "#fff5f5"}">
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${i + 1}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${ok ? "✅" : "⛔"}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.tipo || "—")}</td>
@@ -25007,8 +25092,23 @@
           </tr>`;
           return fila + (editando ? '<tr><td colspan="7" style="padding:0">' + bulkRowEditorHtml(i, r) + "</td></tr>" : "");
         }).join("");
+        // Barra de acciones masivas: con muchas filas, lo que ahorra tiempo no
+        // es corregir mejor una celda, es no repetir el mismo clic 30 veces.
+        const btn = (extra) => 'type="button" style="font-size:12px;font-weight:800;border-radius:8px;padding:6px 11px;cursor:pointer;' + extra + '"';
+        const sugCount = rows.reduce((n, r) => n + bulkSugerenciasDe(r).length, 0);
+        const accionesMasivas =
+          (sugCount ? '<button ' + btn("border:none;background:linear-gradient(135deg,#e05b2a,#f1883f);color:#fff") + ' onclick="bulkApplyAllSuggestions()">Aplicar ' + sugCount + (sugCount === 1 ? " sugerencia" : " sugerencias") + "</button>" : "") +
+          (badCount ? '<button ' + btn("border:1px solid #fecdd3;background:#fff1f2;color:#991b1b") + ' onclick="bulkRemoveErrorRows()">Quitar ' + badCount + " con error</button>" : "") +
+          (badCount || bulkState.soloErrores ? '<button ' + btn("border:1px solid " + (bulkState.soloErrores ? "#0a2f55;background:#0a2f55;color:#fff" : "#d5dee9;background:#fff;color:#0a2f55")) + ' onclick="bulkToggleSoloErrores()">' + (bulkState.soloErrores ? "Ver todas" : "Solo con error") + "</button>" : "");
+        const vacioPorFiltro = !visibles.length
+          ? '<div style="padding:16px;text-align:center;font-size:13px;font-weight:700;color:#12a150">No queda ninguna fila con error.</div>'
+          : "";
         box.innerHTML = `
-          <div style="font-size:13px;font-weight:800;margin-bottom:8px">${okCount} lista${okCount === 1 ? "" : "s"} para publicar · ${badCount} con error${badCount === 1 ? "" : "es"}${bulkState.truncated ? ` · ${bulkState.truncated} omitidas (límite 200)` : ""}</div>
+          <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px">
+            <span style="font-size:13px;font-weight:800;color:#0a2f55">${okCount} lista${okCount === 1 ? "" : "s"} para publicar · ${badCount} con error${badCount === 1 ? "" : "es"}${bulkState.truncated ? ` · ${bulkState.truncated} omitidas (límite 200)` : ""}</span>
+            <span style="flex:1"></span>
+            ${accionesMasivas}
+          </div>
           <div style="overflow-x:auto;border:1px solid #eef2f7;border-radius:10px">
             <table style="width:100%;border-collapse:collapse;font-size:13px">
               <thead><tr style="background:#f6f9fd;text-align:left">
@@ -25016,6 +25116,7 @@
               </tr></thead>
               <tbody>${trs}</tbody>
             </table>
+            ${vacioPorFiltro}
           </div>
           <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
             <button class="button primary" type="button" onclick="confirmBulkImport()" ${okCount ? "" : "disabled"}>Publicar ${okCount} ${okCount === 1 ? singular : plural}</button>
@@ -25027,6 +25128,7 @@
         bulkState.rows = [];
         bulkState.truncated = 0;
         bulkState.editRow = -1;
+        bulkState.soloErrores = false;
         renderBulkPreview();
         const status = document.getElementById("bulkStatus");
         if (status) status.textContent = "";
