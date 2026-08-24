@@ -24589,7 +24589,11 @@
           const rz = bulkSuggest(zone, locationOptions[province] || []);
           if (rz.exact) zone = rz.exact;
           else if (rz.suggestion) bulkErr(errors, "zone", 'Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?', rz.suggestion);
-          else bulkWarn(warnings, "zone", 'La zona "' + zone + '" no está en el catálogo. Se publica tal cual, pero solo hará match con quien busque exactamente esa zona. Si es una errata, corrígela.');
+          // OJO: en vehículos la zona NO da puntos ni filtra (vehicleMatchEngineV1
+          // no la usa: un carro se mueve). Solo sirve de referencia para el
+          // interesado, así que el aviso no puede prometer el mismo efecto que en
+          // inmuebles, donde la zona SÍ es el filtro de ubicación.
+          else bulkWarn(warnings, "zone", 'La zona "' + zone + '" no está en el catálogo. Se publica tal cual: en vehículos la zona no afecta el match, solo le dice al interesado dónde está el vehículo. Si es una errata, corrígela.');
         }
         const transmission = bulkTxt(raw.transmission) ? mapEnum("transmission", raw.transmission, false) : "automatico";
         const fuel = bulkTxt(raw.fuel) ? mapEnum("fuel", raw.fuel, false) : "gasolina";
