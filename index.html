@@ -11028,6 +11028,20 @@
       }
       .pmap-hub-name { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
       .pmap-hub-role { color: #9fb4cc; font-size: 11px; font-weight: 700; }
+      .pmap-hub-admin {
+        background: rgba(224, 91, 42, 0.12);
+        border: 1.5px solid rgba(241, 136, 63, 0.6);
+        border-radius: 999px;
+        color: #f7a869;
+        cursor: pointer;
+        font: inherit;
+        font-size: 11px;
+        font-weight: 800;
+        margin-top: 5px;
+        padding: 4px 13px;
+      }
+      .pmap-hub-admin:hover { background: rgba(224, 91, 42, 0.25); }
+      .pmap-hub-admin[hidden] { display: none; }
       .pmap-node {
         align-items: center;
         background: #ffffff;
@@ -11227,9 +11241,9 @@
               <span class="sm-st"><span class="sm-dot"></span> Sesión activa</span>
             </div>
           </div>
+          <!-- Menú mínimo: Mis datos y ADMIN viven ahora en el mapa de Mi panel
+               (nodo 1 y chip del hub). Aquí solo entrada y salida. -->
           <button class="sm-item" type="button" role="menuitem" onclick="sessionMenuGo('panel')"><span class="sm-ic" aria-hidden="true">▦</span> Mi panel</button>
-          <button class="sm-item" type="button" role="menuitem" onclick="sessionMenuGo('datos')"><span class="sm-ic" aria-hidden="true">👤</span> Mis datos</button>
-          <button class="sm-item sm-admin" id="sessionMenuAdmin" type="button" role="menuitem" hidden onclick="sessionMenuGo('admin')"><span class="sm-ic" aria-hidden="true">⚙</span> ADMIN</button>
           <button class="sm-item sm-exit" type="button" role="menuitem" onclick="sessionMenuGo('salir')"><span class="sm-ic" aria-hidden="true">⏻</span> Cerrar sesión</button>
         </div>
       </div>
@@ -12400,6 +12414,7 @@
                 <svg width="34" height="34" viewBox="0 0 72 72" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#f1883f"></circle><path d="M25 25L48 48" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"></path><circle cx="53" cy="53" r="14" fill="none" stroke="#fff" stroke-width="7"></circle></svg>
                 <span class="pmap-hub-name" id="pmapName"></span>
                 <span class="pmap-hub-role" id="pmapRole"></span>
+                <button type="button" class="pmap-hub-admin" id="pmapAdminChip" hidden onclick="sessionMenuGo('admin')">⚙ Panel ADMIN</button>
               </div>
               <button type="button" class="pmap-node pm-l1 pm-n1" data-theme="datos" onclick="openPanelSection('datos')">
                 <span class="pmap-num">1</span><span class="pmap-ic">👤</span>
@@ -16369,6 +16384,9 @@
         set("pmapName", txt("currentUserName") || currentUserEmail || "");
         const roleChip = document.getElementById("currentUserRoleChip");
         set("pmapRole", roleChip && !roleChip.hidden && roleChip.textContent.trim() ? roleChip.textContent.trim() : "Mi panel");
+        // Chip de ADMIN en el hub (reemplaza al enlace del menú del avatar).
+        const admChip = document.getElementById("pmapAdminChip");
+        if (admChip) admChip.hidden = !(typeof isAdminEmail === "function" && isAdminEmail(currentUserEmail));
         set("pmapSaldo", txt("walletBalanceValue") || "USD 0.00");
         const offers = parseInt(txt("offersTabCount") || "0", 10) || 0;
         const searches = parseInt(txt("searchesTabCount") || "0", 10) || 0;
