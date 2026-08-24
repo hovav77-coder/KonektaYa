@@ -10259,6 +10259,9 @@
         background: #1eb85a;
         transform: scale(1.06);
       }
+      /* Modo email (WhatsApp de soporte apagado): navy de marca, no el verde. */
+      .wa-float.email { background: linear-gradient(135deg, #0a2f55, #0f5e91); }
+      .wa-float.email:hover { background: linear-gradient(135deg, #0d3a66, #1268a0); }
       .wa-float svg {
         height: 30px;
         width: 30px;
@@ -12620,6 +12623,20 @@
                 <button class="button small" type="button" id="paymentsToggleBtn" onclick="adminTogglePayments()" disabled>…</button>
               </div>
 
+              <div id="adminSupportBar" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:13px 16px;margin:0 0 16px">
+                <div style="min-width:0">
+                  <div style="font-size:14.5px;font-weight:900;color:var(--navy)">Soporte por WhatsApp <span id="waSupportChip"></span></div>
+                  <div style="font-size:12.5px;color:#5b6b82;margin-top:2px" id="waSupportDesc">Cargando estado…</div>
+                  <div style="margin-top:9px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <label for="supportEmailInput" style="font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b82">Email de soporte</label>
+                    <input id="supportEmailInput" type="email" style="border:1.5px solid #d5dee9;border-radius:9px;padding:7px 10px;font-size:13px;font-weight:700;min-width:230px" />
+                    <button class="button small ghost" type="button" onclick="adminSaveSupportEmail()">Guardar</button>
+                    <span id="supportEmailStatus" style="font-size:12px"></span>
+                  </div>
+                </div>
+                <button class="button small" type="button" id="waSupportToggleBtn" onclick="adminToggleWhatsapp()" disabled>…</button>
+              </div>
+
               <div id="adminCouponsCard" style="background:#ffffff;border:1px solid #dce5ef;border-radius:14px;padding:14px 16px;margin:0 0 16px">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer" onclick="toggleAdminCoupons()">
                   <div>
@@ -12838,7 +12855,7 @@
             </details>
             <details class="faq-item">
               <summary>¿Cómo contacto al soporte?</summary>
-              <p>Por WhatsApp al <a href="https://wa.me/50764905233?text=Hola%20KonektaYa%2C%20necesito%20ayuda." target="_blank" rel="noopener"><strong>+507 6490-5233</strong></a>. Con gusto te ayudamos.</p>
+              <p>Escríbenos a <a data-support-link data-wa="WhatsApp +507 6490-5233" href="mailto:soporte@konektaya.com"><strong>soporte@konektaya.com</strong></a>. Con gusto te ayudamos.</p>
             </details>
           </div>
         </section>
@@ -12852,7 +12869,7 @@
             <p><strong>KonektaYa</strong> es una plataforma panameña que conecta a quienes ofrecen propiedades y vehículos con personas realmente interesadas, usando matching inteligente en lugar de anuncios masivos.</p>
             <p>Nacimos para resolver dos problemas de siempre: los dueños pierden tiempo con contactos que no califican, y los buscadores no encuentran opciones que de verdad se ajusten a lo que necesitan. Nuestra IA cruza ubicación, precio, características y urgencia para que cada conexión valga la pena.</p>
             <p>Creemos en tres principios simples: <strong>publicar y buscar debe ser gratis</strong>, <strong>tus datos de contacto son tuyos</strong> (permanecen protegidos hasta que decidas conectar) y <strong>sin comisiones por cierre</strong> — la negociación es tuya.</p>
-            <p>Operamos desde Ciudad de Panamá. ¿Ideas o comentarios? Escríbenos por WhatsApp al <a href="https://wa.me/50764905233?text=Hola%20KonektaYa." target="_blank" rel="noopener"><strong>+507 6490-5233</strong></a>.</p>
+            <p>Operamos desde Ciudad de Panamá. ¿Ideas o comentarios? Escríbenos a <a data-support-link data-wa="WhatsApp +507 6490-5233" href="mailto:soporte@konektaya.com"><strong>soporte@konektaya.com</strong></a>.</p>
           </div>
         </section>
       </section>
@@ -12885,7 +12902,7 @@
             <p>Podemos actualizar estos términos; los cambios se publicarán en esta página con su fecha. El uso continuado de la Plataforma implica la aceptación de la versión vigente.</p>
             <h3>11. Ley aplicable</h3>
             <p>Estos términos se rigen por las leyes de la República de Panamá. Cualquier controversia se someterá a los tribunales panameños.</p>
-            <p>Contacto: WhatsApp <a href="https://wa.me/50764905233" target="_blank" rel="noopener">+507 6490-5233</a>.</p>
+            <p>Contacto: <a data-support-link data-wa="WhatsApp +507 6490-5233" href="mailto:soporte@konektaya.com">soporte@konektaya.com</a>.</p>
           </div>
         </section>
       </section>
@@ -12897,7 +12914,7 @@
           <p class="legal-updated">Última actualización: julio de 2026 · Conforme a la Ley 81 de 2019 de Protección de Datos Personales de Panamá</p>
           <div class="legal-body">
             <h3>1. Responsable del tratamiento</h3>
-            <p>La Plataforma KonektaYa (konektaya.com) es operada por <strong>GREEN ASSET REAL ESTATE, S.A.</strong> (RUC 155757055-2-2024 DV 88), con domicilio en <strong>Plaza Edison, Calle Ricardo J. Alfaro, Ciudad de Panamá, República de Panamá</strong>, responsable del tratamiento de los datos personales que recolecta. Para cualquier asunto relacionado con tus datos personales, escríbenos a <a href="mailto:privacidad@konektaya.com">privacidad@konektaya.com</a> o por WhatsApp al <a href="https://wa.me/50764905233" target="_blank" rel="noopener">+507 6490-5233</a>.</p>
+            <p>La Plataforma KonektaYa (konektaya.com) es operada por <strong>GREEN ASSET REAL ESTATE, S.A.</strong> (RUC 155757055-2-2024 DV 88), con domicilio en <strong>Plaza Edison, Calle Ricardo J. Alfaro, Ciudad de Panamá, República de Panamá</strong>, responsable del tratamiento de los datos personales que recolecta. Para cualquier asunto relacionado con tus datos personales, escríbenos a <a href="mailto:privacidad@konektaya.com">privacidad@konektaya.com</a><span data-wa-clause hidden> o por WhatsApp al +507 6490-5233</span>.</p>
             <h3>2. Datos que recolectamos</h3>
             <p>Nombre y apellido, teléfono, correo electrónico, contraseña de acceso, y la información de las ofertas o búsquedas que registras (ubicación, precios, características). También datos técnicos básicos de uso del sitio (analítica anónima). <strong>No recolectamos datos sensibles</strong> (salud, origen étnico, religión, orientación sexual, datos biométricos, etc.); por favor no los incluyas en tus publicaciones ni mensajes.</p>
             <h3>3. Para qué los usamos</h3>
@@ -12919,7 +12936,7 @@
             <h3>11. Enlaces externos</h3>
             <p>La Plataforma puede enlazar a sitios de terceros (por ejemplo WhatsApp, Google Maps o PayPal). No somos responsables de las prácticas de privacidad ni del contenido de esos sitios; te recomendamos revisar sus políticas antes de usarlos.</p>
             <h3>12. Tus derechos (ARCO)</h3>
-            <p>Conforme a la Ley 81 de 2019, tienes derecho a <strong>acceder</strong>, <strong>rectificar</strong>, <strong>cancelar</strong> y <strong>oponerte</strong> al tratamiento de tus datos, así como a la portabilidad. Para ejercerlos, escríbenos a <a href="mailto:privacidad@konektaya.com">privacidad@konektaya.com</a> o por WhatsApp al +507 6490-5233, indicando tu solicitud y un <strong>medio para verificar tu identidad</strong> (para proteger tus datos frente a solicitudes de terceros). Responderemos en un máximo de <strong>quince (15) días hábiles</strong>. Si no quedas conforme con nuestra respuesta, puedes acudir a la <strong>Autoridad Nacional de Transparencia y Acceso a la Información (ANTAI)</strong> de Panamá.</p>
+            <p>Conforme a la Ley 81 de 2019, tienes derecho a <strong>acceder</strong>, <strong>rectificar</strong>, <strong>cancelar</strong> y <strong>oponerte</strong> al tratamiento de tus datos, así como a la portabilidad. Para ejercerlos, escríbenos a <a href="mailto:privacidad@konektaya.com">privacidad@konektaya.com</a><span data-wa-clause hidden> o por WhatsApp al +507 6490-5233</span>, indicando tu solicitud y un <strong>medio para verificar tu identidad</strong> (para proteger tus datos frente a solicitudes de terceros). Responderemos en un máximo de <strong>quince (15) días hábiles</strong>. Si no quedas conforme con nuestra respuesta, puedes acudir a la <strong>Autoridad Nacional de Transparencia y Acceso a la Información (ANTAI)</strong> de Panamá.</p>
             <h3>13. Seguridad</h3>
             <p>Aplicamos medidas razonables para proteger tu información. Los datos de contacto permanecen ocultos entre usuarios hasta que se produce un desbloqueo autorizado. Ningún sistema es infalible; te recomendamos usar contraseñas únicas.</p>
             <h3>14. Cambios</h3>
@@ -13013,7 +13030,7 @@
         </div>
         <div class="footer-col">
           <strong>Contacto</strong>
-          <a href="https://wa.me/50764905233?text=Hola%20KonektaYa%2C%20necesito%20ayuda." target="_blank" rel="noopener">WhatsApp +507 6490-5233</a>
+          <a data-support-link data-wa="WhatsApp +507 6490-5233" href="mailto:soporte@konektaya.com">soporte@konektaya.com</a>
           <a href="#login" data-tab="login">Ingresar a mi cuenta</a>
         </div>
       </div>
@@ -13028,13 +13045,15 @@
       <button type="button" data-bn="panel" onclick="bottomNavGo('panel')"><span class="bn-ic" aria-hidden="true">👤</span>Mi panel</button>
     </nav>
 
+    <!-- Soporte flotante: arranca en modo EMAIL (sin número de WhatsApp dedicado
+         aún). El interruptor del admin lo convierte a WhatsApp (applySupportContact). -->
     <a
-      class="wa-float"
-      href="https://wa.me/50764905233?text=Hola%20KonektaYa%2C%20necesito%20ayuda."
-      target="_blank"
+      class="wa-float email"
+      id="waFloat"
+      href="mailto:soporte@konektaya.com?subject=Ayuda%20KonektaYa"
       rel="noopener"
-      aria-label="Soporte por WhatsApp"
-      title="¿Dudas? Escríbenos por WhatsApp"
+      aria-label="Soporte por email"
+      title="¿Dudas? Escríbenos un email"
     >
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
     </a>
@@ -16494,6 +16513,8 @@
         const pagos = q("#adminPaymentsBar");
         const pagosSlot = q('[data-admin-panel-pane="payments"] .settings-pagos-slot');
         if (pagos && pagosSlot) { pagos.style.margin = "0"; pagosSlot.appendChild(pagos); }
+        const soporte = q("#adminSupportBar");
+        if (soporte && pagosSlot) { soporte.style.margin = "12px 0 0"; pagosSlot.appendChild(soporte); }
         const maint = q("#adminMaintenance");
         const maintSlot = q('[data-admin-panel-pane="payments"] .settings-maint-slot');
         if (maint && maintSlot) maintSlot.appendChild(maint);
@@ -19366,6 +19387,7 @@
       window.adminTogglePayments = adminTogglePayments;
 
       function renderPaymentsSwitch() {
+        if (typeof renderSupportSwitch === "function") renderSupportSwitch();
         // Rediseño admin: sincroniza el estado de pagos en los 3 anclajes
         // (chip fijo del header, punto en la pestaña Ajustes, banda del Resumen).
         (function syncPaymentsAnchors() {
@@ -19933,7 +19955,7 @@
         ruc: "RUC 155757055-2-2024 DV 88",
         dir1: "Plaza Edison, Calle Ricardo J. Alfaro",
         dir2: "Ciudad de Panamá, Rep. de Panamá",
-        contacto: "pagos@konektaya.com · +507 6490-5233",
+        contacto: "pagos@konektaya.com",
       };
 
       // Interruptor global de pagos (kill switch, tabla app_config). Los cobros con
@@ -19950,7 +19972,99 @@
           paymentsEnabled = !error && !!(data && data.payments_enabled === true);
         } catch (e) { paymentsEnabled = false; }
         paymentsFlagLoaded = true;
+        // Config de soporte en SELECT SEPARADO: si 2v-soporte-config.sql aún no
+        // se corrió, estas columnas no existen y un select conjunto tumbaría
+        // también la lectura de pagos. Fail closed: sin dato = email.
+        try {
+          const { data: sc, error: se } = await supabaseClient
+            .from("app_config").select("whatsapp_support_enabled, support_email").eq("id", 1).maybeSingle();
+          if (!se && sc) {
+            whatsappSupportEnabled = sc.whatsapp_support_enabled === true;
+            if (sc.support_email) supportEmail = String(sc.support_email);
+          }
+        } catch (e) {}
+        applySupportContact();
       }
+
+      // ===== Soporte: WhatsApp apagable + email editable (tabla app_config) =====
+      // Sin número de WhatsApp dedicado todavía: el soporte arranca por EMAIL.
+      // El admin lo enciende desde su panel cuando tenga el número (como pagos).
+      let whatsappSupportEnabled = false;
+      let supportEmail = "soporte@konektaya.com";
+      const WA_SUPPORT_HREF = "https://wa.me/50764905233?text=" + encodeURIComponent("Hola KonektaYa, necesito ayuda.");
+      const WA_FLOAT_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>';
+      const MAIL_FLOAT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"></rect><path d="M3.5 6.5 12 13l8.5-6.5"></path></svg>';
+
+      function applySupportContact() {
+        const on = whatsappSupportEnabled;
+        const email = supportEmail || "soporte@konektaya.com";
+        document.querySelectorAll("[data-support-link]").forEach((a) => {
+          const negrita = a.querySelector("strong") !== null || a.innerHTML.includes("<strong>");
+          const txt = on ? (a.dataset.wa || "WhatsApp +507 6490-5233") : email;
+          if (on) { a.href = WA_SUPPORT_HREF; a.target = "_blank"; a.rel = "noopener"; }
+          else { a.href = "mailto:" + email; a.removeAttribute("target"); }
+          a.innerHTML = negrita ? "<strong>" + escapeHtml(txt) + "</strong>" : escapeHtml(txt);
+        });
+        document.querySelectorAll("[data-wa-clause]").forEach((s) => { s.hidden = !on; });
+        const f = document.getElementById("waFloat");
+        if (f) {
+          if (on) {
+            f.href = WA_SUPPORT_HREF; f.target = "_blank"; f.classList.remove("email");
+            f.title = "¿Dudas? Escríbenos por WhatsApp"; f.setAttribute("aria-label", "Soporte por WhatsApp");
+            f.innerHTML = WA_FLOAT_SVG;
+          } else {
+            f.href = "mailto:" + email + "?subject=" + encodeURIComponent("Ayuda KonektaYa");
+            f.removeAttribute("target"); f.classList.add("email");
+            f.title = "¿Dudas? Escríbenos un email"; f.setAttribute("aria-label", "Soporte por email");
+            f.innerHTML = MAIL_FLOAT_SVG;
+          }
+        }
+      }
+      window.applySupportContact = applySupportContact;
+
+      async function adminToggleWhatsapp() {
+        if (!supabaseEnabled) { alert("Disponible solo con el backend conectado."); return; }
+        const next = !whatsappSupportEnabled;
+        const msg = next
+          ? "¿ACTIVAR el soporte por WhatsApp?\n\nEl botón flotante y los enlaces de ayuda volverán a apuntar al +507 6490-5233."
+          : "¿Desactivar el soporte por WhatsApp?\n\nEl botón flotante y los enlaces de ayuda pasarán al email de soporte.";
+        if (!confirm(msg)) return;
+        const { data, error } = await supabaseClient.rpc("admin_set_whatsapp_support", { p_on: next });
+        if (error) { alert("No se pudo cambiar: " + error.message + "\n\n(¿Ya corriste supabase/2v-soporte-config.sql?)"); return; }
+        whatsappSupportEnabled = data === true;
+        renderSupportSwitch();
+      }
+      window.adminToggleWhatsapp = adminToggleWhatsapp;
+
+      async function adminSaveSupportEmail() {
+        if (!supabaseEnabled) { alert("Disponible solo con el backend conectado."); return; }
+        const inp = document.getElementById("supportEmailInput");
+        const st = document.getElementById("supportEmailStatus");
+        const v = String((inp && inp.value) || "").trim();
+        const { data, error } = await supabaseClient.rpc("admin_set_support_email", { p_email: v });
+        if (error) { if (st) { st.textContent = error.message; st.style.color = "#b91c1c"; } return; }
+        supportEmail = String(data || v);
+        if (st) { st.textContent = "✓ Guardado"; st.style.color = "#12a150"; }
+        renderSupportSwitch();
+      }
+      window.adminSaveSupportEmail = adminSaveSupportEmail;
+
+      function renderSupportSwitch() {
+        const chip = document.getElementById("waSupportChip");
+        const desc = document.getElementById("waSupportDesc");
+        const btn = document.getElementById("waSupportToggleBtn");
+        const inp = document.getElementById("supportEmailInput");
+        if (chip) chip.innerHTML = whatsappSupportEnabled
+          ? '<span style="color:#12a150;font-weight:900">ACTIVADO</span>'
+          : '<span style="color:#b91c1c;font-weight:900">DESACTIVADO</span>';
+        if (desc) desc.textContent = whatsappSupportEnabled
+          ? "El botón flotante y los enlaces de ayuda usan WhatsApp (+507 6490-5233)."
+          : "Sin número dedicado: el botón flotante y los enlaces de ayuda usan el email de soporte.";
+        if (btn) { btn.disabled = !supabaseEnabled; btn.textContent = whatsappSupportEnabled ? "Desactivar" : "Activar WhatsApp"; }
+        if (inp && document.activeElement !== inp) inp.value = supportEmail;
+        applySupportContact();
+      }
+      window.renderSupportSwitch = renderSupportSwitch;
 
       // Canje de cupón de crédito regalo (tabla coupons, RPC redeem_coupon).
       // Toda la validación es del servidor: 1 por usuario, tope de usos, vencimiento.
@@ -23894,7 +24008,14 @@
             m += "\n" + L.join("\n");
           }
         } catch (e) {}
-        window.open("https://wa.me/50764905233?text=" + encodeURIComponent(m), "_blank", "noopener");
+        // El canal sigue al interruptor de soporte: WhatsApp si está activo,
+        // email si no (mismo texto del reporte en ambos).
+        if (whatsappSupportEnabled) {
+          window.open("https://wa.me/50764905233?text=" + encodeURIComponent(m), "_blank", "noopener");
+        } else {
+          const email = supportEmail || "soporte@konektaya.com";
+          window.location.href = "mailto:" + email + "?subject=" + encodeURIComponent("Reporte de contacto sospechoso") + "&body=" + encodeURIComponent(m);
+        }
       }
       window.reportarContactoFalso = reportarContactoFalso;
 
