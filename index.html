@@ -24590,7 +24590,7 @@
           })
         }
       };
-      const bulkState = { vertical: "property", rows: [], truncated: 0 };
+      const bulkState = { vertical: "property", rows: [], truncated: 0, editRow: -1 };
       function bulkSpec() { return BULK_SPECS[bulkState.vertical] || BULK_SPECS.property; }
 
       // Carga diferida de la librería de Excel (SheetJS): solo cuando se usa.
@@ -24686,6 +24686,7 @@
           const CAP = 200;
           bulkState.truncated = raws.length > CAP ? raws.length - CAP : 0;
           if (bulkState.truncated) raws = raws.slice(0, CAP);
+          bulkState.editRow = -1;
           bulkState.rows = raws.map((raw) => { const v = spec.validate(raw); return { record: v.record, errors: v.errors, raw }; });
           if (status) status.textContent = bulkState.rows.length ? "" : 'No se encontraron filas en la hoja "' + spec.sheet + '".';
           renderBulkCard();
@@ -24726,6 +24727,7 @@
         bulkState.vertical = v;
         bulkState.rows = [];
         bulkState.truncated = 0;
+        bulkState.editRow = -1;
         renderBulkCard();
       }
       window.setBulkVertical = setBulkVertical;
@@ -24765,22 +24767,82 @@
         return porVertical[field] || null;
       }
 
-      function bulkFieldControlHtml(rowIndex, field, raw, sug) {
+      // El <select> refleja SIEMPRE el valor real de la fila, NUNCA la
+      // sugerencia. Preseleccionar la sugerencia parecía cómodo pero rompía la
+      // corrección: elegir a mano la opción ya seleccionada no dispara "change",
+      // así que la app no reaccionaba y había que escoger otra cosa a la fuerza
+      // (reportado con "Toyotta" → Toyota). La sugerencia ahora se aplica con su
+      // propio botón, y el valor no reconocido se ve en la lista tal como vino.
+      function bulkFieldControlHtml(rowIndex, field, raw, malo) {
         const attrs = 'data-bulkfix onchange="bulkFixCell(' + rowIndex + ", '" + field + "', this.value)\"";
-        const st = "font-size:12.5px;border:1.5px solid #e05b2a;border-radius:8px;padding:4px 8px;max-width:220px";
+        const st = "font-size:12.5px;border:1.5px solid " + (malo ? "#e05b2a" : "#d5dee9") + ";border-radius:8px;padding:4px 8px;max-width:220px";
+        const actual = bulkTxt(raw[field]);
         const opciones = bulkFixOptionsFor(field, raw);
         if (opciones && opciones.length) {
-          const actual = bulkTxt(raw[field]);
-          const opts = ['<option value="">Elige…</option>'].concat(opciones.map((o) => {
-            const sel = sug && normalize(o) === normalize(sug) ? " selected" : "";
-            return '<option value="' + escapeHtml(o) + '"' + sel + ">" + escapeHtml(o) + "</option>";
-          }));
+          const conocido = opciones.some((o) => normalize(o) === normalize(actual));
+          const opts = ['<option value=""' + (actual ? "" : " selected") + ">Elige…</option>"];
+          if (actual && !conocido) {
+            opts.push('<option value="' + escapeHtml(actual) + '" selected>' + escapeHtml(actual) + " (no reconocido)</option>");
+          }
+          opciones.forEach((o) => {
+            opts.push('<option value="' + escapeHtml(o) + '"' + (conocido && normalize(o) === normalize(actual) ? " selected" : "") + ">" + escapeHtml(o) + "</option>");
+          });
           return '<select ' + attrs + ' style="' + st + '">' + opts.join("") + "</select>";
         }
         if (BULK_NUM_FIELDS.indexOf(field) !== -1) {
-          return '<input type="number" min="0" ' + attrs + ' value="' + escapeHtml(bulkTxt(raw[field])) + '" placeholder="Número" style="' + st + ';width:120px" />';
+          return '<input type="number" min="0" ' + attrs + ' value="' + escapeHtml(actual) + '" placeholder="Número" style="' + st + ';width:120px" />';
         }
-        return '<input type="text" ' + attrs + ' value="' + escapeHtml(bulkTxt(raw[field])) + '" style="' + st + ';width:200px" />';
+        return '<input type="text" ' + attrs + ' value="' + escapeHtml(actual) + '" style="' + st + ';width:200px" />';
+      }
+
+      // Un clic para aceptar la sugerencia del catálogo, sin pasar por la lista.
+      function bulkSugButtonHtml(rowIndex, field, sug) {
+        if (!sug) return "";
+        return '<button type="button" onclick="bulkFixCell(' + rowIndex + ", '" + field + "', this.dataset.v)\" data-v=\"" + escapeHtml(sug) +
+          '" style="font-size:12px;font-weight:800;border:none;border-radius:8px;padding:5px 11px;background:linear-gradient(135deg,#e05b2a,#f1883f);color:#fff;cursor:pointer">Usar «' + escapeHtml(sug) + '»</button>';
+      }
+
+      // Quitar una fila que el broker no quiere publicar.
+      function bulkRemoveRow(rowIndex) {
+        const rows = bulkState.rows || [];
+        if (!rows[rowIndex]) return;
+        rows.splice(rowIndex, 1);
+        if (bulkState.editRow === rowIndex) bulkState.editRow = -1;
+        else if (bulkState.editRow > rowIndex) bulkState.editRow -= 1;
+        const status = document.getElementById("bulkStatus");
+        if (!rows.length) {
+          bulkState.truncated = 0;
+          if (status) status.textContent = "Quitaste todas las filas. Sube otro Excel cuando quieras.";
+        } else if (status) status.textContent = "";
+        renderBulkPreview();
+      }
+      window.bulkRemoveRow = bulkRemoveRow;
+
+      function bulkToggleEdit(rowIndex) {
+        bulkState.editRow = bulkState.editRow === rowIndex ? -1 : rowIndex;
+        renderBulkPreview();
+      }
+      window.bulkToggleEdit = bulkToggleEdit;
+
+      // Editor completo de la fila: TODAS las columnas de la plantilla, con el
+      // control que corresponde a cada tipo. Permite ajustar cualquier dato
+      // antes de publicar, no solo lo que trae error.
+      function bulkRowEditorHtml(rowIndex, row) {
+        const spec = bulkSpec();
+        const malos = {};
+        (row.errors || []).forEach((e) => { if (e.f) malos[e.f] = true; });
+        const campos = spec.columns.map((c) =>
+          '<label style="display:flex;flex-direction:column;gap:4px">' +
+            '<span style="font-size:11px;font-weight:800;color:#5b6b82;text-transform:uppercase;letter-spacing:.04em">' +
+              escapeHtml(c.header) + (c.required ? ' <span style="color:#e05b2a">*</span>' : "") +
+            "</span>" +
+            bulkFieldControlHtml(rowIndex, c.field, row.raw || {}, !!malos[c.field]) +
+          "</label>"
+        ).join("");
+        return '<div style="padding:12px 10px 16px;background:#f8fbff;border-top:1px dashed #cfdcea">' +
+          '<div style="font-size:12.5px;font-weight:800;color:#0a2f55;margin-bottom:9px">Editar fila ' + (rowIndex + 1) + " — cambia lo que quieras; se revisa al instante.</div>" +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">' + campos + "</div>" +
+        "</div>";
       }
 
       function bulkFixCell(rowIndex, field, value) {
@@ -24818,24 +24880,33 @@
               const etiqueta = bulkColLabel(spec.columns, e.f);
               return '<div style="margin-top:5px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">' +
                 '<span style="font-size:11px;font-weight:800;color:#5b6b82;text-transform:uppercase;letter-spacing:.04em">' + escapeHtml(etiqueta) + ':</span>' +
-                bulkFieldControlHtml(i, e.f, r.raw || {}, e.sug) +
+                bulkSugButtonHtml(i, e.f, e.sug) +
+                bulkFieldControlHtml(i, e.f, r.raw || {}, true) +
               "</div>";
             }).join("");
-          return `<tr style="background:${ok ? "transparent" : "#fff5f5"}">
+          const editando = bulkState.editRow === i;
+          const acciones =
+            '<button type="button" onclick="bulkToggleEdit(' + i + ')" style="font-size:12px;font-weight:800;border:1px solid ' + (editando ? "#0a2f55" : "#d5dee9") +
+              ';border-radius:8px;padding:5px 10px;cursor:pointer;background:' + (editando ? "#0a2f55" : "#fff") + ";color:" + (editando ? "#fff" : "#0a2f55") + '">' +
+              (editando ? "Cerrar" : "Editar") + "</button>" +
+            '<button type="button" onclick="bulkRemoveRow(' + i + ')" title="No publicar esta fila" style="font-size:12px;font-weight:800;border:1px solid #fecdd3;border-radius:8px;padding:5px 10px;background:#fff1f2;color:#b91c1c;cursor:pointer;margin-left:6px">Quitar</button>';
+          const fila = `<tr style="background:${ok ? "transparent" : "#fff5f5"}">
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${i + 1}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${ok ? "✅" : "⛔"}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.tipo || "—")}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.zona || "—")}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${s.precio ? money.format(s.precio) : "—"}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;font-size:12px"><span style="color:#b91c1c">${msgs}</span>${controles}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;white-space:nowrap">${acciones}</td>
           </tr>`;
+          return fila + (editando ? '<tr><td colspan="7" style="padding:0">' + bulkRowEditorHtml(i, r) + "</td></tr>" : "");
         }).join("");
         box.innerHTML = `
           <div style="font-size:13px;font-weight:800;margin-bottom:8px">${okCount} lista${okCount === 1 ? "" : "s"} para publicar · ${badCount} con error${badCount === 1 ? "" : "es"}${bulkState.truncated ? ` · ${bulkState.truncated} omitidas (límite 200)` : ""}</div>
           <div style="overflow-x:auto;border:1px solid #eef2f7;border-radius:10px">
             <table style="width:100%;border-collapse:collapse;font-size:13px">
               <thead><tr style="background:#f6f9fd;text-align:left">
-                <th style="padding:7px 8px">#</th><th style="padding:7px 8px">Estado</th><th style="padding:7px 8px">Detalle</th><th style="padding:7px 8px">Zona</th><th style="padding:7px 8px">Precio</th><th style="padding:7px 8px">Errores</th>
+                <th style="padding:7px 8px">#</th><th style="padding:7px 8px">Estado</th><th style="padding:7px 8px">Detalle</th><th style="padding:7px 8px">Zona</th><th style="padding:7px 8px">Precio</th><th style="padding:7px 8px">Errores</th><th style="padding:7px 8px">Acciones</th>
               </tr></thead>
               <tbody>${trs}</tbody>
             </table>
@@ -24849,6 +24920,7 @@
       function cancelBulkImport() {
         bulkState.rows = [];
         bulkState.truncated = 0;
+        bulkState.editRow = -1;
         renderBulkPreview();
         const status = document.getElementById("bulkStatus");
         if (status) status.textContent = "";
@@ -24919,6 +24991,7 @@
         // Las filas rechazadas por el SERVIDOR se quedan en la vista previa con su
         // motivo, listas para corregir en Excel y resubir. Nada se pierde en silencio.
         bulkState.rows = fallidas;
+        bulkState.editRow = -1;
         renderBulkCard();
         const status = document.getElementById("bulkStatus");
         if (status) {
