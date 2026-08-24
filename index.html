@@ -10985,6 +10985,7 @@
       #secondaryModal { z-index: 130; }
       #secondaryModal .secondary-modal-card {
         max-height: 86vh; max-height: 86dvh; overflow-y: auto;
+        overscroll-behavior: contain; /* el scroll del modal no arrastra al fondo */
         padding: 18px 18px 22px; text-align: left; width: min(560px, 94vw);
       }
       #secondaryModal .secondary-modal-body [hidden] { display: none; }
@@ -23669,7 +23670,7 @@
       let __bodyLockY = 0;
       function anyModalOpen() {
         return !!document.querySelector(
-          ".results-modal-overlay:not(.hidden), .mydata-modal:not([hidden])"
+          ".results-modal-overlay:not(.hidden), .mydata-modal:not([hidden]), .rd-modal:not([hidden])"
         );
       }
       function syncBodyScrollLock() {
@@ -23692,6 +23693,19 @@
         }
       }
       window.syncBodyScrollLock = syncBodyScrollLock;
+
+      // Bloqueo del fondo AUTOMÁTICO: cualquier modal que se abra o cierre
+      // (atributo hidden o clase .hidden) dispara syncBodyScrollLock, sin que
+      // cada open/close tenga que acordarse de llamarlo. Antes solo lo hacían
+      // resultados/pagos y "Mis datos"; en el resto (Historial de desbloqueos,
+      // Pagos y recibos, Términos, popups de registro…) el fondo del celular
+      // seguía moviéndose al hacer scroll dentro del modal.
+      (function autoLockModales() {
+        const obs = new MutationObserver(() => { try { syncBodyScrollLock(); } catch (e) {} });
+        document.querySelectorAll(".rd-modal, .mydata-modal, .results-modal-overlay").forEach((m) => {
+          obs.observe(m, { attributes: true, attributeFilter: ["hidden", "class"] });
+        });
+      })();
 
       function openResultsModal(kind, id) {
         activeResultsModal = { kind, id: coerceId(id) };
