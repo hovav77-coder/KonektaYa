@@ -24999,6 +24999,12 @@
         if (BULK_NUM_FIELDS.indexOf(field) !== -1) {
           return '<input type="number" min="0" ' + attrs + ' value="' + escapeHtml(actual) + '" placeholder="Número" style="' + st + ';width:120px" />';
         }
+        // La Ubicación de inmuebles trae la búsqueda de Google del formulario:
+        // elegir una sugerencia fija el pin de ESA fila (complemento fino del
+        // botón de geolocalizar en lote).
+        if (field === "streetOrNeighborhood" && bulkState.vertical === "property") {
+          return '<input type="text" ' + attrs + ' onfocus="bulkStreetSearch(this, ' + rowIndex + ')" value="' + escapeHtml(actual) + '" placeholder="Escribe y elige de Google…" style="' + st + ';width:200px" />';
+        }
         return '<input type="text" ' + attrs + ' value="' + escapeHtml(actual) + '" style="' + st + ';width:200px" />';
       }
 
@@ -25044,6 +25050,9 @@
               escapeHtml(c.header) + (c.required ? ' <span style="color:#e05b2a">*</span>' : "") +
             "</span>" +
             bulkFieldControlHtml(rowIndex, c.field, row.raw || {}, !!malos[c.field]) +
+            (c.field === "streetOrNeighborhood" && bulkState.vertical === "property"
+              ? '<span style="font-size:10.5px;font-weight:600;color:#8aa0b8;text-transform:none;letter-spacing:0">📍 Escribe y elige una sugerencia de Google para fijar el pin y subir el % de match</span>'
+              : "") +
           "</label>"
         ).join("");
         return '<div style="padding:12px 10px 16px;background:#f8fbff;border-top:1px dashed #cfdcea">' +
@@ -25219,6 +25228,89 @@
         renderBulkPreview();
       }
       window.bulkRemovePin = bulkRemovePin;
+
+      // Búsqueda de Google en el EDITOR de la fila: la misma experiencia del
+      // formulario (escribes, salen sugerencias, eliges y queda el pin), para
+      // afinar una fila puntual. Complementa al lote: el botón de arriba pone
+      // el primer resultado de Google en todas; aquí el broker ELIGE el lugar.
+      async function bulkStreetSearch(input, rowIndex) {
+        if (input.dataset.gsearch) return;
+        input.dataset.gsearch = "1";
+        let places;
+        try {
+          await loadGmaps();
+          places = await google.maps.importLibrary("places");
+        } catch (e) {
+          const status = document.getElementById("bulkStatus");
+          if (status) status.textContent = "No se pudo cargar Google Maps: " + ((e && e.message) || e);
+          return;
+        }
+        const list = document.createElement("div");
+        list.className = "place-suggestions";
+        input.insertAdjacentElement("afterend", list);
+        const closeList = () => { list.classList.remove("show"); list.innerHTML = ""; };
+        let timer = null;
+        input.addEventListener("blur", () => setTimeout(closeList, 250));
+        input.addEventListener("input", () => {
+          const q = input.value.trim();
+          clearTimeout(timer);
+          if (q.length < 3) { closeList(); return; }
+          timer = setTimeout(async () => {
+            try {
+              const { suggestions } = await places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+                input: q, sessionToken: new places.AutocompleteSessionToken(), includedRegionCodes: ["pa"], language: "es"
+              });
+              if (!suggestions || !suggestions.length) { closeList(); return; }
+              list.innerHTML = "";
+              suggestions.slice(0, 5).forEach((sug) => {
+                const p = sug.placePrediction;
+                const main = p.mainText ? p.mainText.text : (p.text ? p.text.text : "");
+                const secondary = p.secondaryText ? p.secondaryText.text : "";
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "place-suggestion";
+                item.innerHTML = "<strong>" + escapeHtml(main) + "</strong><span>" + escapeHtml(secondary) + "</span>";
+                // mousedown y no click: el click llega DESPUÉS del blur del input,
+                // y ese blur dispara el change que repinta la tabla y destruye
+                // esta lista antes de que el click aterrice.
+                item.addEventListener("mousedown", async (ev) => {
+                  ev.preventDefault();
+                  closeList();
+                  const row = (bulkState.rows || [])[rowIndex];
+                  if (!row) return;
+                  try {
+                    const place = p.toPlace();
+                    await place.fetchFields({ fields: ["id", "location", "displayName", "formattedAddress", "addressComponents", "types"] });
+                    const comps = place.addressComponents || [];
+                    const getc = (t) => { const c = comps.find((x) => (x.types || []).includes(t)); return c ? (c.longText || c.long_name || "") : ""; };
+                    const route = getc("route");
+                    const city = getc("locality") || getc("administrative_area_level_2");
+                    const area = getc("neighborhood") || getc("sublocality") || getc("sublocality_level_1") || city;
+                    const dName = typeof place.displayName === "string" ? place.displayName : (place.displayName && place.displayName.text) || main;
+                    const isEstab = (place.types || []).some((t) => ["establishment", "point_of_interest", "premise", "subpremise", "lodging", "shopping_mall"].includes(t));
+                    // Campo visible = calle (+ área), igual que el formulario.
+                    row.raw.streetOrNeighborhood = route ? (area && area !== route ? route + ", " + area : route) : (area || place.formattedAddress || main);
+                    // El PH solo se llena si el lugar elegido ES un establecimiento
+                    // y el broker no escribió ya uno en su columna.
+                    if (isEstab && dName && !bulkTxt(row.raw.phName)) row.raw.phName = dName;
+                    if (place.location) {
+                      row.raw.streetPlaceId = place.id || "";
+                      row.raw.streetLat = String(place.location.lat());
+                      row.raw.streetLng = String(place.location.lng());
+                      row.geo = { label: (isEstab && dName ? dName + " · " : "") + (place.formattedAddress || area || city || row.raw.streetOrNeighborhood) };
+                    }
+                    bulkRevalidar(row);
+                    renderBulkPreview();
+                  } catch (e) {}
+                });
+                list.appendChild(item);
+              });
+              list.classList.add("show");
+            } catch (e) { closeList(); }
+          }, 250);
+        });
+      }
+      window.bulkStreetSearch = bulkStreetSearch;
 
       function renderBulkPreview() {
         const box = document.getElementById("bulkPreview");
