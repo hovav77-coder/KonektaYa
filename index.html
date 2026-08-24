@@ -24820,6 +24820,10 @@
           operation: ["Alquiler", "Venta", "Ambos"],
           propertyType: ["Apartamento", "Casa", "Local", "Oficina", "Galera", "Terreno"],
           equipment: ["Sin muebles", "Línea blanca", "Amueblado"],
+          // Estacionamientos no es un enum en la validación (acepta cualquier
+          // número y "5+"), pero el formulario ofrece esta lista: en el editor
+          // vale más elegir que adivinar el formato.
+          parkingSpaces: ["0", "1", "2", "3", "4", "5+"],
           storage: ["Sí", "No"],
           availabilityNeed: ["Inmediata", "15 días", "30 días", "45 días", "60 días"]
         },
