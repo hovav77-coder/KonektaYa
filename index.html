@@ -25288,11 +25288,21 @@
                     const area = getc("neighborhood") || getc("sublocality") || getc("sublocality_level_1") || city;
                     const dName = typeof place.displayName === "string" ? place.displayName : (place.displayName && place.displayName.text) || main;
                     const isEstab = (place.types || []).some((t) => ["establishment", "point_of_interest", "premise", "subpremise", "lodging", "shopping_mall"].includes(t));
-                    // Campo visible = calle (+ área), igual que el formulario.
+                    // Lo ELEGIDO en la búsqueda manda sobre calle, PH, zona y
+                    // provincia, igual que en el formulario. Antes el PH del Excel
+                    // se conservaba y quedaba en conflicto con el pin: el match usa
+                    // esa columna (mismo PH = su mayor bonificación), así que un PH
+                    // viejo junto a un pin nuevo publicaba un dato contradicho.
                     row.raw.streetOrNeighborhood = route ? (area && area !== route ? route + ", " + area : route) : (area || place.formattedAddress || main);
-                    // El PH solo se llena si el lugar elegido ES un establecimiento
-                    // y el broker no escribió ya uno en su columna.
-                    if (isEstab && dName && !bulkTxt(row.raw.phName)) row.raw.phName = dName;
+                    row.raw.phName = isEstab && dName ? dName : "";
+                    const provGoogle = (getc("administrative_area_level_1") || "").replace(/^provincia de\s+/i, "").trim();
+                    if (provGoogle) {
+                      // Solo si coincide con el catálogo: la provincia es lista
+                      // cerrada y un nombre raro de Google rompería la fila.
+                      const rp = bulkSuggest(provGoogle, Object.keys(locationOptions));
+                      if (rp.exact) row.raw.province = rp.exact;
+                    }
+                    if (area || city) row.raw.zone = area || city;
                     if (place.location) {
                       row.raw.streetPlaceId = place.id || "";
                       row.raw.streetLat = String(place.location.lat());
