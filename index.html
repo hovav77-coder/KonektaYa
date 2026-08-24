@@ -24725,7 +24725,6 @@
           return `<button type="button" onclick="setBulkVertical('${v}')" ${on ? "disabled" : ""} style="border:none;padding:8px 16px;font-size:13px;font-weight:800;cursor:${on ? "default" : "pointer"};background:${on ? "#0a2f55" : "#fff"};color:${on ? "#fff" : "#0a2f55"}">${txt}</button>`;
         };
         card.innerHTML = `
-          <div ondragover="bulkDragOver(event)" ondragleave="bulkDragLeave(event)" ondrop="bulkDropFile(event)">
           <div class="b2b-title">Carga masiva (Excel) · solo para publicar</div>
           <p class="b2b-desc">Publica muchas ofertas de una vez: elige el tipo, descarga la plantilla, complétala y súbela. Se publican a tu nombre de broker. <strong>Ojo:</strong> esta carga es solo para <strong>publicar</strong> (ofertas); las búsquedas de clientes se registran una por una desde «Buscar».</p>
           <div style="display:inline-flex;align-self:flex-start;border:1px solid #d5dee9;border-radius:10px;overflow:hidden;margin:6px 0 10px">${seg("property", "Inmuebles")}${seg("vehicle", "Vehículos")}</div>
@@ -24737,8 +24736,16 @@
             <span id="bulkStatus" style="font-size:12.5px;color:#5b6b82"></span>
           </div>
           <div id="bulkDrop" style="margin-top:12px;border:2px dashed #c9dcf0;border-radius:12px;background:#f8fbff;color:#5b6b82;padding:15px;text-align:center;font-size:13px;font-weight:700;transition:background .12s,border-color .12s,color .12s">Arrastra aquí tu Excel lleno (.xlsx) — o usa el botón «Subir Excel lleno»</div>
-          <div id="bulkPreview" style="margin-top:12px"></div>
-          </div>`;
+          <div id="bulkPreview" style="margin-top:12px"></div>`;
+        // El arrastre se engancha a la TARJETA, no a un div envoltorio: la
+        // tarjeta es flex con gap y .b2b-desc lo compensa con margen negativo,
+        // así que envolver su contenido encimaba la descripción sobre el título.
+        if (!card.__bulkDragBound) {
+          card.addEventListener("dragover", bulkDragOver);
+          card.addEventListener("dragleave", bulkDragLeave);
+          card.addEventListener("drop", bulkDropFile);
+          card.__bulkDragBound = true;
+        }
         renderBulkPreview();
       }
       window.renderBulkCard = renderBulkCard;
@@ -24885,7 +24892,8 @@
           opciones.forEach((o) => {
             opts.push('<option value="' + escapeHtml(o) + '"' + (conocido && normalize(o) === normalize(efectivo) ? " selected" : "") + ">" + escapeHtml(o) + "</option>");
           });
-          return '<select ' + attrs + ' style="' + st + '">' + opts.join("") + "</select>";
+          // Hueco para la flecha: sin él el texto largo queda debajo de ella.
+          return '<select ' + attrs + ' style="' + st + ';padding-right:26px;text-overflow:ellipsis">' + opts.join("") + "</select>";
         }
         if (BULK_NUM_FIELDS.indexOf(field) !== -1) {
           return '<input type="number" min="0" ' + attrs + ' value="' + escapeHtml(actual) + '" placeholder="Número" style="' + st + ';width:120px" />';
