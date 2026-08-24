@@ -12142,6 +12142,11 @@
               <!-- Visible en AMBOS modos: Google no distingue login de registro —
                    un usuario nuevo puede crear cuenta desde "Iniciar sesión". -->
               <small class="google-terms">Al continuar con Google aceptas los <a href="#terminos" onclick="event.preventDefault(); openLegalModal('terminos')">Términos y Condiciones</a> y la <a href="#privacidad" onclick="event.preventDefault(); openLegalModal('privacidad')">Política de Privacidad</a>.</small>
+              <!-- Solo tras cerrar sesión (bandera del selector): el camino "Usar
+                   otra cuenta" de Google tiene un bug DE GOOGLE (error 400 tras
+                   iniciar sesión en la cuenta nueva), pero la cuenta SÍ queda
+                   agregada al dispositivo: reintentar ya la muestra en la lista. -->
+              <small class="google-terms" id="googleSwitchHint" hidden style="color:#8a5a00">¿Vas a entrar con una cuenta de Google nueva en este dispositivo? Si al agregarla Google muestra un error, vuelve aquí y toca «Continuar con Google» otra vez: la cuenta ya estará en la lista y podrás elegirla.</small>
               <div class="login-or login-or-email"><span>o con tu email</span></div>
               <div class="login-status" id="loginStatus"></div>
               <div class="field-grid">
@@ -18671,6 +18676,15 @@
 
       function refreshAuthUI() {
         const loggedIn = Boolean(currentUserEmail);
+        // Guía para cambiar de cuenta de Google: visible solo cuando el próximo
+        // login mostrará el selector (tras "Salir"), que es cuando el camino
+        // "Usar otra cuenta" puede toparse con el 400 de Google.
+        const switchHint = document.getElementById("googleSwitchHint");
+        if (switchHint) {
+          let picker = false;
+          try { picker = localStorage.getItem("konektaya_show_picker") === "1"; } catch (e) {}
+          switchHint.hidden = loggedIn || !picker;
+        }
         // Mi panel, ADMIN y Salir viven ahora en el MENÚ del avatar; los ocultamos
         // del nav para no repetir el estado de sesión.
         const adminLink = document.getElementById("adminNavLink");
