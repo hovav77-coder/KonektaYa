@@ -24383,6 +24383,15 @@
       function bulkErr(errors, field, msg, sug) {
         errors.push({ f: field || "", m: msg, sug: sug || "" });
       }
+      // AVISO (ámbar): no impide publicar, pero el broker tiene que verlo. Nace
+      // de la zona: es lista abierta a propósito (hay PH y barriadas nuevas), y
+      // el matching de zona es igualdad exacta de texto. Una zona fuera del
+      // catálogo puede ser legítima o una errata gorda, y el sistema no puede
+      // distinguirlas; aceptarla en silencio dejaba la publicación invisible.
+      function bulkWarn(warnings, field, msg) {
+        warnings.push({ f: field || "", m: msg });
+      }
+      const BULK_LISTA_ABIERTA = { zone: true };
       function bulkMapEnum(enums, field, v, label, required, errors) {
         const t = bulkTxt(v);
         if (!t) { if (required) bulkErr(errors, field, label + " vacío"); return ""; }
@@ -24453,6 +24462,7 @@
 
       function bulkValidateProperty(raw) {
         const errors = [];
+        const warnings = [];
         const lbl = (f) => bulkColLabel(PROP_COLS, f);
         const mapEnum = (f, v, req) => bulkMapEnum(PROP_ENUMS, f, v, lbl(f), req, errors);
         const operation = mapEnum("operation", raw.operation, true);
@@ -24475,7 +24485,7 @@
           const rz = bulkSuggest(zone, locationOptions[province] || []);
           if (rz.exact) zone = rz.exact;
           else if (rz.suggestion) bulkErr(errors, "zone", 'Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?', rz.suggestion);
-          // sin match cercano: se acepta tal cual (barrios fuera del catálogo son válidos)
+          else bulkWarn(warnings, "zone", 'La zona "' + zone + '" no está en el catálogo. Se publica tal cual, pero solo hará match con quien busque exactamente esa zona. Si es una errata, corrígela.');
         }
         const salePrice = bulkNum(raw.salePrice);
         const rentalPrice = bulkNum(raw.rentalPrice);
@@ -24502,11 +24512,12 @@
           equipment, parkingSpaces: parkingSpaces || "0", storage, availabilityNeed,
           comments: bulkTxt(raw.comments)
         };
-        return { record, errors };
+        return { record, errors, warnings };
       }
 
       function bulkValidateVehicle(raw) {
         const errors = [];
+        const warnings = [];
         const lbl = (f) => bulkColLabel(VEH_COLS, f);
         const mapEnum = (f, v, req) => bulkMapEnum(VEH_ENUMS, f, v, lbl(f), req, errors);
         let vehicleType = bulkTxt(raw.vehicleType);
@@ -24568,6 +24579,7 @@
           const rz = bulkSuggest(zone, locationOptions[province] || []);
           if (rz.exact) zone = rz.exact;
           else if (rz.suggestion) bulkErr(errors, "zone", 'Zona "' + zone + '": ¿quisiste decir "' + rz.suggestion + '"?', rz.suggestion);
+          else bulkWarn(warnings, "zone", 'La zona "' + zone + '" no está en el catálogo. Se publica tal cual, pero solo hará match con quien busque exactamente esa zona. Si es una errata, corrígela.');
         }
         const transmission = bulkTxt(raw.transmission) ? mapEnum("transmission", raw.transmission, false) : "automatico";
         const fuel = bulkTxt(raw.fuel) ? mapEnum("fuel", raw.fuel, false) : "gasolina";
@@ -24584,7 +24596,7 @@
           transmission, fuel, status: status || "disponible_ahora", previousOwners,
           province, zone, color: bulkTxt(raw.color), vehicleComments: bulkTxt(raw.vehicleComments)
         };
-        return { record, errors };
+        return { record, errors, warnings };
       }
 
       const BULK_SPECS = {
@@ -24754,7 +24766,7 @@
           if (bulkState.truncated) raws = raws.slice(0, CAP);
           bulkState.editRow = -1;
           bulkState.soloErrores = false;
-          bulkState.rows = raws.map((raw) => { const v = spec.validate(raw); return { record: v.record, errors: v.errors, raw }; });
+          bulkState.rows = raws.map((raw) => { const v = spec.validate(raw); return { record: v.record, errors: v.errors, warnings: v.warnings || [], raw }; });
           if (status) status.textContent = bulkState.rows.length ? "" : 'No se encontraron filas en la hoja "' + spec.sheet + '".';
           renderBulkCard();
         } catch (e) {
@@ -24928,6 +24940,14 @@
         const st = "font-size:12.5px;border:1.5px solid " + (malo ? "#e05b2a" : "#d5dee9") + ";border-radius:8px;padding:4px 8px;max-width:220px";
         const actual = bulkTxt(raw[field]);
         const opciones = bulkFixOptionsFor(field, raw);
+        // Lista ABIERTA (zona): casilla de texto con el catálogo como
+        // autocompletado. Un <select> obligaba a elegir del catálogo, así que en
+        // el editor no había forma de escribir una barriada o un PH nuevo.
+        if (BULK_LISTA_ABIERTA[field]) {
+          const idLista = "bulkDl" + rowIndex + field;
+          return '<input type="text" list="' + idLista + '" ' + attrs + ' value="' + escapeHtml(actual) + '" style="' + st + ';width:200px" />' +
+            '<datalist id="' + idLista + '">' + (opciones || []).map((o) => '<option value="' + escapeHtml(o) + '"></option>').join("") + "</datalist>";
+        }
         if (opciones && opciones.length) {
           // Si el campo tiene forma canónica (ej. "2 puestos" → "2"), se marca la
           // opción equivalente en vez de tacharla de "no reconocido": el valor SÍ
@@ -25008,6 +25028,7 @@
         const v = bulkSpec().validate(row.raw);
         row.record = v.record;
         row.errors = v.errors;
+        row.warnings = v.warnings || [];
         if (teniaErrores && !v.errors.length) row.flash = true;
       }
 
@@ -25084,6 +25105,9 @@
         if (!rows.length) { box.innerHTML = ""; return; }
         const okCount = rows.filter((r) => r.errors.length === 0).length;
         const badCount = rows.length - okCount;
+        // Los avisos NO restan de "listas para publicar": son publicables, solo
+        // se cuentan aparte para que el broker sepa que hay algo que mirar.
+        const warnCount = rows.filter((r) => !r.errors.length && (r.warnings || []).length).length;
         const singular = spec.entityKey === "vehicleOffers" ? "vehículo" : "propiedad";
         const plural = spec.entityKey === "vehicleOffers" ? "vehículos" : "propiedades";
         // El filtro "solo con error" conserva el índice ORIGINAL de cada fila:
@@ -25097,6 +25121,12 @@
           // campo). Los errores sin campo (f vacío, ej. rechazo del servidor)
           // solo se muestran.
           const msgs = r.errors.map((e) => escapeHtml(e.m || String(e))).join(" · ");
+          // Avisos en ámbar: solo si la fila no tiene errores (si los tiene, lo
+          // urgente es el error; el aviso reaparece cuando quede limpia).
+          const avisos = ok && (r.warnings || []).length
+            ? '<div style="display:flex;align-items:flex-start;gap:6px;color:#8a5a00"><span style="flex:0 0 auto">⚠️</span><span>' +
+                r.warnings.map((w) => escapeHtml(w.m)).join(" · ") + "</span></div>"
+            : "";
           const vistos = {};
           const controles = r.errors
             .filter((e) => e.f && !vistos[e.f] && (vistos[e.f] = true))
@@ -25119,13 +25149,15 @@
             '<button type="button" onclick="bulkRemoveRow(' + i + ')" title="No publicar esta fila" style="font-size:12px;font-weight:800;border:1px solid #fecdd3;border-radius:8px;padding:5px 10px;background:#fff1f2;color:#b91c1c;cursor:pointer;margin-left:6px">Quitar</button>';
           const destello = r.flash ? ' class="bulk-flash"' : "";
           if (r.flash) delete r.flash;
-          const fila = `<tr${destello} style="background:${ok ? "transparent" : "#fff5f5"}">
+          const conAviso = ok && (r.warnings || []).length > 0;
+          const fondo = !ok ? "#fff5f5" : conAviso ? "#fffaf0" : "transparent";
+          const fila = `<tr${destello} style="background:${fondo}">
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${i + 1}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${ok ? "✅" : "⛔"}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${!ok ? "⛔" : conAviso ? "⚠️" : "✅"}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.tipo || "—")}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.zona || "—")}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${s.precio ? money.format(s.precio) : "—"}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;font-size:12px"><span style="color:#b91c1c">${msgs}</span>${controles}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;font-size:12px"><span style="color:#b91c1c">${msgs}</span>${avisos}${controles}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;white-space:nowrap">${acciones}</td>
           </tr>`;
           return fila + (editando ? '<tr><td colspan="7" style="padding:0">' + bulkRowEditorHtml(i, r) + "</td></tr>" : "");
@@ -25143,7 +25175,7 @@
           : "";
         box.innerHTML = `
           <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px">
-            <span style="font-size:13px;font-weight:800;color:#0a2f55">${okCount} lista${okCount === 1 ? "" : "s"} para publicar · ${badCount} con error${badCount === 1 ? "" : "es"}${bulkState.truncated ? ` · ${bulkState.truncated} omitidas (límite 200)` : ""}</span>
+            <span style="font-size:13px;font-weight:800;color:#0a2f55">${okCount} lista${okCount === 1 ? "" : "s"} para publicar${warnCount ? ` · <span style="color:#8a5a00">${warnCount} con aviso</span>` : ""} · ${badCount} con error${badCount === 1 ? "" : "es"}${bulkState.truncated ? ` · ${bulkState.truncated} omitidas (límite 200)` : ""}</span>
             <span style="flex:1"></span>
             ${accionesMasivas}
           </div>
