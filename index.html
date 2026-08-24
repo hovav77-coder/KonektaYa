@@ -24343,6 +24343,17 @@
         return isFinite(n) ? n : 0;
       }
       function bulkColLabel(cols, field) { const c = cols.find((x) => x.field === field); return c ? c.header : field; }
+      // Estacionamientos: el Excel trae "2", "2 puestos", "6", "5+"… y todo eso
+      // se entiende. Devuelve la forma canónica que se muestra en la lista
+      // ("0"…"4" o "5+") para que el validador Y el desplegable del editor usen
+      // la MISMA regla y no puedan desincronizarse.
+      function bulkParkingCanon(v) {
+        const pk = bulkTxt(v);
+        if (!pk) return "";
+        const pn = Number(pk.replace(/[^0-9]/g, ""));
+        if (pn > 4 || /mas|más|\+/i.test(pk)) return "5+";
+        return String(Math.max(0, pn || 0));
+      }
       // Los errores son OBJETOS {f, m, sug?}: f = campo (para saber qué celda se
       // puede corregir en la vista previa), m = mensaje, sug = sugerencia de
       // catálogo lista para preseleccionar. f vacío = no corregible en línea
@@ -24447,9 +24458,8 @@
           { field: "streetOrNeighborhood", label: lbl("streetOrNeighborhood"), value: raw.streetOrNeighborhood },
           { field: "comments", label: lbl("comments"), value: raw.comments, comment: true }
         ], errors);
-        let parkingSpaces;
-        const pk = bulkTxt(raw.parkingSpaces);
-        if (pk) { const pn = Number(pk.replace(/[^0-9]/g, "")); parkingSpaces = (pn > 4 || /mas|más|\+/i.test(pk)) ? "mas" : String(Math.max(0, pn || 0)); }
+        const pkCanon = bulkParkingCanon(raw.parkingSpaces);
+        const parkingSpaces = pkCanon ? (pkCanon === "5+" ? "mas" : pkCanon) : undefined;
         const equipment = bulkTxt(raw.equipment) ? mapEnum("equipment", raw.equipment, false) : "sin_muebles";
         const storage = bulkTxt(raw.storage) ? mapEnum("storage", raw.storage, false) : "no";
         const availabilityNeed = bulkTxt(raw.availabilityNeed) ? mapEnum("availabilityNeed", raw.availabilityNeed, false) : "inmediata";
@@ -24836,6 +24846,8 @@
         }
       };
       const BULK_NUM_FIELDS = ["salePrice", "rentalPrice", "sizeM2", "year", "mileage"];
+      // Campos cuyo valor escrito libre tiene un equivalente exacto en la lista.
+      const BULK_OPTION_CANON = { parkingSpaces: bulkParkingCanon };
 
       function bulkFixOptionsFor(field, raw) {
         if (field === "brand") return bulkAllBrands();
@@ -24860,13 +24872,18 @@
         const actual = bulkTxt(raw[field]);
         const opciones = bulkFixOptionsFor(field, raw);
         if (opciones && opciones.length) {
-          const conocido = opciones.some((o) => normalize(o) === normalize(actual));
+          // Si el campo tiene forma canónica (ej. "2 puestos" → "2"), se marca la
+          // opción equivalente en vez de tacharla de "no reconocido": el valor SÍ
+          // se entiende y así el broker ve con qué se va a publicar.
+          const canon = BULK_OPTION_CANON[field];
+          const efectivo = (canon && canon(actual)) || actual;
+          const conocido = opciones.some((o) => normalize(o) === normalize(efectivo));
           const opts = ['<option value=""' + (actual ? "" : " selected") + ">Elige…</option>"];
           if (actual && !conocido) {
             opts.push('<option value="' + escapeHtml(actual) + '" selected>' + escapeHtml(actual) + " (no reconocido)</option>");
           }
           opciones.forEach((o) => {
-            opts.push('<option value="' + escapeHtml(o) + '"' + (conocido && normalize(o) === normalize(actual) ? " selected" : "") + ">" + escapeHtml(o) + "</option>");
+            opts.push('<option value="' + escapeHtml(o) + '"' + (conocido && normalize(o) === normalize(efectivo) ? " selected" : "") + ">" + escapeHtml(o) + "</option>");
           });
           return '<select ' + attrs + ' style="' + st + '">' + opts.join("") + "</select>";
         }
