@@ -24522,6 +24522,13 @@
           equipment, parkingSpaces: parkingSpaces || "0", storage, availabilityNeed,
           comments: bulkTxt(raw.comments)
         };
+        // Coordenadas de la geolocalización opcional: mismos nombres que llena el
+        // formulario con Google Places (streetsMatch y el radio de 2 km las usan).
+        if (bulkTxt(raw.streetLat) && bulkTxt(raw.streetLng)) {
+          record.streetLat = bulkTxt(raw.streetLat);
+          record.streetLng = bulkTxt(raw.streetLng);
+          if (bulkTxt(raw.streetPlaceId)) record.streetPlaceId = bulkTxt(raw.streetPlaceId);
+        }
         return { record, errors, warnings };
       }
 
@@ -24639,6 +24646,9 @@
             ["Depósito/bodega", "No", "Sí | No"],
             ["Disponibilidad", "No", "Inmediata | 15 días | 30 días | 45 días | 60 días"],
             ["Comentarios", "No", "Texto libre"],
+            [""],
+            ["CONSEJO: después de subir el archivo, usa el botón «📍 Geolocalizar» de la vista previa."],
+            ["Es opcional y AUMENTA el % de match: fija cada inmueble en el mapa de Google, igual que el formulario."],
             [""],
             ["EJEMPLO (copia esta fila a la hoja Propiedades y ajústala):"]
           ],
@@ -25053,10 +25063,15 @@
         if (teniaErrores && !v.errors.length) row.flash = true;
       }
 
+      // Cambiar la dirección invalida el pin (igual que teclear en el formulario
+      // dispara clearGeo): un pin de la dirección vieja es un pin mentiroso.
+      const BULK_GEO_DEPENDE = { streetOrNeighborhood: true, phName: true, zone: true, province: true };
+
       function bulkFixCell(rowIndex, field, value) {
         const row = (bulkState.rows || [])[rowIndex];
         if (!row) return;
         row.raw[field] = value;
+        if (BULK_GEO_DEPENDE[field] && (row.geo || bulkTxt(row.raw.streetLat))) bulkClearGeo(row);
         bulkRevalidar(row);
         renderBulkPreview();
       }
@@ -25118,6 +25133,93 @@
       }
       window.bulkToggleSoloErrores = bulkToggleSoloErrores;
 
+      // ===== Geolocalización opcional (solo inmuebles) =====
+      // Las filas del Excel no traen coordenadas: pasan el filtro de zona por
+      // texto pero nunca ganan los puntos de misma calle ni el radio de 2 km.
+      // Este paso opcional busca cada dirección con el MISMO motor de Google
+      // que usa el formulario (loadGmaps + AutocompleteSuggestion) y fija
+      // streetLat/Lng/PlaceId. Exige calle o PH: geolocalizar solo la zona
+      // pondría el pin en el centro del corregimiento, y un pin malo es peor
+      // que ninguno. En vehículos no existe: su match ignora la ubicación.
+      function bulkGeoCandidatas() {
+        if (bulkState.vertical !== "property") return [];
+        return (bulkState.rows || []).filter((r) =>
+          !r.errors.length && !bulkTxt(r.raw.streetLat) &&
+          (bulkTxt(r.raw.streetOrNeighborhood) || bulkTxt(r.raw.phName)));
+      }
+
+      function bulkClearGeo(row) {
+        delete row.raw.streetPlaceId;
+        delete row.raw.streetLat;
+        delete row.raw.streetLng;
+        delete row.geo;
+      }
+
+      async function bulkGeolocate() {
+        const cand = bulkGeoCandidatas();
+        if (!cand.length) return;
+        const status = document.getElementById("bulkStatus");
+        const btn = document.getElementById("bulkGeoBtn");
+        if (btn) { btn.disabled = true; btn.style.opacity = "0.6"; }
+        let fijadas = 0, sinResultado = 0;
+        try {
+          if (status) status.textContent = "Cargando Google Maps…";
+          await loadGmaps();
+          const { AutocompleteSuggestion, AutocompleteSessionToken } = await google.maps.importLibrary("places");
+          for (let k = 0; k < cand.length; k++) {
+            const r = cand[k];
+            if (status) status.textContent = "Geolocalizando " + (k + 1) + " de " + cand.length + "…";
+            const consulta = [bulkTxt(r.raw.phName), bulkTxt(r.raw.streetOrNeighborhood), bulkTxt(r.raw.zone), bulkTxt(r.raw.province), "Panamá"].filter(Boolean).join(", ");
+            try {
+              const { suggestions } = await AutocompleteSuggestion.fetchAutocompleteSuggestions({
+                input: consulta, sessionToken: new AutocompleteSessionToken(), includedRegionCodes: ["pa"], language: "es"
+              });
+              const pred = suggestions && suggestions[0] && suggestions[0].placePrediction;
+              if (!pred) { sinResultado++; continue; }
+              const place = pred.toPlace();
+              await place.fetchFields({ fields: ["id", "location", "displayName", "formattedAddress", "types"] });
+              if (!place.location) { sinResultado++; continue; }
+              r.raw.streetPlaceId = place.id || "";
+              r.raw.streetLat = String(place.location.lat());
+              r.raw.streetLng = String(place.location.lng());
+              const types = place.types || [];
+              const isEstab = ["establishment", "point_of_interest", "premise", "subpremise", "lodging", "shopping_mall"].some((t) => types.indexOf(t) !== -1);
+              const dName = typeof place.displayName === "string" ? place.displayName : (place.displayName && place.displayName.text) || "";
+              // La etiqueta es SOLO para mostrar en la vista previa: no entra al
+              // record (el trigger anti-contacto del servidor escanea los textos
+              // desconocidos, y una dirección formateada trae números).
+              r.geo = { label: (isEstab && dName ? dName + " · " : "") + (place.formattedAddress || consulta) };
+              bulkRevalidar(r);
+              fijadas++;
+            } catch (e) {
+              // Si la PRIMERA consulta explota sin que nada haya funcionado, el
+              // problema es de Google (key restringida, sin cuota), no de la
+              // dirección: abortar con el error real en vez de recorrer todas
+              // las filas reportando un falso "sin resultado".
+              if (!fijadas && !sinResultado) throw e;
+              sinResultado++;
+            }
+            await new Promise((res) => setTimeout(res, 200));
+          }
+          if (status) status.textContent =
+            (fijadas === 1 ? "Ubicación fijada en 1 fila." : "Ubicación fijada en " + fijadas + " filas.") +
+            (sinResultado ? " " + sinResultado + " sin resultado — revisa calle y zona, o fíjalas editando la publicación después." : "");
+        } catch (e) {
+          if (status) status.textContent = "No se pudo geolocalizar: " + ((e && e.message) || e);
+        }
+        renderBulkPreview();
+      }
+      window.bulkGeolocate = bulkGeolocate;
+
+      function bulkRemovePin(rowIndex) {
+        const row = (bulkState.rows || [])[rowIndex];
+        if (!row) return;
+        bulkClearGeo(row);
+        bulkRevalidar(row);
+        renderBulkPreview();
+      }
+      window.bulkRemovePin = bulkRemovePin;
+
       function renderBulkPreview() {
         const box = document.getElementById("bulkPreview");
         if (!box) return;
@@ -25147,6 +25249,10 @@
           const avisos = ok && (r.warnings || []).length
             ? '<div style="display:flex;align-items:flex-start;gap:6px;color:#8a5a00"><span style="flex:0 0 auto">⚠️</span><span>' +
                 r.warnings.map((w) => escapeHtml(w.m)).join(" · ") + "</span></div>"
+            : "";
+          const pin = r.geo
+            ? '<div style="display:flex;align-items:center;gap:6px;color:#137436;flex-wrap:wrap"><span>📍</span><span>Ubicación fijada · ' + escapeHtml(r.geo.label) + '</span>' +
+              '<button type="button" onclick="bulkRemovePin(' + i + ')" style="font-size:11px;font-weight:800;border:1px solid #cce8cc;border-radius:7px;padding:3px 8px;background:#fff;color:#137436;cursor:pointer">Quitar pin</button></div>'
             : "";
           const vistos = {};
           const controles = r.errors
@@ -25178,7 +25284,7 @@
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.tipo || "—")}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${escapeHtml(s.zona || "—")}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7">${s.precio ? money.format(s.precio) : "—"}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;font-size:12px"><span style="color:#b91c1c">${msgs}</span>${avisos}${controles}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;font-size:12px"><span style="color:#b91c1c">${msgs}</span>${avisos}${pin}${controles}</td>
             <td style="padding:6px 8px;border-bottom:1px solid #eef2f7;white-space:nowrap">${acciones}</td>
           </tr>`;
           return fila + (editando ? '<tr><td colspan="7" style="padding:0">' + bulkRowEditorHtml(i, r) + "</td></tr>" : "");
@@ -25187,8 +25293,10 @@
         // es corregir mejor una celda, es no repetir el mismo clic 30 veces.
         const btn = (extra) => 'type="button" style="font-size:12px;font-weight:800;border-radius:8px;padding:6px 11px;cursor:pointer;' + extra + '"';
         const sugCount = rows.reduce((n, r) => n + bulkSugerenciasDe(r).length, 0);
+        const geoCand = bulkGeoCandidatas().length;
         const accionesMasivas =
           (sugCount ? '<button ' + btn("border:none;background:linear-gradient(135deg,#e05b2a,#f1883f);color:#fff") + ' onclick="bulkApplyAllSuggestions()">Aplicar ' + sugCount + (sugCount === 1 ? " sugerencia" : " sugerencias") + "</button>" : "") +
+          (geoCand ? '<button id="bulkGeoBtn" ' + btn("border:1px solid #9cc4e4;background:#eef6fc;color:#0f5e91") + ' onclick="bulkGeolocate()">📍 Geolocalizar ' + geoCand + (geoCand === 1 ? " fila" : " filas") + "</button>" : "") +
           (badCount ? '<button ' + btn("border:1px solid #fecdd3;background:#fff1f2;color:#991b1b") + ' onclick="bulkRemoveErrorRows()">Quitar ' + badCount + " con error</button>" : "") +
           (badCount || bulkState.soloErrores ? '<button ' + btn("border:1px solid " + (bulkState.soloErrores ? "#0a2f55;background:#0a2f55;color:#fff" : "#d5dee9;background:#fff;color:#0a2f55")) + ' onclick="bulkToggleSoloErrores()">' + (bulkState.soloErrores ? "Ver todas" : "Solo con error") + "</button>" : "");
         const vacioPorFiltro = !visibles.length
@@ -25200,6 +25308,7 @@
             <span style="flex:1"></span>
             ${accionesMasivas}
           </div>
+          ${geoCand ? '<div style="font-size:12px;color:#5b6b82;margin:-3px 0 9px">📍 <strong>Geolocalizar es opcional y aumenta el % de match:</strong> fija cada inmueble en el mapa de Google y activa los puntos por misma calle y el radio de cercanía, igual que si lo publicaras con el formulario.</div>' : ""}
           <div style="overflow-x:auto;border:1px solid #eef2f7;border-radius:10px">
             <table style="width:100%;border-collapse:collapse;font-size:13px">
               <thead><tr style="background:#f6f9fd;text-align:left">
