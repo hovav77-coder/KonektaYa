@@ -25310,6 +25310,15 @@
                       row.geo = { label: (isEstab && dName ? dName + " · " : "") + (place.formattedAddress || area || city || row.raw.streetOrNeighborhood) };
                     }
                     bulkRevalidar(row);
+                    // Google no siempre trae el corregimiento (muchos lugares de
+                    // Panamá solo tienen código de posición). En ese caso la zona
+                    // del Excel queda como estaba, y si no corresponde al pin, el
+                    // interesado vería una zona equivocada y las búsquedas por
+                    // texto de zona no encontrarían la fila. Avisar, no callar.
+                    if (!(area || city)) {
+                      row.warnings = row.warnings || [];
+                      row.warnings.push({ f: "zone", m: 'Google no trajo el corregimiento de este lugar: revisa que la Zona ("' + (row.raw.zone || "vacía") + '") corresponda al pin, y corrígela si no.' });
+                    }
                     renderBulkPreview();
                   } catch (e) {}
                 });
