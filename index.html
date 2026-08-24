@@ -10990,6 +10990,112 @@
       }
       #secondaryModal .secondary-modal-body [hidden] { display: none; }
       #secondaryModal .pane-heading { margin-top: 4px; }
+
+      /* ===== Mapa de nodos del panel: hub al centro + 8 temas conectados =====
+         Las conexiones replican el logo (punto naranja → línea → anillo). En
+         PC es una cuadrícula 3 columnas con líneas SVG medidas por JS; en el
+         celular, una columna con el riel degradado (la "línea konekta"). */
+      /* display:grid/flex de las clases le gana al atributo [hidden] del
+         navegador: sin esto, "Regresar" y los nodos de broker ocultos se ven. */
+      .pmap[hidden], .pmap-back[hidden], .pmap-node[hidden] { display: none; }
+      .pmap {
+        display: grid;
+        gap: 14px 34px;
+        grid-template-areas: "l1 hub r1" "l2 hub r2" "l3 hub r3" "l4 hub r4";
+        grid-template-columns: 1fr minmax(170px, 205px) 1fr;
+        margin: 4px 0 20px;
+        position: relative;
+      }
+      #pmapLines { height: 100%; inset: 0; pointer-events: none; position: absolute; width: 100%; }
+      .pmap-hub {
+        align-items: center;
+        align-self: center;
+        background: linear-gradient(125deg, rgba(10, 47, 85, 0.98) 55%, rgba(21, 74, 128, 0.95));
+        border-radius: 18px;
+        box-shadow: 0 14px 30px rgba(10, 47, 85, 0.28);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        grid-area: hub;
+        padding: 16px 12px;
+        position: relative;
+        text-align: center;
+        z-index: 1;
+      }
+      .pmap-hub-name { font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+      .pmap-hub-role { color: #9fb4cc; font-size: 11px; font-weight: 700; }
+      .pmap-node {
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #dce5ef;
+        border-radius: 14px;
+        box-shadow: var(--soft-shadow);
+        cursor: pointer;
+        display: flex;
+        font: inherit;
+        gap: 10px;
+        padding: 11px 13px;
+        position: relative;
+        text-align: left;
+        transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
+        z-index: 1;
+      }
+      .pmap-node:hover { border-color: #b9cde2; box-shadow: 0 14px 26px rgba(16, 32, 51, 0.14); transform: translateY(-2px); }
+      .pmap-num {
+        align-items: center;
+        background: #eef3f8;
+        border-radius: 50%;
+        color: #0a2f55;
+        display: flex;
+        flex: 0 0 auto;
+        font-size: 11px;
+        font-weight: 800;
+        height: 20px;
+        justify-content: center;
+        width: 20px;
+      }
+      .pmap-ic { flex: 0 0 auto; font-size: 17px; }
+      .pmap-tx { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+      .pmap-tx strong { color: #0a2f55; font-size: 13.5px; font-weight: 800; }
+      .pmap-tx small { color: #5b6b82; font-size: 11px; font-weight: 600; }
+      .pmap-node.hot { border: 1.5px solid #f1883f; }
+      .pmap-node.hot .pmap-num { background: #fff0e8; color: #a23c18; }
+      .pmap-badge { background: #e05b2a; border-radius: 999px; color: #fff; flex: 0 0 auto; font-size: 11px; font-weight: 800; margin-left: auto; padding: 1px 8px; }
+      .pmap-node.pm-go { background: linear-gradient(135deg, #e05b2a, #f1883f); border: none; box-shadow: 0 12px 24px rgba(224, 91, 42, 0.3); }
+      .pmap-node.pm-go .pmap-tx strong { color: #fff; }
+      .pmap-node.pm-go .pmap-tx small { color: rgba(255, 255, 255, 0.88); }
+      .pmap-node.pm-go .pmap-num { background: rgba(255, 255, 255, 0.25); color: #fff; }
+      .pm-l1 { grid-area: l1; } .pm-l2 { grid-area: l2; } .pm-l3 { grid-area: l3; } .pm-l4 { grid-area: l4; }
+      .pm-r1 { grid-area: r1; } .pm-r2 { grid-area: r2; } .pm-r3 { grid-area: r3; } .pm-r4 { grid-area: r4; }
+      .pmap-back { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; margin: 2px 0 16px; }
+      .pmap-back-btn { background: #fff; border: 1px solid #d5dee9; color: #0a2f55; font-size: 13px; font-weight: 800; min-height: 38px; padding: 8px 14px; }
+      .pmap-back-title { align-items: center; display: flex; gap: 8px; }
+      .pmap-back-dot { background: #e05b2a; border-radius: 50%; height: 9px; width: 9px; }
+      .pmap-back-line { background: #e05b2a; border-radius: 2px; height: 2.5px; width: 22px; }
+      .pmap-back-title strong { color: #0a2f55; font-size: 16px; }
+      @media (max-width: 760px) {
+        .pmap { display: flex; flex-direction: column; gap: 9px; padding-left: 24px; }
+        #pmapLines { display: none; }
+        .pmap::before { background: linear-gradient(#e05b2a, #f1883f, #0a2f55); border-radius: 2px; bottom: 14px; content: ""; left: 7px; position: absolute; top: 92px; width: 3px; }
+        .pmap-hub { flex-direction: row; justify-content: center; margin-left: -24px; order: 0; padding: 12px; }
+        .pmap-node { order: 9; }
+        .pm-n1 { order: 1; } .pm-n2 { order: 2; } .pm-n3 { order: 3; } .pm-n4 { order: 4; }
+        .pm-n5 { order: 5; } .pm-n6 { order: 6; } .pm-n7 { order: 7; } .pm-n8 { order: 8; }
+        .pmap-node::before {
+          background: #fff;
+          border: 2.5px solid #0a2f55;
+          border-radius: 50%;
+          content: "";
+          height: 8px;
+          left: -22px;
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 8px;
+        }
+        .pmap-node.hot::before, .pmap-node.pm-go::before { background: #e05b2a; border-color: #e05b2a; }
+      }
     </style>
   </head>
   <body>
@@ -12191,6 +12297,54 @@
           </div>
 
           <div class="dashboard-view active" data-dashboard-view="user">
+            <!-- Mapa de nodos: la portada del panel. Cada nodo abre SU sección
+                 (una a la vez) con "Regresar al panel" arriba. -->
+            <div class="pmap" id="panelMap" hidden>
+              <svg id="pmapLines" aria-hidden="true"></svg>
+              <div class="pmap-hub" id="pmapHub">
+                <svg width="34" height="34" viewBox="0 0 72 72" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="#f1883f"></circle><path d="M25 25L48 48" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round"></path><circle cx="53" cy="53" r="14" fill="none" stroke="#fff" stroke-width="7"></circle></svg>
+                <span class="pmap-hub-name" id="pmapName"></span>
+                <span class="pmap-hub-role" id="pmapRole"></span>
+              </div>
+              <button type="button" class="pmap-node pm-l1 pm-n1" data-theme="datos" onclick="openPanelSection('datos')">
+                <span class="pmap-num">1</span><span class="pmap-ic">👤</span>
+                <span class="pmap-tx"><strong>Mis datos</strong><small>nombre · celular · contraseña</small></span>
+              </button>
+              <button type="button" class="pmap-node pm-l2 pm-n2" data-theme="billetera" onclick="openPanelSection('billetera')">
+                <span class="pmap-num">2</span><span class="pmap-ic">💰</span>
+                <span class="pmap-tx"><strong>Mi billetera</strong><small id="pmapSaldo">USD 0.00</small></span>
+              </button>
+              <button type="button" class="pmap-node pm-r1 pm-n3 pm-go" data-theme="empecemos" onclick="openPanelSection('empecemos')">
+                <span class="pmap-num">3</span><span class="pmap-ic">👋</span>
+                <span class="pmap-tx"><strong>Empecemos</strong><small>publicar · buscar</small></span>
+              </button>
+              <button type="button" class="pmap-node pm-r2 pm-n4" data-theme="publicaciones" onclick="openPanelSection('publicaciones')">
+                <span class="pmap-num">4</span><span class="pmap-ic">📋</span>
+                <span class="pmap-tx"><strong>Mis publicaciones</strong><small id="pmapPubs">0 ofertas · 0 búsquedas</small></span>
+                <span class="pmap-badge" id="pmapPubsBadge" hidden>0</span>
+              </button>
+              <button type="button" class="pmap-node pm-r4 pm-n5" data-theme="broker" onclick="openPanelSection('broker')" hidden>
+                <span class="pmap-num">5</span><span class="pmap-ic">💼</span>
+                <span class="pmap-tx"><strong>Cuenta Broker</strong><small>aprobada · paquetes con bono</small></span>
+              </button>
+              <button type="button" class="pmap-node pm-r3 pm-n6" data-theme="carga" onclick="openPanelSection('carga')" hidden>
+                <span class="pmap-num">6</span><span class="pmap-ic">📤</span>
+                <span class="pmap-tx"><strong>Carga masiva</strong><small>Excel · inmuebles y vehículos</small></span>
+              </button>
+              <button type="button" class="pmap-node pm-l3 pm-n7" data-theme="historial" onclick="openPanelSection('historial')">
+                <span class="pmap-num">7</span><span class="pmap-ic">🧾</span>
+                <span class="pmap-tx"><strong>Historial</strong><small>contactos desbloqueados</small></span>
+              </button>
+              <button type="button" class="pmap-node pm-l4 pm-n8" data-theme="pagos" onclick="openPanelSection('pagos')">
+                <span class="pmap-num">8</span><span class="pmap-ic">💳</span>
+                <span class="pmap-tx"><strong>Pagos</strong><small>recibos de recargas</small></span>
+              </button>
+            </div>
+            <div id="panelBack" class="pmap-back" hidden>
+              <button type="button" class="button pmap-back-btn" onclick="backToPanelMap()">← Regresar al panel</button>
+              <span class="pmap-back-title"><span class="pmap-back-dot"></span><span class="pmap-back-line"></span><strong id="panelBackTitle"></strong></span>
+            </div>
+            <div data-panel-theme="billetera">
             <div class="wallet-panel wallet-panel-compact">
               <div class="wallet-account-bar wab-b">
                 <div class="wab-id">
@@ -12224,11 +12378,19 @@
                   <p class="cb-status" id="couponStatus"></p>
                 </div>
               </div>
-              <div id="brokerStatusBanner"></div>
               <div class="wallet-summary-strip" id="ownerStats"></div>
             </div>
-            <div class="owner-action" id="ownerActionBlock" hidden></div>
-            <div id="brokerB2BPanel"></div>
+            </div>
+            <div data-panel-theme="empecemos">
+              <div class="owner-action" id="ownerActionBlock" hidden></div>
+            </div>
+            <div data-panel-theme="broker">
+              <div id="brokerStatusBanner"></div>
+              <div id="brokerB2BPanel"></div>
+            </div>
+            <div data-panel-theme="carga">
+              <section class="b2b-panel" id="bulkCard" hidden></section>
+            </div>
             <div class="mydata-modal" id="myDataModal" hidden>
               <div class="mydata-backdrop" onclick="closeMyData()"></div>
               <div class="mydata-dialog" role="dialog" aria-modal="true" aria-label="Mis datos">
@@ -12273,6 +12435,7 @@
                 </div>
               </div>
             </div>
+            <div data-panel-theme="publicaciones">
             <div class="section user-dashboard-tabs">
               <h2 class="user-dash-title">Mis publicaciones</h2>
               <div class="dashboard-nav-bar" aria-label="Navegación del dashboard">
@@ -12318,27 +12481,22 @@
               </div>
             </div>
             <div class="owner-resumen-strip" id="ownerResumen" hidden></div>
-            <div class="rd-modal" id="secondaryModal" hidden>
-              <div class="rd-scrim" onclick="closeSecondaryPanel()"></div>
-              <div class="rd-card secondary-modal-card" role="dialog" aria-modal="true" aria-label="Historial y pagos">
-                <button type="button" class="legal-modal-close" onclick="closeSecondaryPanel()" aria-label="Cerrar">✕</button>
-                <div class="secondary-modal-body">
-                  <div id="secHistory" hidden>
-                    <div class="pane-heading">
-                      <h2>Historial de desbloqueos</h2>
-                      <span class="pane-heading-note">Contactos desbloqueados con su costo</span>
-                    </div>
-                    <div class="history-list" id="unlockHistory"></div>
-                  </div>
-                  <div id="secPayments" hidden>
-                    <div class="pane-heading">
-                      <h2>Pagos y recibos</h2>
-                      <span class="pane-heading-note">Tus recargas de crédito. Descarga el comprobante de cada pago.</span>
-                    </div>
-                    <div class="pay-list" id="userPayments"></div>
-                  </div>
-                </div>
+            </div>
+            <!-- Historial y Pagos: antes vivían en un modal (secondaryModal);
+                 ahora son secciones del mapa, como los demás temas. -->
+            <div data-panel-theme="historial">
+              <div class="pane-heading" style="margin-top:6px">
+                <h2>Historial de desbloqueos</h2>
+                <span class="pane-heading-note">Contactos desbloqueados con su costo</span>
               </div>
+              <div class="history-list" id="unlockHistory"></div>
+            </div>
+            <div data-panel-theme="pagos">
+              <div class="pane-heading" style="margin-top:6px">
+                <h2>Pagos y recibos</h2>
+                <span class="pane-heading-note">Tus recargas de crédito. Descarga el comprobante de cada pago.</span>
+              </div>
+              <div class="pay-list" id="userPayments"></div>
             </div>
           </div>
 
@@ -16016,26 +16174,141 @@
       // Historial y Pagos abren como POPUP (antes cambiaban el pane en sitio y no
       // había forma clara de volver). El contenido (#unlockHistory / #userPayments)
       // vive dentro del modal; render()/renderHistory/renderPayments lo pueblan por id.
-      function openSecondaryPanel(which) {
-        const modal = document.getElementById("secondaryModal");
-        if (!modal) return;
-        const isPay = which === "payments";
-        const h = document.getElementById("secHistory");
-        const p = document.getElementById("secPayments");
-        if (h) h.hidden = isPay;
-        if (p) p.hidden = !isPay;
+      // ===== Mapa de nodos del panel (hub) =====
+      // El panel abre en el MAPA (8 temas conectados al centro); cada nodo abre
+      // solo SU sección con "Regresar al panel". "Mis datos" sigue siendo el
+      // modal existente (tiene su propio cerrar). Sin sesión se muestra la vista
+      // clásica apilada: el guard de login redirige de todos modos.
+      let panelSection = null;
+      const PANEL_THEMES = {
+        billetera: "2 · Mi billetera",
+        empecemos: "3 · Empecemos",
+        publicaciones: "4 · Mis publicaciones",
+        broker: "5 · Cuenta Broker",
+        carga: "6 · Carga masiva",
+        historial: "7 · Historial de desbloqueos",
+        pagos: "8 · Pagos y recibos"
+      };
+
+      function renderPanelView() {
+        const map = document.getElementById("panelMap");
+        const back = document.getElementById("panelBack");
+        if (!map || !back) return;
+        if (!currentUserEmail) {
+          map.hidden = true;
+          back.hidden = true;
+          document.querySelectorAll("[data-panel-theme]").forEach((el) => { el.hidden = false; });
+          return;
+        }
+        document.querySelectorAll("[data-panel-theme]").forEach((el) => {
+          el.hidden = panelSection !== el.getAttribute("data-panel-theme");
+        });
+        map.hidden = Boolean(panelSection);
+        back.hidden = !panelSection;
+        const t = document.getElementById("panelBackTitle");
+        if (t) t.textContent = PANEL_THEMES[panelSection] || "";
+        if (!panelSection) renderPanelMap();
+      }
+
+      function openPanelSection(key) {
+        if (key === "datos") { if (typeof openMyData === "function") openMyData(); return; }
+        if (!PANEL_THEMES[key]) return;
+        showTab("admin"); // resetea al mapa; abajo fijamos la sección elegida
+        panelSection = key;
         try {
-          if (isPay) { if (typeof renderPayments === "function") renderPayments(); }
-          else { if (typeof renderHistory === "function") renderHistory(); }
+          if (key === "historial" && typeof renderHistory === "function") renderHistory();
+          if (key === "pagos" && typeof renderPayments === "function") renderPayments();
         } catch (e) {}
-        modal.hidden = false;
-        const card = modal.querySelector(".rd-card");
-        if (card) card.scrollTop = 0;
+        renderPanelView();
+        window.scrollTo({ top: 0, behavior: "auto" });
       }
-      function closeSecondaryPanel() {
-        const modal = document.getElementById("secondaryModal");
-        if (modal) modal.hidden = true;
+      function backToPanelMap() {
+        panelSection = null;
+        renderPanelView();
+        window.scrollTo({ top: 0, behavior: "auto" });
       }
+      window.openPanelSection = openPanelSection;
+      window.backToPanelMap = backToPanelMap;
+      window.__pmapReset = function () { panelSection = null; if (typeof renderPanelView === "function") renderPanelView(); };
+      window.__pmapRefresh = function () { renderPanelView(); };
+
+      // El mapa muestra datos VIVOS sin recalcular nada: copia lo que el render
+      // ya dejó en el DOM (saldo, contadores, chip de rol, badge de resultados).
+      function renderPanelMap() {
+        const map = document.getElementById("panelMap");
+        if (!map || map.hidden) return;
+        const txt = (id) => { const el = document.getElementById(id); return el ? el.textContent.trim() : ""; };
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+        set("pmapName", txt("currentUserName") || currentUserEmail || "");
+        const roleChip = document.getElementById("currentUserRoleChip");
+        set("pmapRole", roleChip && !roleChip.hidden && roleChip.textContent.trim() ? roleChip.textContent.trim() : "Mi panel");
+        set("pmapSaldo", txt("walletBalanceValue") || "USD 0.00");
+        const offers = parseInt(txt("offersTabCount") || "0", 10) || 0;
+        const searches = parseInt(txt("searchesTabCount") || "0", 10) || 0;
+        set("pmapPubs", offers + (offers === 1 ? " oferta" : " ofertas") + " · " + searches + (searches === 1 ? " búsqueda" : " búsquedas"));
+        const hotEl = document.querySelector("#ownerActionBlock .oa-n2");
+        const hot = hotEl ? parseInt(hotEl.textContent, 10) || 0 : 0;
+        const badge = document.getElementById("pmapPubsBadge");
+        if (badge) { badge.hidden = hot <= 0; badge.textContent = String(hot); }
+        const pubNode = map.querySelector('[data-theme="publicaciones"]');
+        if (pubNode) pubNode.classList.toggle("hot", hot > 0);
+        // Nodos de broker solo si el panel broker existe (misma condición que
+        // usa renderBrokerB2B: ficha local aprobada o promoción por Supabase).
+        const b2b = document.getElementById("brokerB2BPanel");
+        const brokerOn = Boolean(b2b && b2b.innerHTML.trim());
+        const bNode = map.querySelector('[data-theme="broker"]');
+        const cNode = map.querySelector('[data-theme="carga"]');
+        if (bNode) bNode.hidden = !brokerOn;
+        if (cNode) cNode.hidden = !brokerOn;
+        // Tres intentos: ahora, al próximo frame y a los 60 ms. El gancho de
+        // showTab corre ANTES de que la pestaña se active (display:none →
+        // medidas en cero), y rAF no dispara con la pestaña en segundo plano.
+        drawPanelLines();
+        requestAnimationFrame(drawPanelLines);
+        setTimeout(drawPanelLines, 60);
+      }
+
+      // Conexiones del mapa (solo PC): líneas medidas del borde del hub al borde
+      // de cada nodo, con el ADN del logo — punto naranja al salir, anillo al
+      // llegar. Naranja = pide acción (Empecemos, Publicaciones con resultados).
+      let pmapRaf = null;
+      function drawPanelLines() {
+        const map = document.getElementById("panelMap");
+        const svg = document.getElementById("pmapLines");
+        const hub = document.getElementById("pmapHub");
+        if (!map || !svg || !hub || map.hidden) return;
+        if (window.innerWidth <= 760) { svg.innerHTML = ""; return; }
+        const mr = map.getBoundingClientRect();
+        if (!mr.width) return;
+        svg.setAttribute("viewBox", "0 0 " + mr.width + " " + mr.height);
+        const hr = hub.getBoundingClientRect();
+        const hubY = hr.top - mr.top + hr.height / 2;
+        let out = "";
+        map.querySelectorAll(".pmap-node").forEach((node) => {
+          if (node.hidden) return;
+          const nr = node.getBoundingClientRect();
+          const izq = nr.left < hr.left;
+          const x1 = (izq ? hr.left : hr.right) - mr.left;
+          // El anillo va 9px AFUERA del borde del nodo (hacia el hub): pegado al
+          // borde quedaba mordido por la tarjeta, que se pinta encima del SVG.
+          const x2 = (izq ? nr.right - mr.left + 9 : nr.left - mr.left - 9);
+          const y2 = nr.top - mr.top + nr.height / 2;
+          const hot = node.classList.contains("hot") || node.classList.contains("pm-go");
+          const col = hot ? "#e05b2a" : "rgba(10,47,85,0.30)";
+          out += '<path d="M' + x1 + " " + hubY + " L" + x2 + " " + y2 + '" stroke="' + col + '" stroke-width="' + (hot ? 2.5 : 2) + '" fill="none"/>';
+          out += '<circle cx="' + x1 + '" cy="' + hubY + '" r="4" fill="#e05b2a"/>';
+          out += '<circle cx="' + x2 + '" cy="' + y2 + '" r="5" fill="#fff" stroke="' + (hot ? "#e05b2a" : "#0a2f55") + '" stroke-width="2.5"/>';
+        });
+        svg.innerHTML = out;
+      }
+      window.addEventListener("resize", () => {
+        cancelAnimationFrame(pmapRaf);
+        pmapRaf = requestAnimationFrame(drawPanelLines);
+      });
+
+      // Compatibilidad: los enlaces viejos de "Tu actividad" siguen funcionando.
+      function openSecondaryPanel(which) { openPanelSection(which === "payments" ? "pagos" : "historial"); }
+      function closeSecondaryPanel() { backToPanelMap(); }
       window.openSecondaryPanel = openSecondaryPanel;
       window.closeSecondaryPanel = closeSecondaryPanel;
 
@@ -17978,6 +18251,9 @@
           tabId = "admin";
         }
         const target = document.getElementById(tabId) ? tabId : "inicio";
+        // Entrar a "Mi panel" siempre aterriza en el MAPA de nodos (la portada).
+        // openPanelSection fija su sección justo después de llamar aquí.
+        if (target === "admin" && typeof window.__pmapReset === "function") window.__pmapReset();
         // Lazy-init (Fase B #2): si el destino es un formulario, prepara sus setups.
         if (window.FORM_TABS && window.FORM_TABS[target] && window.initFormsOnce) window.initFormsOnce();
 
@@ -21821,6 +22097,8 @@
             '<button type="button" class="orr-row" onclick="openSecondaryPanel(\'history\')"><span class="orr-row-l">🧾 Historial de contactos</span><span class="orr-chev">›</span></button>' +
             '<button type="button" class="orr-row" onclick="openSecondaryPanel(\'payments\')"><span class="orr-row-l">💳 Pagos y recibos</span><span class="orr-chev">›</span></button>';
         }
+        // Refrescar el mapa de nodos con los datos que este render dejó en el DOM.
+        if (typeof window.__pmapRefresh === "function") window.__pmapRefresh();
 
         const kpiOffers =
           adminVerticalFilter === "property"
@@ -24323,6 +24601,10 @@
         const supaApproved = supabaseEnabled && myBrokerStatus() === "aprobado";
         if (!supaApproved && (!broker || broker.status !== "aprobado")) {
           target.innerHTML = "";
+          // La carga masiva vive en su propia sección del mapa: apagarla junto
+          // con el panel broker (misma condición de aprobación).
+          const bulkOff = document.getElementById("bulkCard");
+          if (bulkOff) { bulkOff.hidden = true; bulkOff.innerHTML = ""; }
           return;
         }
         // Broker de Supabase sin ficha local: sintetizar una para el encabezado.
@@ -24361,8 +24643,11 @@
             <div class="b2b-packages">${cards}</div>
             <p class="b2b-foot"><svg viewBox="0 0 24 24" fill="none" stroke="#1f7a4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"></path><path d="M9 12l2 2 4-4"></path></svg> El crédito se descuenta automáticamente según el nivel de cada match. El email de cada interesado está verificado.</p>
           </section>
-          <section class="b2b-panel" style="margin-top:14px" id="bulkCard"></section>
         `;
+        // La carga masiva ya no se inyecta aquí: #bulkCard es estático, en su
+        // propia sección del mapa (tema 6). Solo se enciende y se pinta.
+        const bulkOn = document.getElementById("bulkCard");
+        if (bulkOn) bulkOn.hidden = false;
         renderBulkCard();
       }
 
