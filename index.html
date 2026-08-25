@@ -1042,6 +1042,72 @@
         display: grid;
       }
 
+      /* Cinta "EN VIVO" de la portada: lo último que la gente publica o busca.
+         Oculta del todo hasta tener suficientes eventos reales (data-vacia). */
+      .cinta-vivo[data-vacia="1"] { display: none !important; }
+      .cinta-vivo {
+        background: #f2f6fa;
+        border-top: 1px solid #e3ebf3;
+        border-bottom: 1px solid #e3ebf3;
+        padding: 16px 0;
+        overflow: hidden;
+      }
+      .cinta-inner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 20px;
+      }
+      .cinta-head { flex: 0 0 auto; display: flex; flex-direction: column; gap: 2px; }
+      .cinta-live {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        font-weight: 900;
+        letter-spacing: 0.07em;
+        color: #e05b2a;
+      }
+      .cinta-live::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #12a150;
+        animation: cintaPulso 1.6s infinite;
+      }
+      .cinta-sub { font-size: 11px; color: #5b6b7e; font-weight: 700; }
+      .cinta-scroll { flex: 1; overflow: hidden; min-width: 0; }
+      .cinta-track { display: inline-flex; gap: 12px; animation: cintaMueve 40s linear infinite; }
+      .cinta-scroll:hover .cinta-track { animation-play-state: paused; }
+      .cinta-card {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: 1px solid #dce5ef;
+        border-radius: 13px;
+        padding: 11px 16px;
+        box-shadow: 0 6px 16px rgba(16, 32, 51, 0.06);
+      }
+      .cinta-ico { font-size: 20px; }
+      .cinta-t1 { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800; color: #0a2f55; white-space: nowrap; }
+      .cinta-t1::before { content: ""; width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; }
+      .cinta-card.oferta .cinta-t1::before { background: #e05b2a; }
+      .cinta-card.busqueda .cinta-t1::before { background: #0f5e91; }
+      .cinta-t2 { font-size: 12px; color: #5b6b7e; white-space: nowrap; }
+      .cinta-t2 .cinta-hace { color: #8aa0b8; }
+      @keyframes cintaMueve { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+      @keyframes cintaPulso { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+      @media (prefers-reduced-motion: reduce) { .cinta-track { animation: none; } }
+      @media (max-width: 640px) {
+        .cinta-inner { gap: 10px; padding: 0 14px; }
+        .cinta-sub { display: none; }
+      }
+
       .section {
         padding: 34px 0;
       }
@@ -11461,6 +11527,16 @@
         </aside>
       </section>
 
+      <section class="tab-panel active cinta-vivo" data-home-extra="true" id="cintaVivo" data-vacia="1" aria-label="Actividad reciente en KonektaYa">
+        <div class="cinta-inner">
+          <div class="cinta-head">
+            <span class="cinta-live">EN VIVO</span>
+            <span class="cinta-sub">lo último en KonektaYa</span>
+          </div>
+          <div class="cinta-scroll"><div class="cinta-track" id="cintaTrack"></div></div>
+        </div>
+      </section>
+
       <section class="container tab-panel active" data-home-extra="true">
         <section class="section">
           <span class="eyebrow">Por qué usar KonektaYa</span>
@@ -20118,6 +20194,62 @@
         renderSupportSwitch();
       }
       window.adminSaveSupportEmail = adminSaveSupportEmail;
+
+      // Cinta "EN VIVO" de la portada (3a-cinta-vivo.sql): los últimos eventos
+      // reales (máx. 12, últimas 48 h) con mensaje claro y sin datos de
+      // contacto. Con menos de 4 eventos la cinta entera se esconde.
+      let cintaEventos = [];
+      function cintaMsg(e) {
+        if (e.v === "vehiculo") {
+          if (e.k === "oferta") {
+            const nombre = [e.marca, e.modelo, e.anio].filter(Boolean).join(" ") || (typeof vehicleLabel === "function" && vehicleLabel(e.tipo)) || "Vehículo";
+            return nombre + " disponible para venta";
+          }
+          const busca = [e.marca, e.modelo].filter(Boolean).join(" ") || (typeof vehicleLabel === "function" && vehicleLabel(e.tipo)) || "vehículo";
+          return "Buscando " + busca + " para comprar";
+        }
+        const tipo = (typeof label === "function" && label(e.tipo)) || "Inmueble";
+        if (e.k === "oferta") {
+          const op = e.op === "ambos" ? "venta / alquiler" : e.op === "venta" ? "venta" : "alquiler";
+          return tipo + " disponible para " + op;
+        }
+        return "Buscando " + tipo + (e.op === "venta" ? " para comprar" : " para alquiler");
+      }
+      function cintaIco(e) {
+        if (e.v === "vehiculo") return String(e.tipo || "").toLowerCase().includes("moto") ? "🏍" : "🚗";
+        const t = String(e.tipo || "").toLowerCase();
+        if (t.includes("ofici")) return "🏢";
+        if (t.includes("local")) return "🏬";
+        if (t.includes("terreno") || t.includes("lote")) return "🌳";
+        if (t.includes("casa")) return "🏡";
+        return "🏠";
+      }
+      function renderCintaVivo() {
+        const sec = document.getElementById("cintaVivo");
+        const track = document.getElementById("cintaTrack");
+        if (!sec || !track) return;
+        if (!Array.isArray(cintaEventos) || cintaEventos.length < 4) { sec.dataset.vacia = "1"; return; }
+        const card = (e) =>
+          '<div class="cinta-card ' + (e.k === "busqueda" ? "busqueda" : "oferta") + '">' +
+            '<span class="cinta-ico">' + (e.k === "busqueda" ? "🔎" : cintaIco(e)) + "</span>" +
+            "<div>" +
+              '<div class="cinta-t1">' + escapeHtml(cintaMsg(e)) + "</div>" +
+              '<div class="cinta-t2">' + escapeHtml(String(e.z || "Panamá")) + ' · <span class="cinta-hace">hace ' + anlRel(e.t) + "</span></div>" +
+            "</div></div>";
+        const html = cintaEventos.map(card).join("");
+        track.innerHTML = html + html; // pista duplicada = bucle continuo sin salto
+        track.style.animationDuration = Math.max(30, cintaEventos.length * 6) + "s";
+        delete sec.dataset.vacia;
+      }
+      async function cargarCintaVivo() {
+        if (!supabaseEnabled || !supabaseClient) return;
+        try {
+          const { data, error } = await supabaseClient.rpc("public_ticker");
+          if (!error && Array.isArray(data)) { cintaEventos = data; renderCintaVivo(); }
+        } catch (e) {}
+      }
+      cargarCintaVivo();
+      setInterval(() => { if (!document.hidden) cargarCintaVivo(); }, 120000);
 
       // Contador de visitas propio (2z-visitas.sql): un ping anónimo por carga
       // de página. "Único" = primera entrada del navegador en el día. No suma
