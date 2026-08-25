@@ -19650,6 +19650,9 @@
         // que pidió logoutUser (la bandera sobrevive a reintentos fallidos, pero
         // muere en cuanto alguien entra de verdad, por Google o por email).
         if (email) { try { localStorage.removeItem("konektaya_show_picker"); } catch (e) {} }
+        // El navegador del admin queda marcado y deja de sumar al contador de
+        // visitas (con poco tráfico, sus propias entradas inflarían el número).
+        try { if (email && typeof isAdminEmail === "function" && isAdminEmail(email)) localStorage.setItem("ky_es_admin", "1"); } catch (e) {}
         // ¿Cambió realmente el estado de sesión? supabase-js re-emite SIGNED_IN al
         // recuperar el foco (ej. volver de WhatsApp en el celular); sin este guard
         // eso re-renderizaba todo y te sacaba al panel a mitad de un formulario.
@@ -20116,6 +20119,22 @@
       }
       window.adminSaveSupportEmail = adminSaveSupportEmail;
 
+      // Contador de visitas propio (2z-visitas.sql): un ping anónimo por carga
+      // de página. "Único" = primera entrada del navegador en el día. No suma
+      // el navegador del admin (bandera ky_es_admin) ni las pruebas locales.
+      function trackVisit() {
+        if (!supabaseEnabled || !supabaseClient) return;
+        try {
+          if (/^(localhost|127\.|192\.168\.)/.test(location.hostname)) return;
+          if (localStorage.getItem("ky_es_admin") === "1") return;
+          const hoy = new Date().toISOString().slice(0, 10);
+          const esUnico = localStorage.getItem("ky_visita_dia") !== hoy;
+          if (esUnico) localStorage.setItem("ky_visita_dia", hoy);
+          supabaseClient.rpc("track_visit", { p_unique: esUnico }).then(() => {}, () => {});
+        } catch (e) {}
+      }
+      trackVisit();
+
       // ==================== Analítica del admin (estación del riel) ====================
       // Diseño aprobado por mockup: funnel → alerta de liquidez → tendencia +
       // oferta/demanda por zona → pulso en vivo + zonas top. Los agregados de
@@ -20164,6 +20183,16 @@
         const ms = new Date(t).getTime();
         return ms >= anlState.win.d && ms <= anlState.win.h;
       }
+      // Visitas del contador propio dentro de la ventana activa (día completo:
+      // el día cuenta si su mediodía cae dentro de la ventana).
+      function anlVisitasVentana(d) {
+        const lista = d && d.visits_daily;
+        if (!Array.isArray(lista) || !lista.length) return null;
+        let n = 0, u = 0;
+        lista.forEach((r) => { if (anlEnPeriodo(r.d + "T12:00:00")) { n += Number(r.n || 0); u += Number(r.u || 0); } });
+        return { n, u };
+      }
+
       function anlFmtFecha(iso) {
         const d = new Date(iso + "T12:00:00");
         return d.getDate() + " " + ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][d.getMonth()];
@@ -20242,21 +20271,27 @@
           titulo = anlState.period === "all" ? "TODO EL TIEMPO" : "ÚLTIMOS " + anlState.period + " DÍAS";
           f = (d.funnel && d.funnel[key]) || {};
         }
-        const etapas = [
+        const etapas = [];
+        const nombres = [];
+        const visitas = anlVisitasVentana(d);
+        if (visitas && visitas.u > 0) { etapas.push(["VISITARON", visitas.u]); nombres.push("visita → registro"); }
+        etapas.push(
           ["REGISTRADOS", Number(f.registrados || 0)],
           ["CON PUBLICACIÓN", Number(f.con_publicacion || 0)],
           ["CON AVISO DE MATCH", Number(f.con_aviso_match || 0)],
           ["CON DESBLOQUEO", Number(f.con_desbloqueo || 0)]
-        ];
+        );
+        nombres.push("registro → publicación", "publicación → aviso de match", "aviso → desbloqueo");
         const max = Math.max(1, etapas[0][1]);
         const tasas = [];
         for (let i = 1; i < etapas.length; i++) {
           tasas.push(etapas[i - 1][1] >= 5 ? Math.round((etapas[i][1] / etapas[i - 1][1]) * 100) : null);
         }
         const minIdx = tasas.reduce((mi, t, i) => (t !== null && (tasas[mi] === null || t < tasas[mi]) ? i : mi), 0);
+        const ult = etapas.length - 1;
         const bloques = etapas.map(([lbl, n], i) => {
           const h = Math.max(8, Math.round((n / max) * 84));
-          const caliente = i === 3 && tasas[2] !== null && minIdx === 2;
+          const caliente = i === ult && tasas[ult - 1] !== null && minIdx === ult - 1;
           const barra = caliente ? "linear-gradient(180deg,#f1883f,#e05b2a)" : "linear-gradient(180deg,#0f5e91,#0a2f55)";
           const borde = caliente ? "#e05b2a" : "#0a2f55";
           const chip = i === 0 ? "" :
@@ -20271,7 +20306,6 @@
             '<div style="font-size:10px;color:' + (caliente ? "#a23c18" : "#5b6b7e") + ';font-weight:800;padding-top:5px;border-top:2px solid ' + borde + '">' + lbl + "</div></div>";
         }).join("");
         let nota = "";
-        const nombres = ["registro → publicación", "publicación → aviso de match", "aviso → desbloqueo"];
         if (tasas[minIdx] !== null && etapas[0][1] > 0) {
           nota = '<div style="font-size:12px;color:#a23c18;font-weight:800;margin-top:10px">⚠ Cuello de botella: ' + nombres[minIdx] + " (" + tasas[minIdx] + "%)</div>";
         } else if (etapas[0][1] === 0) {
@@ -20279,8 +20313,10 @@
         }
         return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:14px 16px;margin-bottom:10px">' +
           '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#5b6b7e;margin-bottom:10px">FUNNEL DEL NEGOCIO · ' + titulo +
-          ' <span style="font-weight:700;text-transform:none;letter-spacing:0;color:#8aa0b8">(el aviso de match es un proxy: solo cuenta emails enviados)</span></div>' +
-          '<div style="overflow-x:auto"><div style="display:flex;align-items:flex-end;min-width:430px">' + bloques + "</div></div>" + nota + "</div>";
+          ' <span style="font-weight:700;text-transform:none;letter-spacing:0;color:#8aa0b8">(' +
+          (etapas.length > 4 ? "visitantes: navegadores únicos por día · aviso de match: solo emails enviados" : "el aviso de match es un proxy: solo cuenta emails enviados") +
+          ')</span></div>' +
+          '<div style="overflow-x:auto"><div style="display:flex;align-items:flex-end;min-width:' + (etapas.length > 4 ? 540 : 430) + 'px">' + bloques + "</div></div>" + nota + "</div>";
       }
 
       function anlAlertaHtml(z) {
@@ -20317,6 +20353,7 @@
       function anlTrendHtml(d) {
         const series = {
           unlocks: { lbl: "Desbloqueos", vals: anlSemanas((d.unlocks_list || []).map((u) => ({ d: String(u.t).slice(0, 10), n: 1 })), "n") },
+          visitas: { lbl: "Visitas", vals: anlSemanas(d.visits_daily, "n") },
           registros: { lbl: "Registros", vals: anlSemanas(d.registros_daily, "n") },
           ingresos: { lbl: "Ingresos $", vals: anlSemanas(d.paypal_daily, "amt") }
         };
