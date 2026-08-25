@@ -10049,6 +10049,13 @@
 
       .admin-users-list { display: grid; gap: 8px; max-height: 460px; overflow-y: auto; }
       .admin-users-empty { color: #64748b; font-size: 13px; margin: 6px 2px; }
+      /* Analítica: la columna del pane no debe crecer con el contenido (el funnel
+         tiene ancho mínimo propio); las parejas de tarjetas caen a una columna
+         en pantallas angostas y el funnel se desliza en horizontal. */
+      section[data-admin-panel-pane="analytics"].active { grid-template-columns: minmax(0, 1fr); }
+      @media (max-width: 760px) {
+        .anl-2col { grid-template-columns: 1fr !important; }
+      }
 
       .au-panel { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 14px; }
       @media (max-width: 760px) { .au-panel { grid-template-columns: 1fr; } }
@@ -12703,6 +12710,7 @@
                   <button type="button" data-admin-panel-button="coupons">Cupones</button>
                   <button type="button" data-admin-panel-button="payments">Pagos <span id="settingsTabDot" class="tab-stdot"></span></button>
                   <button type="button" data-admin-panel-button="matchlab">Laboratorio</button>
+                  <button type="button" data-admin-panel-button="analytics">Analítica</button>
                 </div>
 
                 <div class="admin-content">
@@ -12834,6 +12842,15 @@
                     <button type="button" onclick="setMatchLabVertical('vehiculos')">🚗 Vehículos</button>
                   </div>
                   <div id="matchLabRoot"></div>
+                </section>
+
+                <section class="admin-panel-pane" data-admin-panel-pane="analytics">
+                  <div class="admin-section-title">
+                    <h3>Analítica</h3>
+                    <p>El pulso del negocio: dónde gotea el funnel, si vamos mejor o peor, y dónde falta inventario.</p>
+                  </div>
+                  <div id="anlControls"></div>
+                  <div id="anlRoot"><p class="admin-users-empty">Cargando métricas…</p></div>
                 </section>
                 </div>
               </div>
@@ -16492,6 +16509,7 @@
           panes.forEach((pane) => {
             pane.classList.toggle("active", pane.dataset.adminPanelPane === target);
           });
+          if (target === "analytics" && typeof window.ensureAnalytics === "function") window.ensureAnalytics();
         };
 
         buttons.forEach((button) => {
@@ -20097,6 +20115,318 @@
         renderSupportSwitch();
       }
       window.adminSaveSupportEmail = adminSaveSupportEmail;
+
+      // ==================== Analítica del admin (estación del riel) ====================
+      // Diseño aprobado por mockup: funnel → alerta de liquidez → tendencia +
+      // oferta/demanda por zona → pulso en vivo + zonas top. Los agregados de
+      // plataforma vienen del RPC admin_metrics (2x-admin-metrics.sql); las
+      // zonas y el inventario salen de las publicaciones ya cargadas en memoria.
+      const anlState = { period: "30", vertical: "all", serie: "unlocks", inited: false, lastAt: 0, error: "" };
+      let adminMetricsData = null;
+
+      async function anlFetch(force) {
+        if (!supabaseEnabled || !supabaseClient) { anlState.error = "demo"; return null; }
+        if (!force && adminMetricsData && Date.now() - anlState.lastAt < 60000) return adminMetricsData;
+        const { data, error } = await supabaseClient.rpc("admin_metrics");
+        if (error) { anlState.error = error.message; return adminMetricsData; }
+        anlState.error = "";
+        adminMetricsData = data;
+        anlState.lastAt = Date.now();
+        // Corrige los signos vitales: antes "Ingresos" y "Desbloqueos" salían de
+        // datos locales del navegador (solo los del propio admin). Ahora, cifras
+        // reales de TODA la plataforma.
+        try {
+          const avI = document.getElementById("avIngresos");
+          const avD = document.getElementById("avDesbloqueos");
+          if (avI && data.paypal_all) {
+            avI.textContent = money.format(Number(data.paypal_all.amt) || 0);
+            if (avI.previousElementSibling) avI.previousElementSibling.textContent = "Ingresos (PayPal real)";
+          }
+          if (avD && data.unlocks_all) avD.textContent = String(data.unlocks_all.n || 0);
+        } catch (e) {}
+        return data;
+      }
+
+      function anlCorte() { return anlState.period === "all" ? 0 : Date.now() - Number(anlState.period) * 86400000; }
+      function anlEnPeriodo(t) { return new Date(t).getTime() >= anlCorte(); }
+      function anlVertOk(v) {
+        if (anlState.vertical === "all") return true;
+        return anlState.vertical === "property" ? v === "inmueble" : v === "vehiculo";
+      }
+
+      // Publicaciones en memoria → ofertas y demandas activas por zona.
+      function anlZonas() {
+        const off = [], dem = [], mapa = {};
+        const zonaDe = (z) => String(z || "").trim() || "(sin zona)";
+        const activa = (r) => r && r.active !== false && String(r.archived || "") !== "true";
+        const meter = (arr, lista, getZ, vert) => (arr || []).forEach((r) => {
+          if (!activa(r)) return;
+          const z = zonaDe(getZ(r));
+          lista.push(z);
+          if (r.id) mapa[String(r.id)] = { z, v: vert };
+        });
+        if (anlState.vertical !== "vehicle") {
+          meter(typeof properties !== "undefined" ? properties : [], off, (r) => r.zone, "inmueble");
+          meter(typeof searches !== "undefined" ? searches : [], dem, (r) => r.desiredZone || r.zone, "inmueble");
+        }
+        if (anlState.vertical !== "property") {
+          meter(typeof vehicleOffers !== "undefined" ? vehicleOffers : [], off, (r) => r.zone, "vehiculo");
+          meter(typeof vehicleSearches !== "undefined" ? vehicleSearches : [], dem, (r) => r.zone || r.desiredZone, "vehiculo");
+        }
+        const cuenta = (l) => l.reduce((m, z) => { m[z] = (m[z] || 0) + 1; return m; }, {});
+        return { oferta: cuenta(off), demanda: cuenta(dem), mapa };
+      }
+
+      function anlRel(t) {
+        const s = Math.max(0, (Date.now() - new Date(t).getTime()) / 1000);
+        if (s < 90) return Math.round(s) + " s";
+        if (s < 5400) return Math.round(s / 60) + " min";
+        if (s < 129600) return Math.round(s / 3600) + " h";
+        return Math.round(s / 86400) + " d";
+      }
+
+      function anlFunnelHtml(d) {
+        const key = anlState.period === "all" ? "all" : "p" + anlState.period;
+        const f = (d.funnel && d.funnel[key]) || {};
+        const etapas = [
+          ["REGISTRADOS", Number(f.registrados || 0)],
+          ["CON PUBLICACIÓN", Number(f.con_publicacion || 0)],
+          ["CON AVISO DE MATCH", Number(f.con_aviso_match || 0)],
+          ["CON DESBLOQUEO", Number(f.con_desbloqueo || 0)]
+        ];
+        const max = Math.max(1, etapas[0][1]);
+        const tasas = [];
+        for (let i = 1; i < etapas.length; i++) {
+          tasas.push(etapas[i - 1][1] >= 5 ? Math.round((etapas[i][1] / etapas[i - 1][1]) * 100) : null);
+        }
+        const minIdx = tasas.reduce((mi, t, i) => (t !== null && (tasas[mi] === null || t < tasas[mi]) ? i : mi), 0);
+        const bloques = etapas.map(([lbl, n], i) => {
+          const h = Math.max(8, Math.round((n / max) * 84));
+          const caliente = i === 3 && tasas[2] !== null && minIdx === 2;
+          const barra = caliente ? "linear-gradient(180deg,#f1883f,#e05b2a)" : "linear-gradient(180deg,#0f5e91,#0a2f55)";
+          const borde = caliente ? "#e05b2a" : "#0a2f55";
+          const chip = i === 0 ? "" :
+            '<div style="width:46px;text-align:center;align-self:flex-end;padding-bottom:34px;flex:0 0 auto">' +
+              (tasas[i - 1] === null
+                ? '<span title="Se calcula con 5+ usuarios" style="background:#eef3f8;color:#8aa0b8;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px">—</span>'
+                : '<span style="background:' + (i - 1 === minIdx ? "#e05b2a;color:#fff" : "#eef3f8;color:#29425f") + ';font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px">' + tasas[i - 1] + "%</span>") +
+            "</div>";
+          return chip + '<div style="flex:1;text-align:center;min-width:0">' +
+            '<div style="font-size:23px;font-weight:900;color:#0a2f55">' + n + "</div>" +
+            '<div style="height:' + h + 'px;background:' + barra + ';border-radius:8px 8px 0 0;margin:5px 4px 0"></div>' +
+            '<div style="font-size:10px;color:' + (caliente ? "#a23c18" : "#5b6b7e") + ';font-weight:800;padding-top:5px;border-top:2px solid ' + borde + '">' + lbl + "</div></div>";
+        }).join("");
+        let nota = "";
+        const nombres = ["registro → publicación", "publicación → aviso de match", "aviso → desbloqueo"];
+        if (tasas[minIdx] !== null && etapas[0][1] > 0) {
+          nota = '<div style="font-size:12px;color:#a23c18;font-weight:800;margin-top:10px">⚠ Cuello de botella: ' + nombres[minIdx] + " (" + tasas[minIdx] + "%)</div>";
+        } else if (etapas[0][1] === 0) {
+          nota = '<div style="font-size:12px;color:#8aa0b8;margin-top:10px">Aún no hay recorrido que medir en este periodo — prueba «Todo».</div>';
+        }
+        return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:14px 16px;margin-bottom:10px">' +
+          '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#5b6b7e;margin-bottom:10px">FUNNEL DEL NEGOCIO · ' +
+          (anlState.period === "all" ? "TODO EL TIEMPO" : "ÚLTIMOS " + anlState.period + " DÍAS") +
+          ' <span style="font-weight:700;text-transform:none;letter-spacing:0;color:#8aa0b8">(el aviso de match es un proxy: solo cuenta emails enviados)</span></div>' +
+          '<div style="overflow-x:auto"><div style="display:flex;align-items:flex-end;min-width:430px">' + bloques + "</div></div>" + nota + "</div>";
+      }
+
+      function anlAlertaHtml(z) {
+        let peor = null;
+        Object.keys(z.demanda).forEach((zona) => {
+          const d = z.demanda[zona], o = z.oferta[zona] || 0;
+          if (d >= 3 && (o === 0 || d / Math.max(1, o) >= 3)) {
+            if (!peor || d > peor.d) peor = { zona, d, o };
+          }
+        });
+        if (!peor) return "";
+        return '<div style="background:#fff8e8;border:1.5px solid #f1883f;border-radius:11px;padding:9px 13px;margin-bottom:10px;font-size:12.5px;font-weight:800;color:#8a5a00">🔔 ' +
+          escapeHtml(peor.zona) + ": " + peor.d + " búsquedas vs " + peor.o + " ofertas — demanda esperando: capta inventario en esa zona.</div>";
+      }
+
+      function anlSemanas(daily, campo) {
+        // Últimas 12 semanas a partir de una serie diaria [{d, n|amt}].
+        const semanas = [];
+        const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+        const lunes = new Date(hoy); lunes.setDate(lunes.getDate() - ((lunes.getDay() + 6) % 7));
+        for (let i = 11; i >= 0; i--) {
+          const ini = new Date(lunes); ini.setDate(ini.getDate() - i * 7);
+          semanas.push({ ini: ini.getTime(), v: 0 });
+        }
+        (daily || []).forEach((r) => {
+          const t = new Date(r.d + "T00:00:00").getTime();
+          for (let i = semanas.length - 1; i >= 0; i--) {
+            if (t >= semanas[i].ini) { semanas[i].v += Number(r[campo] || 0); break; }
+          }
+        });
+        return semanas.map((s) => s.v);
+      }
+
+      function anlTrendHtml(d) {
+        const series = {
+          unlocks: { lbl: "Desbloqueos", vals: anlSemanas((d.unlocks_list || []).map((u) => ({ d: String(u.t).slice(0, 10), n: 1 })), "n") },
+          registros: { lbl: "Registros", vals: anlSemanas(d.registros_daily, "n") },
+          ingresos: { lbl: "Ingresos $", vals: anlSemanas(d.paypal_daily, "amt") }
+        };
+        const s = series[anlState.serie] || series.unlocks;
+        const vals = s.vals;
+        const conDatos = vals.filter((v) => v > 0).length;
+        const max = Math.max(1, ...vals);
+        const W = 340, H = 96, X0 = 30;
+        const px = (i) => X0 + (i * (W - X0 - 12)) / (vals.length - 1);
+        const py = (v) => 14 + (1 - v / max) * (H - 28);
+        const pts = vals.map((v, i) => px(i).toFixed(1) + " " + py(v).toFixed(1));
+        const linea = "M" + pts.join(" L");
+        const area = linea + " L" + px(vals.length - 1).toFixed(1) + " " + (H - 14) + " L" + X0 + " " + (H - 14) + " Z";
+        const mitad = vals.slice(0, 6).reduce((a, b) => a + b, 0);
+        const fin = vals.slice(6).reduce((a, b) => a + b, 0);
+        const delta = mitad > 0 ? Math.round(((fin - mitad) / mitad) * 100) : null;
+        const chips = Object.keys(series).map((k) =>
+          '<span onclick="anlSet(\'serie\',\'' + k + '\')" style="cursor:pointer;background:' + (k === anlState.serie ? "#0a2f55;color:#fff" : "#eef3f8;color:#5b6b7e") + ';font-size:10.5px;font-weight:800;border-radius:999px;padding:2px 9px">' + series[k].lbl + "</span>").join(" ");
+        const cuerpo = conDatos < 2
+          ? '<div style="padding:26px 8px;text-align:center;font-size:12px;color:#8aa0b8">La tendencia se dibuja al cumplir 2 semanas con datos (llevas ' + conDatos + ").</div>"
+          : '<svg viewBox="0 0 ' + W + " " + H + '" style="width:100%;height:auto">' +
+            [0, 0.5, 1].map((f) => { const y = 14 + f * (H - 28); return '<line x1="' + X0 + '" y1="' + y + '" x2="' + (W - 8) + '" y2="' + y + '" stroke="#dce5ef" stroke-width="1"></line><text x="' + (X0 - 4) + '" y="' + (y + 3) + '" font-size="9" fill="#8aa0b8" text-anchor="end">' + Math.round(max * (1 - f)) + "</text>"; }).join("") +
+            '<path d="' + area + '" fill="rgba(10,47,85,0.10)"></path><path d="' + linea + '" fill="none" stroke="#0a2f55" stroke-width="2.5" stroke-linejoin="round"></path>' +
+            '<circle cx="' + px(vals.length - 1) + '" cy="' + py(vals[vals.length - 1]) + '" r="4" fill="#0a2f55"></circle>' +
+            '<text x="' + px(vals.length - 1) + '" y="' + Math.max(10, py(vals[vals.length - 1]) - 8) + '" font-size="11" font-weight="800" fill="#0a2f55" text-anchor="middle">' + vals[vals.length - 1] + "</text></svg>";
+        return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:13px 15px;min-width:0">' +
+          '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e">TENDENCIA · 12 SEMANAS</span><span style="flex:1"></span>' + chips +
+          (delta !== null ? ' <span style="color:' + (delta >= 0 ? "#12a150" : "#c62828") + ';font-size:12px;font-weight:800">' + (delta >= 0 ? "+" : "") + delta + "%</span>" : "") + "</div>" + cuerpo + "</div>";
+      }
+
+      function anlDivergHtml(z) {
+        const zonas = {};
+        Object.keys(z.demanda).forEach((k) => { zonas[k] = zonas[k] || { d: 0, o: 0 }; zonas[k].d = z.demanda[k]; });
+        Object.keys(z.oferta).forEach((k) => { zonas[k] = zonas[k] || { d: 0, o: 0 }; zonas[k].o = z.oferta[k]; });
+        const filas = Object.keys(zonas)
+          .map((k) => ({ k, d: zonas[k].d, o: zonas[k].o, brecha: Math.abs(zonas[k].d - zonas[k].o) }))
+          .sort((a, b) => b.brecha - a.brecha || (b.d + b.o) - (a.d + a.o))
+          .slice(0, 5);
+        const max = Math.max(1, ...filas.map((f) => Math.max(f.d, f.o)));
+        const cuerpo = !filas.length
+          ? '<div style="padding:22px 8px;text-align:center;font-size:12px;color:#8aa0b8">Sin actividad por zona en este filtro.</div>'
+          : filas.map((f) =>
+            '<div><div style="font-size:11px;font-weight:800;color:#0a2f55;text-align:center;margin-bottom:2px">' + escapeHtml(f.k) + "</div>" +
+            '<div style="display:flex;align-items:center;gap:2px">' +
+              '<div style="flex:1;display:flex;justify-content:flex-end;align-items:center"><span style="font-size:10px;color:#a23c18;font-weight:800;margin-right:3px">' + f.d + '</span><div style="width:' + Math.round((f.d / max) * 88) + '%;max-width:88%;min-width:2px;height:10px;background:linear-gradient(270deg,#e05b2a,#f1883f);border-radius:5px 0 0 5px"></div></div>' +
+              '<div style="width:2px;height:14px;background:#c9d6e4;flex:0 0 auto"></div>' +
+              '<div style="flex:1;display:flex;align-items:center"><div style="width:' + Math.round((f.o / max) * 88) + '%;max-width:88%;min-width:2px;height:10px;background:#0a2f55;border-radius:0 5px 5px 0"></div><span style="font-size:10px;color:#0a2f55;font-weight:800;margin-left:3px">' + f.o + "</span></div>" +
+            "</div></div>").join('<div style="height:8px"></div>');
+        return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:13px 15px;min-width:0">' +
+          '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:9px">DEMANDA ◂ ▸ OFERTA POR ZONA (activas)</div>' + cuerpo +
+          '<div style="display:flex;gap:10px;margin-top:9px;font-size:10px;color:#5b6b7e"><span>◂ <span style="color:#a23c18;font-weight:800">búsquedas</span></span><span>▸ <span style="color:#0a2f55;font-weight:800">publicaciones</span></span></div></div>';
+      }
+
+      function anlFeedHtml(d) {
+        const ev = (d.recent || []).slice(0, 8);
+        const linea = (e) => {
+          if (e.k === "unlock") return ["#12a150", "Desbloqueo pagado · " + money.format(Number(e.p) || 0) + " · " + (e.v || "")];
+          if (e.k === "pago") return ["#12a150", "Recarga PayPal · " + money.format(Number(e.amt) || 0)];
+          if (e.k === "cupon") return ["#e05b2a", "Cupón " + (e.c || "") + " canjeado · " + money.format(Number(e.amt) || 0)];
+          if (e.k === "aviso") return ["#e05b2a", "Aviso de match (" + (e.v || "") + ") · " + (e.m || 1) + " coincidencia(s)"];
+          if (e.k === "pub") return ["#0a2f55", (e.lado === "busqueda" ? "Búsqueda" : "Publicación") + " nueva (" + (e.v || "") + ") · " + (e.z || "sin zona")];
+          return ["#0f5e91", "Registro nuevo" + (e.r ? " · " + e.r : "")];
+        };
+        const filas = ev.map((e) => {
+          const [c, txt] = linea(e);
+          return '<div style="display:flex;gap:8px;align-items:baseline"><span style="width:7px;height:7px;border-radius:50%;background:' + c + ';flex:0 0 auto"></span><span style="font-size:11.5px;color:#0a2f55;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(txt) + '</span><span style="font-size:10px;color:#8aa0b8;white-space:nowrap">hace ' + anlRel(e.t) + "</span></div>";
+        }).join('<div style="height:7px"></div>');
+        return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:13px 15px;min-width:0">' +
+          '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:9px">PULSO EN VIVO</div>' +
+          (filas || '<div style="padding:18px 8px;text-align:center;font-size:12px;color:#8aa0b8">Sin actividad reciente. El pulso despierta con el próximo evento.</div>') + "</div>";
+      }
+
+      function anlTablaHtml(d, z) {
+        const porZona = {};
+        const fila = (k) => (porZona[k] = porZona[k] || { pubs: 0, avisos: 0, unlocks: 0 });
+        Object.keys(z.oferta).forEach((k) => { fila(k).pubs = z.oferta[k]; });
+        (d.notif_list || []).forEach((n) => {
+          if (!anlEnPeriodo(n.t) || !anlVertOk(n.v)) return;
+          const ref = z.mapa[String(n.pub)]; if (ref) fila(ref.z).avisos++;
+        });
+        (d.unlocks_list || []).forEach((u) => {
+          if (!anlEnPeriodo(u.t) || !anlVertOk(u.v)) return;
+          const ref = z.mapa[String(u.o)]; if (ref) fila(ref.z).unlocks++;
+        });
+        const filas = Object.keys(porZona)
+          .map((k) => ({ k, ...porZona[k] }))
+          .sort((a, b) => b.avisos - a.avisos || b.pubs - a.pubs)
+          .slice(0, 6);
+        const cuerpo = !filas.length
+          ? '<div style="padding:18px 8px;text-align:center;font-size:12px;color:#8aa0b8">Aparecen las zonas cuando haya al menos 1 publicación activa.</div>'
+          : '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><tr style="color:#8aa0b8;text-align:left"><th style="padding:3px 0;font-weight:800">Zona</th><th style="text-align:right;font-weight:800">Public.</th><th style="text-align:right;font-weight:800">Avisos</th><th style="text-align:right;font-weight:800">Desbloq.</th><th style="text-align:right;font-weight:800">Tasa</th></tr>' +
+            filas.map((f) => {
+              const tasa = f.avisos > 0 ? Math.round((f.unlocks / f.avisos) * 100) + "%" : "—";
+              return '<tr style="border-top:1px solid #eef2f7"><td style="padding:6px 0;font-weight:800;color:#0a2f55">' + escapeHtml(f.k) + '</td><td style="text-align:right;color:#0a2f55">' + f.pubs + '</td><td style="text-align:right;color:#0a2f55">' + f.avisos + '</td><td style="text-align:right;color:#0a2f55">' + f.unlocks + '</td><td style="text-align:right"><span style="background:rgba(10,47,85,0.10);border-radius:4px;padding:1px 6px;font-weight:800;color:#0a2f55">' + tasa + "</span></td></tr>";
+            }).join("") + "</table>";
+        return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:13px 15px;min-width:0;overflow-x:auto">' +
+          '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:9px">ZONAS TOP · AVISO → DESBLOQUEO</div>' + cuerpo + "</div>";
+      }
+
+      function anlControlesHtml() {
+        const per = (v, t) => '<span onclick="anlSet(\'period\',\'' + v + '\')" style="cursor:pointer;padding:6px 12px;font-size:12px;font-weight:800;' + (anlState.period === v ? "background:#0a2f55;color:#fff" : "color:#5b6b7e") + '">' + t + "</span>";
+        const vert = (v, t) => '<span onclick="anlSet(\'vertical\',\'' + v + '\')" style="cursor:pointer;padding:6px 12px;font-size:12px;font-weight:800;border-radius:999px;' + (anlState.vertical === v ? "background:#0a2f55;color:#fff" : "background:#fff;border:1px solid #dce5ef;color:#0a2f55") + '">' + t + "</span>";
+        return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">' +
+          '<div style="display:inline-flex;background:#fff;border:1px solid #dce5ef;border-radius:9px;overflow:hidden">' + per("7", "7d") + per("30", "30d") + per("90", "90d") + per("all", "Todo") + "</div>" +
+          '<div style="display:inline-flex;gap:6px">' + vert("all", "Todos") + vert("property", "Inmuebles") + vert("vehicle", "Vehículos") + "</div>" +
+          '<span style="flex:1"></span>' +
+          '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#5b6b7e"><span id="anlDot" style="width:8px;height:8px;border-radius:50%;background:' + (anlState.error ? "#8aa0b8" : "#12a150") + '"></span><span id="anlVivo">En vivo</span></span>' +
+          '<button class="button small ghost" type="button" onclick="anlRefrescar()">Actualizar</button></div>';
+      }
+
+      function renderAnalytics() {
+        const root = document.getElementById("anlRoot");
+        const ctl = document.getElementById("anlControls");
+        if (!root || !ctl) return;
+        ctl.innerHTML = anlControlesHtml();
+        if (!adminMetricsData) {
+          root.innerHTML = anlState.error && anlState.error !== "demo"
+            ? '<div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:11px;padding:12px;font-size:13px;color:#b91c1c">No se pudieron cargar las métricas: ' + escapeHtml(anlState.error) + '<br><span style="color:#5b6b82">¿Ya corriste <strong>supabase/2x-admin-metrics.sql</strong> en el SQL Editor?</span></div>'
+            : '<p class="admin-users-empty">' + (anlState.error === "demo" ? "La analítica de plataforma requiere el backend conectado." : "Cargando métricas…") + "</p>";
+          return;
+        }
+        const z = anlZonas();
+        root.innerHTML =
+          anlFunnelHtml(adminMetricsData) +
+          anlAlertaHtml(z) +
+          '<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-bottom:10px" class="anl-2col">' + anlTrendHtml(adminMetricsData) + anlDivergHtml(z) + "</div>" +
+          '<div style="display:grid;grid-template-columns:1fr 1.4fr;gap:10px" class="anl-2col">' + anlFeedHtml(adminMetricsData) + anlTablaHtml(adminMetricsData, z) + "</div>";
+      }
+
+      function anlSet(campo, valor) {
+        anlState[campo] = valor;
+        renderAnalytics();
+      }
+      window.anlSet = anlSet;
+
+      async function anlRefrescar() {
+        await anlFetch(true);
+        renderAnalytics();
+      }
+      window.anlRefrescar = anlRefrescar;
+
+      function anlPaneActivo() {
+        const pane = document.querySelector('[data-admin-panel-pane="analytics"]');
+        return !!(pane && pane.classList.contains("active")) && document.visibilityState === "visible";
+      }
+
+      async function ensureAnalytics() {
+        if (!anlState.inited) {
+          anlState.inited = true;
+          // Refresco: datos cada 60 s, reloj "hace Xs" cada 10 s — solo con la
+          // estación visible (cero consultas de fondo).
+          setInterval(() => { if (anlPaneActivo()) anlRefrescar(); }, 60000);
+          setInterval(() => {
+            if (!anlPaneActivo() || !anlState.lastAt) return;
+            const el = document.getElementById("anlVivo");
+            if (el) el.textContent = "En vivo · hace " + anlRel(anlState.lastAt);
+          }, 10000);
+        }
+        renderAnalytics();
+        await anlFetch(false);
+        renderAnalytics();
+      }
+      window.ensureAnalytics = ensureAnalytics;
 
       function renderSupportSwitch() {
         const chip = document.getElementById("waSupportChip");
