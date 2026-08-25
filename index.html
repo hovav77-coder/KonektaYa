@@ -20147,8 +20147,46 @@
         return data;
       }
 
-      function anlCorte() { return anlState.period === "all" ? 0 : Date.now() - Number(anlState.period) * 86400000; }
-      function anlEnPeriodo(t) { return new Date(t).getTime() >= anlCorte(); }
+      // Ventana de tiempo activa: presets relativos (1/7/30/90 días), todo, o
+      // rango libre desde→hasta elegido por el admin.
+      function anlVentanaCalc() {
+        const p = anlState.period;
+        if (p === "all") { anlState.win = null; return; }
+        if (p === "custom") {
+          if (!anlState.desde || !anlState.hasta) { anlState.win = null; return; }
+          anlState.win = { d: new Date(anlState.desde + "T00:00:00").getTime(), h: new Date(anlState.hasta + "T23:59:59.999").getTime() };
+          return;
+        }
+        anlState.win = { d: Date.now() - Number(p) * 86400000, h: Date.now() + 60000 };
+      }
+      function anlEnPeriodo(t) {
+        if (!anlState.win) return true;
+        const ms = new Date(t).getTime();
+        return ms >= anlState.win.d && ms <= anlState.win.h;
+      }
+      function anlFmtFecha(iso) {
+        const d = new Date(iso + "T12:00:00");
+        return d.getDate() + " " + ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][d.getMonth()];
+      }
+
+      // Funnel para 1d o rango libre: se pide al RPC admin_metrics_funnel
+      // (2y-analitica-rango.sql) y se cachea por ventana.
+      async function anlFunnelRango(force) {
+        const p = anlState.period;
+        if (p !== "1" && p !== "custom") return;
+        if (!supabaseEnabled || !supabaseClient) return;
+        if (p === "custom" && (!anlState.desde || !anlState.hasta)) return;
+        const key = p === "1" ? "1d" : anlState.desde + "_" + anlState.hasta;
+        if (!force && anlState.rango && anlState.rango.key === key && !anlState.rango.error) return;
+        const desde = p === "1" ? new Date(Date.now() - 86400000).toISOString() : new Date(anlState.desde + "T00:00:00").toISOString();
+        const hasta = p === "1" ? new Date().toISOString() : new Date(anlState.hasta + "T23:59:59.999").toISOString();
+        anlState.rango = { key, data: null, cargando: true, error: "" };
+        const { data, error } = await supabaseClient.rpc("admin_metrics_funnel", { p_from: desde, p_to: hasta });
+        if (anlState.rango && anlState.rango.key === key) {
+          anlState.rango = { key, data: error ? null : data, error: error ? error.message : "" };
+          renderAnalytics();
+        }
+      }
       function anlVertOk(v) {
         if (anlState.vertical === "all") return true;
         return anlState.vertical === "property" ? v === "inmueble" : v === "vehiculo";
@@ -20186,8 +20224,24 @@
       }
 
       function anlFunnelHtml(d) {
-        const key = anlState.period === "all" ? "all" : "p" + anlState.period;
-        const f = (d.funnel && d.funnel[key]) || {};
+        let f, titulo;
+        if (anlState.period === "1" || anlState.period === "custom") {
+          const r = anlState.rango || {};
+          titulo = anlState.period === "1" ? "ÚLTIMAS 24 HORAS"
+            : (anlState.desde && anlState.hasta ? "DEL " + anlFmtFecha(anlState.desde) + " AL " + anlFmtFecha(anlState.hasta) : "RANGO");
+          if (!r.data) {
+            const cuerpo = r.error
+              ? '<div style="font-size:12.5px;color:#b91c1c">No se pudo calcular: ' + escapeHtml(r.error) + '<br><span style="color:#5b6b82">¿Ya corriste <strong>supabase/2y-analitica-rango.sql</strong> en el SQL Editor?</span></div>'
+              : '<div style="font-size:12px;color:#8aa0b8">Calculando funnel del periodo…</div>';
+            return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:14px 16px;margin-bottom:10px">' +
+              '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#5b6b7e;margin-bottom:10px">FUNNEL DEL NEGOCIO · ' + titulo + "</div>" + cuerpo + "</div>";
+          }
+          f = r.data;
+        } else {
+          const key = anlState.period === "all" ? "all" : "p" + anlState.period;
+          titulo = anlState.period === "all" ? "TODO EL TIEMPO" : "ÚLTIMOS " + anlState.period + " DÍAS";
+          f = (d.funnel && d.funnel[key]) || {};
+        }
         const etapas = [
           ["REGISTRADOS", Number(f.registrados || 0)],
           ["CON PUBLICACIÓN", Number(f.con_publicacion || 0)],
@@ -20224,8 +20278,7 @@
           nota = '<div style="font-size:12px;color:#8aa0b8;margin-top:10px">Aún no hay recorrido que medir en este periodo — prueba «Todo».</div>';
         }
         return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:14px 16px;margin-bottom:10px">' +
-          '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#5b6b7e;margin-bottom:10px">FUNNEL DEL NEGOCIO · ' +
-          (anlState.period === "all" ? "TODO EL TIEMPO" : "ÚLTIMOS " + anlState.period + " DÍAS") +
+          '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#5b6b7e;margin-bottom:10px">FUNNEL DEL NEGOCIO · ' + titulo +
           ' <span style="font-weight:700;text-transform:none;letter-spacing:0;color:#8aa0b8">(el aviso de match es un proxy: solo cuenta emails enviados)</span></div>' +
           '<div style="overflow-x:auto"><div style="display:flex;align-items:flex-end;min-width:430px">' + bloques + "</div></div>" + nota + "</div>";
       }
@@ -20366,18 +20419,34 @@
       function anlControlesHtml() {
         const per = (v, t) => '<span onclick="anlSet(\'period\',\'' + v + '\')" style="cursor:pointer;padding:6px 12px;font-size:12px;font-weight:800;' + (anlState.period === v ? "background:#0a2f55;color:#fff" : "color:#5b6b7e") + '">' + t + "</span>";
         const vert = (v, t) => '<span onclick="anlSet(\'vertical\',\'' + v + '\')" style="cursor:pointer;padding:6px 12px;font-size:12px;font-weight:800;border-radius:999px;' + (anlState.vertical === v ? "background:#0a2f55;color:#fff" : "background:#fff;border:1px solid #dce5ef;color:#0a2f55") + '">' + t + "</span>";
+        const rangoPill = '<span onclick="anlSet(\'period\',\'custom\')" style="cursor:pointer;padding:6px 12px;font-size:12px;font-weight:800;border-radius:999px;' + (anlState.period === "custom" ? "background:#0a2f55;color:#fff" : "background:#fff;border:1px solid #dce5ef;color:#0a2f55") + '">📅 Rango</span>';
+        let filaRango = "";
+        if (anlState.period === "custom") {
+          const hoy = new Date().toISOString().slice(0, 10);
+          const inp = 'type="date" max="' + hoy + '" style="padding:5px 8px;border:1px solid #dce5ef;border-radius:8px;font:inherit;font-size:12px;background:#fff;color:#0a2f55"';
+          filaRango = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:-4px 0 12px">' +
+            '<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#5b6b7e;font-weight:700">Desde <input id="anlDesde" ' + inp + ' value="' + (anlState.desde || "") + '"></label>' +
+            '<label style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#5b6b7e;font-weight:700">Hasta <input id="anlHasta" ' + inp + ' value="' + (anlState.hasta || "") + '"></label>' +
+            '<button class="button small" type="button" onclick="anlAplicarRango()">Aplicar</button>' +
+            (anlState.rangoMsg ? '<span style="font-size:12px;color:#b91c1c;font-weight:700">' + escapeHtml(anlState.rangoMsg) + "</span>" : "") +
+            "</div>";
+        }
         return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">' +
-          '<div style="display:inline-flex;background:#fff;border:1px solid #dce5ef;border-radius:9px;overflow:hidden">' + per("7", "7d") + per("30", "30d") + per("90", "90d") + per("all", "Todo") + "</div>" +
+          '<div style="display:inline-flex;background:#fff;border:1px solid #dce5ef;border-radius:9px;overflow:hidden">' + per("1", "1d") + per("7", "7d") + per("30", "30d") + per("90", "90d") + per("all", "Todo") + "</div>" +
+          rangoPill +
           '<div style="display:inline-flex;gap:6px">' + vert("all", "Todos") + vert("property", "Inmuebles") + vert("vehicle", "Vehículos") + "</div>" +
           '<span style="flex:1"></span>' +
           '<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#5b6b7e"><span id="anlDot" style="width:8px;height:8px;border-radius:50%;background:' + (anlState.error ? "#8aa0b8" : "#12a150") + '"></span><span id="anlVivo">En vivo</span></span>' +
-          '<button class="button small ghost" type="button" onclick="anlRefrescar()">Actualizar</button></div>';
+          '<button class="button small ghost" type="button" onclick="anlRefrescar()">Actualizar</button></div>' + filaRango;
       }
 
       function renderAnalytics() {
         const root = document.getElementById("anlRoot");
         const ctl = document.getElementById("anlControls");
         if (!root || !ctl) return;
+        // Los presets relativos (1/7/30/90d) se recalculan contra el reloj en
+        // cada render; el rango libre solo cambia con «Aplicar».
+        if (anlState.period !== "custom") anlVentanaCalc();
         ctl.innerHTML = anlControlesHtml();
         if (!adminMetricsData) {
           root.innerHTML = anlState.error && anlState.error !== "demo"
@@ -20395,12 +20464,36 @@
 
       function anlSet(campo, valor) {
         anlState[campo] = valor;
+        if (campo === "period") {
+          anlState.rangoMsg = "";
+          if (valor === "custom" && (!anlState.desde || !anlState.hasta)) {
+            anlState.hasta = new Date().toISOString().slice(0, 10);
+            anlState.desde = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10);
+          }
+          anlVentanaCalc();
+          anlFunnelRango();
+        }
         renderAnalytics();
       }
       window.anlSet = anlSet;
 
+      function anlAplicarRango() {
+        const desde = (document.getElementById("anlDesde") || {}).value;
+        const hasta = (document.getElementById("anlHasta") || {}).value;
+        anlState.rangoMsg = "";
+        if (!desde || !hasta) { anlState.rangoMsg = "Elige las dos fechas."; renderAnalytics(); return; }
+        if (desde > hasta) { anlState.rangoMsg = "«Desde» no puede ser después de «Hasta»."; renderAnalytics(); return; }
+        anlState.desde = desde;
+        anlState.hasta = hasta;
+        anlVentanaCalc();
+        anlFunnelRango();
+        renderAnalytics();
+      }
+      window.anlAplicarRango = anlAplicarRango;
+
       async function anlRefrescar() {
         await anlFetch(true);
+        anlFunnelRango(true);
         renderAnalytics();
       }
       window.anlRefrescar = anlRefrescar;
