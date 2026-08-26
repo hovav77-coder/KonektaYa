@@ -20201,7 +20201,7 @@
       // Cinta "EN VIVO" de la portada (3a-cinta-vivo.sql): los últimos eventos
       // reales (máx. 12, últimas 48 h) con mensaje claro y sin datos de
       // contacto. Con menos de 4 eventos la cinta entera se esconde.
-      let cintaEventos = [], cintaMin = 4;
+      let cintaEventos = [], cintaMin = 4, cintaCrudos = 0;
       function cintaMsg(e) {
         if (e.k === "promo") {
           const t = String(e.txt || "");
@@ -20239,7 +20239,8 @@
             '<div class="cinta-t2">' + (e.k === "promo" ? "KonektaYa" : escapeHtml(String(e.z || "Panamá")) + ' · <span class="cinta-hace">hace ' + anlRel(e.t) + "</span>") + "</div>" +
           "</div></div>";
       }
-      // Intercala los mensajes propios entre la actividad real (1 cada 2).
+      // Intercala los mensajes propios entre la actividad real: 1 de KonektaYa
+      // por cada 3 de la gente (la cinta es del mercado, no del dueño).
       function cintaMezclar(lista) {
         const reales = lista.filter((e) => e.k !== "promo");
         const promos = lista.filter((e) => e.k === "promo");
@@ -20247,20 +20248,40 @@
         let p = 0;
         reales.forEach((e, i) => {
           mezcla.push(e);
-          if ((i + 1) % 2 === 0 && p < promos.length) mezcla.push(promos[p++]);
+          if ((i + 1) % 3 === 0 && p < promos.length) mezcla.push(promos[p++]);
         });
         while (p < promos.length) mezcla.push(promos[p++]);
         return mezcla;
+      }
+      // La cinta siempre corre con al menos 4 tarjetas: si hay pocas, se
+      // repiten los mensajes propios (o lo que haya, si no hay mensajes).
+      function cintaRellenar(lista) {
+        if (!lista.length) return lista;
+        const promos = lista.filter((e) => e.k === "promo");
+        const fuente = promos.length ? promos : lista;
+        const res = lista.slice();
+        let i = 0;
+        while (res.length < 4) res.push(fuente[i++ % fuente.length]);
+        return res;
       }
       function renderCintaVivo() {
         const sec = document.getElementById("cintaVivo");
         const track = document.getElementById("cintaTrack");
         if (!sec || !track) return;
-        if (!Array.isArray(cintaEventos) || cintaEventos.length < cintaMin) { sec.dataset.vacia = "1"; return; }
-        const html = cintaEventos.map(cintaCardHtml).join("");
-        track.innerHTML = html + html; // pista duplicada = bucle continuo sin salto
-        track.style.animationDuration = Math.max(30, cintaEventos.length * 6) + "s";
+        // El umbral "mínimo para mostrarse" se mide con los eventos REALES del
+        // servidor (cintaCrudos), no con las tarjetas rellenadas.
+        if (!Array.isArray(cintaEventos) || !cintaEventos.length || cintaCrudos < cintaMin) { sec.dataset.vacia = "1"; return; }
         delete sec.dataset.vacia;
+        // La pista debe cubrir el ancho completo de la pantalla: se repite la
+        // secuencia hasta llenarlo y luego se duplica para el bucle sin salto.
+        const html = cintaEventos.map(cintaCardHtml).join("");
+        const scroll = track.parentElement;
+        const ancho = (scroll && scroll.clientWidth) || window.innerWidth || 1200;
+        const copias = Math.max(1, Math.ceil((ancho + 260) / (cintaEventos.length * 260)));
+        let mitad = "";
+        for (let c = 0; c < copias; c++) mitad += html;
+        track.innerHTML = mitad + mitad;
+        track.style.animationDuration = Math.max(30, cintaEventos.length * copias * 6) + "s";
       }
       async function cargarCintaVivo() {
         if (!supabaseEnabled || !supabaseClient) return;
@@ -20270,7 +20291,8 @@
           const lista = Array.isArray(data) ? data : (data && Array.isArray(data.events) ? data.events : null);
           if (!error && lista) {
             cintaMin = Array.isArray(data) ? 4 : Math.max(1, Number(data.min) || 4);
-            cintaEventos = cintaMezclar(lista);
+            cintaCrudos = lista.length;
+            cintaEventos = cintaRellenar(cintaMezclar(lista));
             renderCintaVivo();
           }
         } catch (e) {}
