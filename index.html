@@ -12913,11 +12913,12 @@
                     </div>
                   </div>
                   <p class="matchlab-status" id="matchLabStatus" hidden></p>
-                  <div id="adminCintaBar" style="min-width:0"></div>
                   <div class="admin-seg compact matchlab-seg" id="matchLabSeg">
                     <button class="active" type="button" onclick="setMatchLabVertical('inmuebles')">🏠 Inmuebles</button>
                     <button type="button" onclick="setMatchLabVertical('vehiculos')">🚗 Vehículos</button>
+                    <button type="button" id="matchLabCintaBtn" onclick="setMatchLabCinta()">📡 Cinta</button>
                   </div>
+                  <div id="adminCintaBar" style="min-width:0" hidden></div>
                   <div id="matchLabRoot"></div>
                 </section>
 
@@ -22077,13 +22078,38 @@
 
       function setMatchLabVertical(vertical) {
         matchLabVertical = vertical;
+        // Al volver a una vertical, la pestaña Cinta se guarda y el laboratorio reaparece.
+        const cintaBar = document.getElementById("adminCintaBar");
+        if (cintaBar) cintaBar.hidden = true;
+        const labRoot = document.getElementById("matchLabRoot");
+        if (labRoot) labRoot.hidden = false;
+        const labAcciones = document.querySelector('[data-admin-panel-pane="matchlab"] .matchlab-actions');
+        if (labAcciones) labAcciones.hidden = false;
         document.querySelectorAll("#matchLabSeg button").forEach((btn, index) => {
-          btn.classList.toggle("active", (index === 0 ? "inmuebles" : "vehiculos") === vertical);
+          btn.classList.toggle("active", btn.id !== "matchLabCintaBtn" && (index === 0 ? "inmuebles" : "vehiculos") === vertical);
         });
         document.querySelectorAll("[data-matchlab-vertical]").forEach((section) => {
           section.classList.toggle("active", section.dataset.matchlabVertical === vertical);
         });
       }
+
+      // Pestaña "📡 Cinta" del Laboratorio: muestra la administración de la
+      // cinta y esconde la fórmula (con sus botones Guardar/Restablecer).
+      function setMatchLabCinta() {
+        document.querySelectorAll("#matchLabSeg button").forEach((btn) => {
+          btn.classList.toggle("active", btn.id === "matchLabCintaBtn");
+        });
+        const labRoot = document.getElementById("matchLabRoot");
+        if (labRoot) labRoot.hidden = true;
+        const labAcciones = document.querySelector('[data-admin-panel-pane="matchlab"] .matchlab-actions');
+        if (labAcciones) labAcciones.hidden = true;
+        const status = document.getElementById("matchLabStatus");
+        if (status) status.hidden = true;
+        const cintaBar = document.getElementById("adminCintaBar");
+        if (cintaBar) cintaBar.hidden = false;
+        if (typeof window.ensureCintaAdmin === "function") window.ensureCintaAdmin();
+      }
+      window.setMatchLabCinta = setMatchLabCinta;
 
       function setupMatchLab() {
         const rootEl = document.getElementById("matchLabRoot");
