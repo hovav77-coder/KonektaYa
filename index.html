@@ -11709,6 +11709,9 @@
                 <label class="field">
                   Equipamiento
                   <select name="equipment">
+                    <option value="en_gris">En gris (sin acabados)</option>
+                    <option value="piso_techo">Con piso y techo (planta abierta)</option>
+                    <option value="con_divisiones">Con divisiones (ambientes listos)</option>
                     <option value="sin_muebles">Sin muebles</option>
                     <option value="linea_blanca">Línea blanca</option>
                     <option value="amueblado">Amueblado</option>
@@ -11853,6 +11856,9 @@
                   Equipamiento deseado
                   <select name="desiredEquipment">
                     <option value="indiferente">Indiferente</option>
+                    <option value="en_gris">En gris (sin acabados)</option>
+                    <option value="piso_techo">Con piso y techo (planta abierta)</option>
+                    <option value="con_divisiones">Con divisiones (ambientes listos)</option>
                     <option value="sin_muebles">Sin muebles</option>
                     <option value="linea_blanca">Línea blanca</option>
                     <option value="amueblado">Amueblado</option>
@@ -11986,6 +11992,9 @@
                   Equipamiento deseado
                   <select name="desiredEquipment">
                     <option value="indiferente">Indiferente</option>
+                    <option value="en_gris">En gris (sin acabados)</option>
+                    <option value="piso_techo">Con piso y techo (planta abierta)</option>
+                    <option value="con_divisiones">Con divisiones (ambientes listos)</option>
                     <option value="sin_muebles">Sin muebles</option>
                     <option value="linea_blanca">Línea blanca</option>
                     <option value="amueblado">Amueblado</option>
@@ -15642,6 +15651,9 @@
 
       function equipmentLabel(value) {
         const labels = {
+          en_gris: "En gris",
+          piso_techo: "Con piso y techo",
+          con_divisiones: "Con divisiones",
           sin_muebles: "Sin muebles",
           linea_blanca: "Línea blanca",
           amueblado: "Amueblado",
@@ -25912,7 +25924,7 @@
         { header: "Metros cuadrados", field: "sizeM2", guia: "Número (ej. 120)" },
         { header: "Precio venta (USD)", field: "salePrice", guia: "Número (ej. 185000) — si es Venta o Ambos" },
         { header: "Precio alquiler (USD)", field: "rentalPrice", guia: "Número (ej. 1200) — si es Alquiler o Ambos" },
-        { header: "Equipamiento", field: "equipment", guia: "Sin muebles | Línea blanca | Amueblado" },
+        { header: "Equipamiento", field: "equipment", guia: "En gris | Con piso y techo | Con divisiones | Sin muebles | Línea blanca | Amueblado" },
         { header: "Estacionamientos", field: "parkingSpaces", guia: "0 a 4, o 5+" },
         { header: "Depósito/bodega", field: "storage", guia: "Sí | No" },
         { header: "Disponibilidad", field: "availabilityNeed", guia: "Inmediata | 15 días | 30 días | 45 días | 60 días" },
@@ -25941,7 +25953,7 @@
         // letras), así que el "¿quisiste decir?" no lo alcanza.
         operation: { "alquiler": "alquiler", "solo alquiler": "alquiler", "alquilar": "alquiler", "rent": "alquiler", "for rent": "alquiler", "rental": "alquiler", "lease": "alquiler", "venta": "venta", "solo venta": "venta", "vender": "venta", "sale": "venta", "for sale": "venta", "sell": "venta", "ambos": "ambos", "alquiler y venta": "ambos", "both": "ambos" },
         propertyType: { "apartamento": "apartamento", "apto": "apartamento", "apartment": "apartamento", "apt": "apartamento", "condo": "apartamento", "casa": "casa", "house": "casa", "home": "casa", "local": "local", "store": "local", "shop": "local", "oficina": "oficina", "office": "oficina", "galera": "galera", "warehouse": "galera", "terreno": "terreno", "lote": "terreno", "land": "terreno", "lot": "terreno" },
-        equipment: { "sin muebles": "sin_muebles", "sin_muebles": "sin_muebles", "unfurnished": "sin_muebles", "linea blanca": "linea_blanca", "linea_blanca": "linea_blanca", "appliances": "linea_blanca", "white goods": "linea_blanca", "amueblado": "amueblado", "furnished": "amueblado" },
+        equipment: { "sin muebles": "sin_muebles", "sin_muebles": "sin_muebles", "unfurnished": "sin_muebles", "linea blanca": "linea_blanca", "linea_blanca": "linea_blanca", "appliances": "linea_blanca", "white goods": "linea_blanca", "amueblado": "amueblado", "furnished": "amueblado", "en gris": "en_gris", "en_gris": "en_gris", "gris": "en_gris", "obra gris": "en_gris", "gray shell": "en_gris", "grey shell": "en_gris", "shell": "en_gris", "con piso y techo": "piso_techo", "piso y techo": "piso_techo", "piso_techo": "piso_techo", "planta abierta": "piso_techo", "open plan": "piso_techo", "con divisiones": "con_divisiones", "con_divisiones": "con_divisiones", "divisiones": "con_divisiones", "dividido": "con_divisiones", "con oficinas": "con_divisiones", "ambientes listos": "con_divisiones" },
         storage: { "si": "si", "si incluye": "si", "incluye": "si", "yes": "si", "no": "no", "no incluye": "no" },
         availabilityNeed: { "inmediata": "inmediata", "inmediato": "inmediata", "disponible inmediato": "inmediata", "immediate": "inmediata", "immediately": "inmediata", "15 dias": "15_dias", "15_dias": "15_dias", "15 days": "15_dias", "30 dias": "30_dias", "30_dias": "30_dias", "30 days": "30_dias", "45 dias": "45_dias", "45_dias": "45_dias", "45 days": "45_dias", "60 dias": "60_dias", "60_dias": "60_dias", "60 days": "60_dias" }
       };
@@ -26253,7 +26265,7 @@
             ["Metros cuadrados", "No", "Número (ej. 120)"],
             ["Precio venta (USD)", "Si es Venta o Ambos", "Número (ej. 185000)"],
             ["Precio alquiler (USD)", "Si es Alquiler o Ambos", "Número (ej. 1200)"],
-            ["Equipamiento", "No", "Sin muebles | Línea blanca | Amueblado"],
+            ["Equipamiento", "No", "En gris | Con piso y techo | Con divisiones | Sin muebles | Línea blanca | Amueblado"],
             ["Estacionamientos", "No", "0 | 1 | 2 | 3 | 4 | 5+ (más de 4)"],
             ["Depósito/bodega", "No", "Sí | No"],
             ["Disponibilidad", "No", "Inmediata | 15 días | 30 días | 45 días | 60 días"],
@@ -26541,7 +26553,7 @@
         property: {
           operation: ["Alquiler", "Venta", "Ambos"],
           propertyType: ["Apartamento", "Casa", "Local", "Oficina", "Galera", "Terreno"],
-          equipment: ["Sin muebles", "Línea blanca", "Amueblado"],
+          equipment: ["En gris", "Con piso y techo", "Con divisiones", "Sin muebles", "Línea blanca", "Amueblado"],
           // Estacionamientos no es un enum en la validación (acepta cualquier
           // número y "5+"), pero el formulario ofrece esta lista: en el editor
           // vale más elegir que adivinar el formato.
