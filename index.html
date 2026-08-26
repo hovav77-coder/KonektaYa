@@ -1361,6 +1361,18 @@
         margin-top: 8px;
         padding: 8px 11px;
       }
+      /* Aviso ámbar cuando Google no da el corregimiento (la Zona queda genérica) */
+      .place-confirm { flex-wrap: wrap; }
+      .place-confirm .pc-warn {
+        background: #fff8e8;
+        border: 1px solid #f1883f;
+        border-radius: 8px;
+        color: #8a5a00;
+        flex: 1 0 100%;
+        font-weight: 700;
+        margin-top: 7px;
+        padding: 6px 9px;
+      }
 
       .place-confirm.show { display: flex; }
       .place-confirm strong { color: #0f5132; }
@@ -15083,9 +15095,22 @@
                     };
                     setSel(form.querySelector("[data-location-province]"), provinceName);
                     setSel(form.querySelector("[data-location-zone]"), area || city);
+                    // Si Google no dio un corregimiento del catálogo, avisar: la Zona
+                    // quedó genérica (ej. "Panamá") y conviene afinarla a mano — el
+                    // texto de zona participa en el match cuando el buscador no
+                    // tiene pin. (Mismo criterio que la carga masiva.)
+                    let zonaAviso = "";
+                    try {
+                      const provCat = (typeof locationOptions !== "undefined" &&
+                        (locationOptions[provinceName] || locationOptions[String(provinceName).replace(/^provincia de\s+/i, "")])) || null;
+                      const zonaPuesta = area || city;
+                      if (provCat && zonaPuesta && !provCat.includes(zonaPuesta)) {
+                        zonaAviso = '<div class="pc-warn">⚠ Google no identificó el corregimiento y la Zona quedó como «' + escapeHtml(zonaPuesta) + '». Si conoces el corregimiento (ej. Bella Vista), elígelo en el campo Zona.</div>';
+                      }
+                    } catch (e) {}
                     // Confirmación para que el usuario verifique (📍 barrio/ciudad + dirección).
                     if (!confEl) { confEl = document.createElement("div"); confEl.className = "place-confirm"; wrapper.appendChild(confEl); }
-                    confEl.innerHTML = `<span class="pc-check">📍</span><span>Ubicación fijada en el mapa · ${isEstab ? "<strong>" + escapeHtml(dName) + "</strong> · " : ""}${escapeHtml(place.formattedAddress || area || city || streetText)}</span>`;
+                    confEl.innerHTML = `<span class="pc-check">📍</span><span>Ubicación fijada en el mapa · ${isEstab ? "<strong>" + escapeHtml(dName) + "</strong> · " : ""}${escapeHtml(place.formattedAddress || area || city || streetText)}</span>` + zonaAviso;
                     confEl.classList.add("show");
                     // Mini mapa con el pin, para verificar visualmente el punto elegido.
                     if (place.location) {
