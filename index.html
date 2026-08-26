@@ -16255,11 +16255,21 @@
         if (!provinceSelect || !zoneSelect) return;
 
         const provinces = Object.keys(locationOptions);
-        fillSelect(provinceSelect, provinces, defaultProvince);
+        // Valores guardados FUERA del catálogo (el flujo de Google puede escribir
+        // "Provincia de Panamá" / "Panamá") se conservan como opción extra. Antes
+        // caían EN SILENCIO al primer valor de la lista ("Ancón") y, al guardar
+        // una edición, la zona real de la publicación quedaba corrompida.
+        const provLista = defaultProvince && !provinces.includes(defaultProvince)
+          ? [defaultProvince].concat(provinces)
+          : provinces;
+        fillSelect(provinceSelect, provLista, defaultProvince);
+        const provinciaOriginal = provinceSelect.value;
 
         const refreshZones = () => {
-          const zones = locationOptions[provinceSelect.value] || [];
-          fillSelect(zoneSelect, zones, zones.includes(defaultZone) ? defaultZone : zones[0]);
+          const zones = (locationOptions[provinceSelect.value] || []).slice();
+          const enOriginal = provinceSelect.value === provinciaOriginal;
+          if (defaultZone && enOriginal && !zones.includes(defaultZone)) zones.unshift(defaultZone);
+          fillSelect(zoneSelect, zones, enOriginal && zones.includes(defaultZone) ? defaultZone : zones[0]);
         };
 
         provinceSelect.addEventListener("change", refreshZones);
@@ -23215,8 +23225,30 @@
         const filteredUnlocksForStats = unlockedRecordsForStats.filter(
           (item) => adminVerticalFilter === "all" || item.vertical === adminVerticalFilter
         );
-        const unlockedCount = filteredUnlocksForStats.length;
-        const totalSpent = filteredUnlocksForStats.reduce((sum, item) => sum + Number(item.price || 0), 0);
+        let unlockedCount = filteredUnlocksForStats.length;
+        let totalSpent = filteredUnlocksForStats.reduce((sum, item) => sum + Number(item.price || 0), 0);
+        // Cifras REALES de plataforma (admin_metrics) en cuanto llegan: machUnlocks
+        // vive en localStorage del navegador y puede arrastrar restos de pruebas
+        // viejas (así apareció un "$20 · 1 desbloqueo" fantasma tras la limpieza).
+        const srvM = supabaseEnabled && typeof adminMetricsData !== "undefined" && adminMetricsData && adminMetricsData.unlocks_all ? adminMetricsData : null;
+        if (srvM) {
+          if (adminVerticalFilter === "all") {
+            unlockedCount = Number(srvM.unlocks_all.n || 0);
+            totalSpent = Number(srvM.unlocks_all.amt || 0);
+          } else {
+            const lst = (srvM.unlocks_list || []).filter((u) => (adminVerticalFilter === "property" ? u.v === "inmueble" : u.v === "vehiculo"));
+            unlockedCount = lst.length;
+            totalSpent = lst.reduce((s, u) => s + Number(u.p || 0), 0);
+          }
+        } else if (supabaseEnabled && typeof anlFetch === "function" && !window.__anlPidiendo && typeof isAdminEmail === "function" && isAdminEmail(currentUserEmail)) {
+          // Primera vez que el admin abre el panel: pedir las métricas reales y
+          // re-pintar una sola vez cuando lleguen.
+          window.__anlPidiendo = true;
+          Promise.resolve(anlFetch()).then((d) => {
+            window.__anlPidiendo = false;
+            if (d && typeof render === "function") render();
+          }).catch(() => { window.__anlPidiendo = false; });
+        }
         const avg = unlockedCount ? totalSpent / unlockedCount : 0;
         const userPropertyMatches = matches.filter(
           (match) => userProperties.some((property) => property.id === match.property.id) && isContactRequested(match)
@@ -23439,9 +23471,16 @@
         }
         // Signos vitales del centro de mando (siempre visibles) + badge del riel.
         const avSet = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-        avSet("avIngresos", money.format(totalSpent));
+        if (srvM && srvM.paypal_all) {
+          // El signo vital de ingresos muestra el dinero REAL cobrado por PayPal.
+          avSet("avIngresos", money.format(Number(srvM.paypal_all.amt) || 0));
+          const avI = document.getElementById("avIngresos");
+          if (avI && avI.previousElementSibling) avI.previousElementSibling.textContent = "Ingresos (PayPal real)";
+        } else {
+          avSet("avIngresos", money.format(totalSpent));
+        }
         avSet("avClientes", String(clientesRegistrados));
-        avSet("avDesbloqueos", String(unlockedCount));
+        avSet("avDesbloqueos", String(srvM ? Number(srvM.unlocks_all.n || 0) : unlockedCount));
         avSet("avRevisar", String(porRevisar));
         avSet("avPaypal", !supabaseEnabled ? "modo demo" : (typeof paymentsEnabled !== "undefined" && paymentsEnabled ? "● PayPal activado" : "PayPal apagado"));
         const avCard = document.getElementById("avRevisarCard");
