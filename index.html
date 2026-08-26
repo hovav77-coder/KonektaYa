@@ -11327,6 +11327,38 @@
       .cinta-fila .f-t2 { color: #9fb4cc; font-size: 10.5px; }
       @keyframes cintaFilaIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
 
+      /* Tablero PC (opción A aprobada, con filas resaltadas): cada anuncio es
+         una fila-tarjeta con columnas alineadas — ícono · ZONA · anuncio ·
+         detalle · hora — estilo pantalla de salidas. */
+      @media (min-width: 641px) {
+        #cintaBoardTrack { display: flex; flex-direction: column; gap: 8px; }
+        .cinta-fila,
+        .cinta-fila:last-child {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.10);
+          border-radius: 12px;
+          gap: 16px;
+          padding: 12px 16px;
+        }
+        .cinta-fila .f-zcol {
+          align-items: center;
+          color: #f7a869;
+          display: flex;
+          flex: 0 0 185px;
+          font-size: 15px;
+          font-weight: 900;
+          gap: 8px;
+          letter-spacing: 0.05em;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        .cinta-fila .f-tit { color: #ffffff; flex: 1 1 auto; font-size: 16px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cinta-fila .f-det { color: #9fb4cc; flex: 0 0 230px; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cinta-fila .f-hace { color: #6d84a3; flex: 0 0 110px; font-size: 12.5px; text-align: right; }
+      }
+
       @media (max-width: 640px) {
         /* Beneficios: cuadrícula 2×2 compacta (diseño A aprobado) */
         .home-benefit-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
@@ -20397,49 +20429,53 @@
           '<div class="f-t1"><span class="f-dot" style="background:' + dot + '"></span><span class="f-txt">' + t1 + "</span></div>" +
           '<div class="f-t2">' + sub + "</div></div></div>";
       }
+      // Fila del tablero en PC (opción A con filas resaltadas): columnas
+      // alineadas — ícono · ZONA · anuncio · detalle · hora.
+      function cintaFilaPcHtml(e) {
+        const p = cintaPartes(e);
+        const dot = e.k === "busqueda" ? "#7db8e8" : "#f1883f";
+        const ico = e.k === "promo" ? "📣" : e.k === "busqueda" ? "🔎" : cintaIco(e);
+        const zona = e.k === "promo" ? "KonektaYa" : (p.gancho || "Panamá");
+        const det = e.k === "promo" ? "" : (p.detalle || "");
+        const hace = e.k === "promo" ? "" : "hace " + anlRel(e.t);
+        return '<div class="cinta-fila"><span class="f-ico">' + ico + "</span>" +
+          '<span class="f-zcol"><span style="background:' + dot + ';width:7px;height:7px;border-radius:50%;flex:0 0 auto"></span>' + escapeHtml(zona) + "</span>" +
+          '<span class="f-tit">' + escapeHtml(p.titulo) + "</span>" +
+          '<span class="f-det">' + escapeHtml(det) + "</span>" +
+          '<span class="f-hace">' + hace + "</span></div>";
+      }
       function renderCintaVivo() {
         const sec = document.getElementById("cintaVivo");
         const track = document.getElementById("cintaTrack");
         const board = document.getElementById("cintaBoard");
-        if (!sec || !track) return;
+        if (!sec || !track || !board) return;
         // El umbral "mínimo para mostrarse" se mide con los eventos REALES del
         // servidor (cintaCrudos), no con las tarjetas rellenadas.
         if (!Array.isArray(cintaEventos) || !cintaEventos.length || cintaCrudos < cintaMin) { sec.dataset.vacia = "1"; return; }
         delete sec.dataset.vacia;
-        const scroll = track.parentElement;
-        const movil = !!board && cintaEsMovil();
-        sec.classList.toggle("tablero", movil);
+        // Tablero SIEMPRE (aprobado también para PC): la pista deslizante vieja
+        // queda apagada; el celular usa filas de 2 líneas, el PC columnas.
+        sec.classList.add("tablero");
+        track.parentElement.hidden = true;
+        board.hidden = false;
         let rota = document.getElementById("cintaRota");
         if (!rota) {
           const head = sec.querySelector(".cinta-head");
           if (head) { rota = document.createElement("span"); rota.className = "cinta-rota"; rota.id = "cintaRota"; head.appendChild(rota); }
         }
-        if (movil) {
-          scroll.hidden = true;
-          board.hidden = false;
-          const n = cintaEventos.length;
-          // 5 filas: 4 visibles + la siguiente esperando abajo. El marco (board)
-          // recorta; la pista interna es la que se desliza.
-          const filas = [];
-          for (let i = 0; i < 5; i++) filas.push(cintaFilaHtml(cintaEventos[(cintaOffset + i) % n]));
-          board.innerHTML = '<div id="cintaBoardTrack">' + filas.join("") + "</div>";
-          const fila0 = board.querySelector(".cinta-fila");
-          if (fila0) board.style.height = fila0.offsetHeight * 4 + "px";
-          if (rota) rota.textContent = n > 4 ? "rota cada 4 s" : "";
-          return;
+        const n = cintaEventos.length;
+        const arma = cintaEsMovil() ? cintaFilaHtml : cintaFilaPcHtml;
+        // 5 filas: 4 visibles + la siguiente esperando abajo. El marco (board)
+        // recorta; la pista interna es la que se desliza.
+        const filas = [];
+        for (let i = 0; i < 5; i++) filas.push(arma(cintaEventos[(cintaOffset + i) % n]));
+        board.innerHTML = '<div id="cintaBoardTrack">' + filas.join("") + "</div>";
+        const kids = board.querySelectorAll(".cinta-fila");
+        if (kids.length >= 4) {
+          const r0 = kids[0].getBoundingClientRect(), r3 = kids[3].getBoundingClientRect();
+          board.style.height = Math.ceil(r3.bottom - r0.top) + "px";
         }
-        if (board) board.hidden = true;
-        scroll.hidden = false;
-        if (rota) rota.textContent = "";
-        // La pista debe cubrir el ancho completo de la pantalla: se repite la
-        // secuencia hasta llenarlo y luego se duplica para el bucle sin salto.
-        const html = cintaEventos.map(cintaCardHtml).join("");
-        const ancho = (scroll && scroll.clientWidth) || window.innerWidth || 1200;
-        const copias = Math.max(1, Math.ceil((ancho + 260) / (cintaEventos.length * 260)));
-        let mitad = "";
-        for (let c = 0; c < copias; c++) mitad += html;
-        track.innerHTML = mitad + mitad;
-        track.style.animationDuration = Math.max(30, cintaEventos.length * copias * 6) + "s";
+        if (rota) rota.textContent = n > 4 ? "rota cada 4 s" : "";
       }
       async function cargarCintaVivo() {
         if (!supabaseEnabled || !supabaseClient) return;
@@ -20457,10 +20493,10 @@
       }
       cargarCintaVivo();
       setInterval(() => { if (!document.hidden) cargarCintaVivo(); }, 120000);
-      // Movimiento del tablero móvil: cada 4 s la fila de arriba se desliza
-      // hacia afuera y entra la siguiente por abajo (siempre, aun con 4).
+      // Movimiento del tablero (celular Y PC): cada 4 s la fila de arriba se
+      // desliza hacia afuera y entra la siguiente por abajo (siempre, aun con 4).
       setInterval(() => {
-        if (document.hidden || !cintaEsMovil()) return;
+        if (document.hidden) return;
         const sec = document.getElementById("cintaVivo");
         const board = document.getElementById("cintaBoard");
         if (!sec || !board || board.hidden || sec.dataset.vacia === "1") return;
@@ -20470,10 +20506,12 @@
           if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { avanzar(); return; }
         } catch (e) {}
         const pista = document.getElementById("cintaBoardTrack");
-        const fila0 = board.querySelector(".cinta-fila");
-        if (!pista || !fila0) return;
+        const kids = board.querySelectorAll(".cinta-fila");
+        if (!pista || kids.length < 2) return;
+        // Distancia = alto de una fila + el espacio entre filas (en PC hay gap).
+        const paso = kids[1].getBoundingClientRect().top - kids[0].getBoundingClientRect().top;
         pista.style.transition = "transform 0.55s ease";
-        pista.style.transform = "translateY(-" + fila0.offsetHeight + "px)";
+        pista.style.transform = "translateY(-" + paso + "px)";
         setTimeout(avanzar, 590);
       }, 4000);
       // Cambio de tamaño (girar el teléfono, achicar la ventana): re-render al modo correcto.
