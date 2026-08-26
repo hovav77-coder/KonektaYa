@@ -11278,6 +11278,68 @@
         }
         .admin-vitals { grid-template-columns: 1fr 1fr; }
       }
+
+      /* ===== Portada móvil: tablero EN VIVO + cuadrícula 2×2 + pasos en línea ===== */
+      /* Tablero (cinta apilada, diseño B aprobado): panel oscuro con 4 filas
+         completas visibles; rota cuando hay más de 4 eventos. Solo celular. */
+      .cinta-vivo.tablero {
+        background: linear-gradient(150deg, #132f4f, #0d2138);
+        border-top: 0;
+        border-bottom: 0;
+        padding: 13px 0 8px;
+      }
+      .cinta-vivo.tablero .cinta-inner { display: block; }
+      .cinta-vivo.tablero .cinta-head {
+        align-items: center;
+        flex-direction: row;
+        gap: 8px;
+        margin-bottom: 2px;
+      }
+      .cinta-vivo.tablero .cinta-live { color: #f7a869; }
+      .cinta-vivo.tablero .cinta-sub { color: #9fb4cc; display: inline; }
+      .cinta-rota { font-size: 10px; color: #6d84a3; font-weight: 700; margin-left: auto; }
+      .cinta-fila {
+        align-items: center;
+        animation: cintaFilaIn 0.45s ease;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+        display: flex;
+        gap: 9px;
+        padding: 9px 0;
+      }
+      .cinta-fila:last-child { border-bottom: 0; padding-bottom: 3px; }
+      .cinta-fila .f-ico { font-size: 16px; flex: 0 0 auto; }
+      .cinta-fila .f-cuerpo { flex: 1; min-width: 0; }
+      .cinta-fila .f-t1 {
+        align-items: baseline;
+        color: #ffffff;
+        display: flex;
+        font-size: 12.5px;
+        font-weight: 800;
+        gap: 5px;
+        min-width: 0;
+      }
+      .cinta-fila .f-t1 .f-dot { width: 6px; height: 6px; border-radius: 50%; flex: 0 0 auto; align-self: center; }
+      .cinta-fila .f-t1 .f-txt { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .cinta-fila .f-t2 { color: #9fb4cc; font-size: 10.5px; }
+      @keyframes cintaFilaIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+
+      @media (max-width: 640px) {
+        /* Beneficios: cuadrícula 2×2 compacta (diseño A aprobado) */
+        .home-benefit-grid { grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+        .home-benefit-card { border-radius: 14px; padding: 13px 13px 12px; }
+        .home-benefit-card h3 { font-size: 13.5px; margin: 0 0 4px; }
+        .home-benefit-card p { font-size: 11.5px; line-height: 1.35; }
+        .home-benefit-card .benefit-icon { margin-bottom: 5px; }
+        .home-benefit-card .benefit-icon svg { height: 20px; width: 20px; }
+        /* Cómo funciona: los 5 pasos en una línea, número arriba y texto debajo */
+        .home-flow-steps { border-radius: 16px; gap: 12px; margin-top: 14px; padding: 16px 10px 14px; }
+        .home-flow-label { padding-left: 4px; }
+        .home-flow-track { align-items: flex-start; flex-direction: row; flex-wrap: nowrap; gap: 0; }
+        .home-flow-step { flex: 1 1 0; flex-direction: column; gap: 5px; min-width: 0; text-align: center; }
+        .home-flow-num { font-size: 14px; height: 31px; width: 31px; }
+        .home-flow-text { font-size: 10px; line-height: 1.2; text-align: center; white-space: normal; }
+        .home-flow-connector { border-top: 2.5px solid #f1883f; display: block; flex: 0 0 14px; margin: 14px -7px 0; min-width: 0; }
+      }
     </style>
   </head>
   <body>
@@ -11534,6 +11596,7 @@
             <span class="cinta-sub">lo último en KonektaYa</span>
           </div>
           <div class="cinta-scroll"><div class="cinta-track" id="cintaTrack"></div></div>
+          <div class="cinta-board" id="cintaBoard" hidden></div>
         </div>
       </section>
 
@@ -20264,18 +20327,52 @@
         while (res.length < 4) res.push(fuente[i++ % fuente.length]);
         return res;
       }
+      // En celular la cinta es un TABLERO apilado (diseño B aprobado): 4 filas
+      // completas visibles a la vez, rotando cada 4 s cuando hay más eventos.
+      // En pantallas grandes sigue la pista deslizante.
+      let cintaOffset = 0;
+      function cintaEsMovil() { return !!(window.matchMedia && window.matchMedia("(max-width: 640px)").matches); }
+      function cintaFilaHtml(e) {
+        const dot = e.k === "busqueda" ? "#7db8e8" : "#f1883f";
+        const ico = e.k === "promo" ? "📣" : e.k === "busqueda" ? "🔎" : cintaIco(e);
+        const sub = e.k === "promo" ? "KonektaYa" : escapeHtml(String(e.z || "Panamá")) + ' · hace ' + anlRel(e.t);
+        return '<div class="cinta-fila"><span class="f-ico">' + ico + '</span><div class="f-cuerpo">' +
+          '<div class="f-t1"><span class="f-dot" style="background:' + dot + '"></span><span class="f-txt">' + escapeHtml(cintaMsg(e)) + "</span></div>" +
+          '<div class="f-t2">' + sub + "</div></div></div>";
+      }
       function renderCintaVivo() {
         const sec = document.getElementById("cintaVivo");
         const track = document.getElementById("cintaTrack");
+        const board = document.getElementById("cintaBoard");
         if (!sec || !track) return;
         // El umbral "mínimo para mostrarse" se mide con los eventos REALES del
         // servidor (cintaCrudos), no con las tarjetas rellenadas.
         if (!Array.isArray(cintaEventos) || !cintaEventos.length || cintaCrudos < cintaMin) { sec.dataset.vacia = "1"; return; }
         delete sec.dataset.vacia;
+        const scroll = track.parentElement;
+        const movil = !!board && cintaEsMovil();
+        sec.classList.toggle("tablero", movil);
+        let rota = document.getElementById("cintaRota");
+        if (!rota) {
+          const head = sec.querySelector(".cinta-head");
+          if (head) { rota = document.createElement("span"); rota.className = "cinta-rota"; rota.id = "cintaRota"; head.appendChild(rota); }
+        }
+        if (movil) {
+          scroll.hidden = true;
+          board.hidden = false;
+          const n = cintaEventos.length;
+          const filas = [];
+          for (let i = 0; i < Math.min(4, n); i++) filas.push(cintaFilaHtml(cintaEventos[(cintaOffset + i) % n]));
+          board.innerHTML = filas.join("");
+          if (rota) rota.textContent = n > 4 ? "rota cada 4 s" : "";
+          return;
+        }
+        if (board) board.hidden = true;
+        scroll.hidden = false;
+        if (rota) rota.textContent = "";
         // La pista debe cubrir el ancho completo de la pantalla: se repite la
         // secuencia hasta llenarlo y luego se duplica para el bucle sin salto.
         const html = cintaEventos.map(cintaCardHtml).join("");
-        const scroll = track.parentElement;
         const ancho = (scroll && scroll.clientWidth) || window.innerWidth || 1200;
         const copias = Math.max(1, Math.ceil((ancho + 260) / (cintaEventos.length * 260)));
         let mitad = "";
@@ -20299,6 +20396,19 @@
       }
       cargarCintaVivo();
       setInterval(() => { if (!document.hidden) cargarCintaVivo(); }, 120000);
+      // Rotación del tablero móvil (solo cuando hay más de 4 eventos).
+      setInterval(() => {
+        if (document.hidden || !cintaEsMovil()) return;
+        const sec = document.getElementById("cintaVivo");
+        if (!sec || sec.dataset.vacia === "1") return;
+        if (!Array.isArray(cintaEventos) || cintaEventos.length <= 4) return;
+        cintaOffset = (cintaOffset + 1) % cintaEventos.length;
+        renderCintaVivo();
+      }, 4000);
+      // Cambio de tamaño (girar el teléfono, achicar la ventana): re-render al modo correcto.
+      if (window.matchMedia) {
+        try { window.matchMedia("(max-width: 640px)").addEventListener("change", () => renderCintaVivo()); } catch (e) {}
+      }
 
       // ============ Administración de la cinta (Laboratorio del admin) ============
       // Tarjeta #adminCintaBar: interruptor, ajustes (ventana/mínimo/máximo),
