@@ -12913,6 +12913,7 @@
                     </div>
                   </div>
                   <p class="matchlab-status" id="matchLabStatus" hidden></p>
+                  <div id="adminCintaBar" style="min-width:0"></div>
                   <div class="admin-seg compact matchlab-seg" id="matchLabSeg">
                     <button class="active" type="button" onclick="setMatchLabVertical('inmuebles')">🏠 Inmuebles</button>
                     <button type="button" onclick="setMatchLabVertical('vehiculos')">🚗 Vehículos</button>
@@ -16586,6 +16587,7 @@
             pane.classList.toggle("active", pane.dataset.adminPanelPane === target);
           });
           if (target === "analytics" && typeof window.ensureAnalytics === "function") window.ensureAnalytics();
+          if (target === "matchlab" && typeof window.ensureCintaAdmin === "function") window.ensureCintaAdmin();
         };
 
         buttons.forEach((button) => {
@@ -20198,8 +20200,12 @@
       // Cinta "EN VIVO" de la portada (3a-cinta-vivo.sql): los últimos eventos
       // reales (máx. 12, últimas 48 h) con mensaje claro y sin datos de
       // contacto. Con menos de 4 eventos la cinta entera se esconde.
-      let cintaEventos = [];
+      let cintaEventos = [], cintaMin = 4;
       function cintaMsg(e) {
+        if (e.k === "promo") {
+          const t = String(e.txt || "");
+          return t.length > 64 ? t.slice(0, 63) + "…" : t;
+        }
         if (e.v === "vehiculo") {
           if (e.k === "oferta") {
             const nombre = [e.marca, e.modelo, e.anio].filter(Boolean).join(" ") || (typeof vehicleLabel === "function" && vehicleLabel(e.tipo)) || "Vehículo";
@@ -20224,19 +20230,33 @@
         if (t.includes("casa")) return "🏡";
         return "🏠";
       }
+      function cintaCardHtml(e) {
+        return '<div class="cinta-card ' + (e.k === "busqueda" ? "busqueda" : "oferta") + '">' +
+          '<span class="cinta-ico">' + (e.k === "promo" ? "📣" : e.k === "busqueda" ? "🔎" : cintaIco(e)) + "</span>" +
+          "<div>" +
+            '<div class="cinta-t1">' + escapeHtml(cintaMsg(e)) + "</div>" +
+            '<div class="cinta-t2">' + (e.k === "promo" ? "KonektaYa" : escapeHtml(String(e.z || "Panamá")) + ' · <span class="cinta-hace">hace ' + anlRel(e.t) + "</span>") + "</div>" +
+          "</div></div>";
+      }
+      // Intercala los mensajes propios entre la actividad real (1 cada 2).
+      function cintaMezclar(lista) {
+        const reales = lista.filter((e) => e.k !== "promo");
+        const promos = lista.filter((e) => e.k === "promo");
+        const mezcla = [];
+        let p = 0;
+        reales.forEach((e, i) => {
+          mezcla.push(e);
+          if ((i + 1) % 2 === 0 && p < promos.length) mezcla.push(promos[p++]);
+        });
+        while (p < promos.length) mezcla.push(promos[p++]);
+        return mezcla;
+      }
       function renderCintaVivo() {
         const sec = document.getElementById("cintaVivo");
         const track = document.getElementById("cintaTrack");
         if (!sec || !track) return;
-        if (!Array.isArray(cintaEventos) || cintaEventos.length < 4) { sec.dataset.vacia = "1"; return; }
-        const card = (e) =>
-          '<div class="cinta-card ' + (e.k === "busqueda" ? "busqueda" : "oferta") + '">' +
-            '<span class="cinta-ico">' + (e.k === "busqueda" ? "🔎" : cintaIco(e)) + "</span>" +
-            "<div>" +
-              '<div class="cinta-t1">' + escapeHtml(cintaMsg(e)) + "</div>" +
-              '<div class="cinta-t2">' + escapeHtml(String(e.z || "Panamá")) + ' · <span class="cinta-hace">hace ' + anlRel(e.t) + "</span></div>" +
-            "</div></div>";
-        const html = cintaEventos.map(card).join("");
+        if (!Array.isArray(cintaEventos) || cintaEventos.length < cintaMin) { sec.dataset.vacia = "1"; return; }
+        const html = cintaEventos.map(cintaCardHtml).join("");
         track.innerHTML = html + html; // pista duplicada = bucle continuo sin salto
         track.style.animationDuration = Math.max(30, cintaEventos.length * 6) + "s";
         delete sec.dataset.vacia;
@@ -20245,11 +20265,152 @@
         if (!supabaseEnabled || !supabaseClient) return;
         try {
           const { data, error } = await supabaseClient.rpc("public_ticker");
-          if (!error && Array.isArray(data)) { cintaEventos = data; renderCintaVivo(); }
+          // Dos formatos: lista (3a/3c) u objeto {min, events} (3d en adelante).
+          const lista = Array.isArray(data) ? data : (data && Array.isArray(data.events) ? data.events : null);
+          if (!error && lista) {
+            cintaMin = Array.isArray(data) ? 4 : Math.max(1, Number(data.min) || 4);
+            cintaEventos = cintaMezclar(lista);
+            renderCintaVivo();
+          }
         } catch (e) {}
       }
       cargarCintaVivo();
       setInterval(() => { if (!document.hidden) cargarCintaVivo(); }, 120000);
+
+      // ============ Administración de la cinta (Laboratorio del admin) ============
+      // Tarjeta #adminCintaBar: interruptor, ajustes (ventana/mínimo/máximo),
+      // mensajes propios 📣 y vista previa exacta de lo que ve el público.
+      // Servidor: 3d-cinta-admin.sql (admin_ticker_* + public_ticker v2).
+      let cintaAdminData = null;
+
+      async function ensureCintaAdmin() {
+        const bar = document.getElementById("adminCintaBar");
+        if (!bar || !supabaseEnabled || !supabaseClient) return;
+        if (!bar.innerHTML) bar.innerHTML = '<p class="admin-users-empty">Cargando cinta…</p>';
+        const { data, error } = await supabaseClient.rpc("admin_ticker_list");
+        if (error) {
+          bar.innerHTML = '<div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:11px;padding:11px 13px;font-size:13px;color:#b91c1c;margin-bottom:14px">No se pudo cargar la administración de la cinta: ' + escapeHtml(error.message) + '<br><span style="color:#5b6b82">¿Ya corriste <strong>supabase/3d-cinta-admin.sql</strong> en el SQL Editor?</span></div>';
+          return;
+        }
+        cintaAdminData = data || {};
+        renderCintaAdminCard();
+        cintaAdminPreview();
+      }
+      window.ensureCintaAdmin = ensureCintaAdmin;
+
+      function renderCintaAdminCard() {
+        const bar = document.getElementById("adminCintaBar");
+        if (!bar || !cintaAdminData) return;
+        const cfg = cintaAdminData.cfg || { enabled: true, hours: 48, min: 4, max: 12 };
+        const msgs = Array.isArray(cintaAdminData.msgs) ? cintaAdminData.msgs : [];
+        const encendida = cfg.enabled !== false;
+        const chip = encendida
+          ? '<span style="background:#e8f7ee;border:1px solid #bfe6cd;color:#0f7a3d;font-size:11px;font-weight:900;border-radius:999px;padding:3px 11px">● ENCENDIDA</span>'
+          : '<span style="background:#fdecec;border:1px solid #f5c2c0;color:#b91c1c;font-size:11px;font-weight:900;border-radius:999px;padding:3px 11px">■ APAGADA</span>';
+        const sel = (id, val, ops) => '<select id="' + id + '" style="padding:4px 8px;border:1px solid #dce5ef;border-radius:7px;font:inherit;font-size:12.5px;background:#fff;color:#0a2f55">' +
+          ops.map((o) => '<option value="' + o[0] + '"' + (String(o[0]) === String(val) ? " selected" : "") + ">" + o[1] + "</option>").join("") + "</select>";
+        const filas = msgs.map((m) =>
+          '<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #dce5ef;border-radius:10px;padding:8px 12px' + (m.on ? "" : ";opacity:.55") + '">' +
+            '<span style="font-size:15px">📣</span>' +
+            '<span style="flex:1;min-width:0;font-size:13px;color:#0a2f55;font-weight:600;overflow-wrap:anywhere">' + escapeHtml(m.txt || "") + (m.on ? "" : ' <em style="color:#8aa0b8;font-weight:600">(pausado)</em>') + "</span>" +
+            '<button class="button small ghost" type="button" onclick="cintaAdminMsgToggle(\'' + m.id + "'," + (m.on ? "false" : "true") + ')">' + (m.on ? "Pausar" : "Activar") + "</button>" +
+            '<button class="button small ghost" type="button" style="color:#c62828" onclick="cintaAdminMsgDelete(\'' + m.id + '\')">🗑</button>' +
+          "</div>").join("");
+        bar.innerHTML =
+          '<div style="background:#f8fafc;border:1px solid #dce5ef;border-radius:14px;padding:16px 18px;margin:4px 0 8px;min-width:0;overflow:hidden">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">' +
+              '<strong style="font-size:15px;color:#0a2f55">📡 Cinta EN VIVO de la portada</strong>' + chip +
+              '<span id="cintaAdmStatus" style="font-size:12px;font-weight:800"></span>' +
+              '<span style="flex:1"></span>' +
+              '<button class="button small ghost" type="button" onclick="cintaAdminToggle()">' + (encendida ? "Apagar cinta" : "Encender cinta") + "</button>" +
+            "</div>" +
+            '<p style="font-size:12.5px;color:#5b6b7e;margin:0 0 12px">Lo que los visitantes ven deslizándose en la página principal. Aquí la controlas sin tocar código.</p>' +
+            '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;background:#fff;border:1px solid #dce5ef;border-radius:10px;padding:10px 14px;margin-bottom:12px">' +
+              '<label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#29425f">Ventana ' + sel("cintaSelHoras", cfg.hours, [[24, "últimas 24 h"], [48, "últimas 48 h"], [72, "últimas 72 h"], [168, "última semana"]]) + "</label>" +
+              '<label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#29425f">Mínimo para mostrarse ' + sel("cintaSelMin", cfg.min, [[1, "1 evento"], [2, "2 eventos"], [3, "3 eventos"], [4, "4 eventos"], [6, "6 eventos"], [8, "8 eventos"]]) + "</label>" +
+              '<label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#29425f">Máximo ' + sel("cintaSelMax", cfg.max, [[8, "8"], [12, "12"], [16, "16"], [20, "20"]]) + "</label>" +
+              '<button class="button small" type="button" onclick="cintaAdminSave()">Guardar</button>' +
+            "</div>" +
+            '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:7px">MENSAJES PROPIOS <span style="font-weight:700;letter-spacing:0;color:#8aa0b8">(se mezclan con la actividad real, marcados con 📣 — cuentan para el mínimo)</span></div>' +
+            (filas ? '<div style="display:grid;gap:7px;margin-bottom:8px;min-width:0">' + filas + "</div>" : '<p class="admin-users-empty" style="margin:0 0 8px">Sin mensajes todavía — agrega el primero abajo.</p>') +
+            '<div style="display:flex;gap:8px;margin-bottom:14px">' +
+              '<input type="text" id="cintaNuevoMsg" maxlength="140" placeholder="Escribe un mensaje nuevo… (ej. Canjea el cupón BIENVENIDO10)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();cintaAdminAdd();}" style="flex:1;min-width:0;padding:8px 12px;border:1px solid #dce5ef;border-radius:9px;font:inherit;font-size:13px">' +
+              '<button class="button small" type="button" onclick="cintaAdminAdd()">+ Agregar</button>' +
+            "</div>" +
+            '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:7px">ASÍ SE VE AHORA MISMO PARA EL PÚBLICO <button class="button small ghost" type="button" style="font-size:11px;margin-left:6px" onclick="cintaAdminPreview()">Actualizar</button></div>' +
+            '<div id="cintaPreviewRow" style="min-width:0"><span class="admin-users-empty">Cargando…</span></div>' +
+          "</div>";
+      }
+
+      async function cintaAdminPreview() {
+        const row = document.getElementById("cintaPreviewRow");
+        if (!row || !supabaseClient) return;
+        const { data, error } = await supabaseClient.rpc("public_ticker");
+        if (error) { row.innerHTML = '<span class="admin-users-empty">Error: ' + escapeHtml(error.message) + "</span>"; return; }
+        const lista = Array.isArray(data) ? data : (data && Array.isArray(data.events) ? data.events : []);
+        const min = Array.isArray(data) ? 4 : Math.max(1, Number(data.min) || 4);
+        const cfg = (cintaAdminData && cintaAdminData.cfg) || {};
+        let aviso = "";
+        if (cfg.enabled === false) {
+          aviso = '<div style="background:#fdecec;border:1px solid #f5c2c0;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:700;color:#b91c1c;margin-bottom:8px">🔇 La cinta está APAGADA: los visitantes no la ven.</div>';
+        } else if (lista.length < min) {
+          aviso = '<div style="background:#fff8e8;border:1px solid #f1883f;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:700;color:#8a5a00;margin-bottom:8px">👻 Oculta para el público: hay ' + lista.length + " evento(s) y el mínimo es " + min + ". Agrega mensajes propios o baja el mínimo.</div>";
+        }
+        row.innerHTML = aviso + (lista.length
+          ? '<div style="display:flex;gap:10px;overflow-x:auto;background:#f2f6fa;border:1px solid #e3ebf3;border-radius:11px;padding:10px 12px">' + cintaMezclar(lista).map(cintaCardHtml).join("") + "</div>"
+          : (aviso ? "" : '<span class="admin-users-empty">Sin eventos todavía.</span>'));
+      }
+      window.cintaAdminPreview = cintaAdminPreview;
+
+      async function cintaAdminRpc(fn, args) {
+        if (!supabaseClient) return;
+        let msgErr = "";
+        try {
+          const { error } = await supabaseClient.rpc(fn, args);
+          if (error) msgErr = error.message;
+        } catch (e) { msgErr = String(e && e.message || e); }
+        await ensureCintaAdmin();
+        cargarCintaVivo();
+        const st = document.getElementById("cintaAdmStatus");
+        if (st) {
+          st.textContent = msgErr ? "✘ " + msgErr : "✔ Guardado";
+          st.style.color = msgErr ? "#c62828" : "#0f7a3d";
+          if (!msgErr) setTimeout(() => { if (st.textContent === "✔ Guardado") st.textContent = ""; }, 4000);
+        }
+      }
+      async function cintaAdminToggle() {
+        const cfg = cintaAdminData && cintaAdminData.cfg;
+        if (!cfg) return;
+        await cintaAdminRpc("admin_set_ticker_config", { p_enabled: cfg.enabled === false, p_hours: cfg.hours, p_min: cfg.min, p_max: cfg.max });
+      }
+      async function cintaAdminSave() {
+        const cfg = cintaAdminData && cintaAdminData.cfg;
+        if (!cfg) return;
+        await cintaAdminRpc("admin_set_ticker_config", {
+          p_enabled: cfg.enabled !== false,
+          p_hours: Number((document.getElementById("cintaSelHoras") || {}).value || 48),
+          p_min: Number((document.getElementById("cintaSelMin") || {}).value || 4),
+          p_max: Number((document.getElementById("cintaSelMax") || {}).value || 12)
+        });
+      }
+      async function cintaAdminAdd() {
+        const inp = document.getElementById("cintaNuevoMsg");
+        const texto = inp ? inp.value.trim() : "";
+        if (!texto) return;
+        await cintaAdminRpc("admin_ticker_add", { p_text: texto });
+      }
+      async function cintaAdminMsgToggle(id, activo) {
+        await cintaAdminRpc("admin_ticker_toggle", { p_id: id, p_active: activo });
+      }
+      async function cintaAdminMsgDelete(id) {
+        if (!confirm("¿Borrar este mensaje de la cinta?")) return;
+        await cintaAdminRpc("admin_ticker_delete", { p_id: id });
+      }
+      window.cintaAdminToggle = cintaAdminToggle;
+      window.cintaAdminSave = cintaAdminSave;
+      window.cintaAdminAdd = cintaAdminAdd;
+      window.cintaAdminMsgToggle = cintaAdminMsgToggle;
+      window.cintaAdminMsgDelete = cintaAdminMsgDelete;
 
       // Contador de visitas propio (2z-visitas.sql): un ping anónimo por carga
       // de página. "Único" = primera entrada del navegador en el día. No suma
