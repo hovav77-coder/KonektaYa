@@ -1100,6 +1100,9 @@
       .cinta-card.busqueda .cinta-t1::before { background: #0f5e91; }
       .cinta-t2 { font-size: 12px; color: #5b6b7e; white-space: nowrap; }
       .cinta-t2 .cinta-hace { color: #8aa0b8; }
+      /* El gancho de zona (formato B): naranja y en mayúsculas */
+      .cinta-zona { color: #e05b2a; letter-spacing: 0.04em; text-transform: uppercase; }
+      .cinta-fila .cinta-zona { color: #f7a869; }
       @keyframes cintaMueve { from { transform: translateX(0); } to { transform: translateX(-50%); } }
       @keyframes cintaPulso { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
       @media (prefers-reduced-motion: reduce) { .cinta-track { animation: none; } }
@@ -20266,25 +20269,48 @@
       // reales (máx. 12, últimas 48 h) con mensaje claro y sin datos de
       // contacto. Con menos de 4 eventos la cinta entera se esconde.
       let cintaEventos = [], cintaMin = 4, cintaCrudos = 0;
-      function cintaMsg(e) {
+      // Formato B aprobado: ZONA (naranja, el gancho) · título con el dato que
+      // vende (metraje/año) · detalle abajo (PH o presupuesto). El barrio sale
+      // del campo PH cuando viene como "PH Atrium Tower | Obarrio".
+      function cintaPartes(e) {
+        const num = (v) => { const n = Number(String(v == null ? "" : v).replace(/[^\d.]/g, "")); return isFinite(n) && n > 0 ? n : 0; };
+        const dinero = (n) => "$" + Math.round(n).toLocaleString("en-US");
         if (e.k === "promo") {
           const t = String(e.txt || "");
-          return t.length > 64 ? t.slice(0, 63) + "…" : t;
+          return { gancho: "", titulo: t.length > 64 ? t.slice(0, 63) + "…" : t, detalle: "KonektaYa" };
         }
         if (e.v === "vehiculo") {
           if (e.k === "oferta") {
             const nombre = [e.marca, e.modelo, e.anio].filter(Boolean).join(" ") || (typeof vehicleLabel === "function" && vehicleLabel(e.tipo)) || "Vehículo";
-            return nombre + " disponible para venta";
+            return { gancho: e.z || "Panamá", titulo: nombre + " en venta", detalle: "" };
           }
           const busca = [e.marca, e.modelo].filter(Boolean).join(" ") || (typeof vehicleLabel === "function" && vehicleLabel(e.tipo)) || "vehículo";
-          return "Buscando " + busca + " para comprar";
+          const pv = num(e.pres);
+          return { gancho: e.z || "Panamá", titulo: "Buscan " + busca, detalle: pv ? "hasta " + dinero(pv) : "" };
         }
         const tipo = (typeof label === "function" && label(e.tipo)) || "Inmueble";
         if (e.k === "oferta") {
           const op = e.op === "ambos" ? "venta / alquiler" : e.op === "venta" ? "venta" : "alquiler";
-          return tipo + " disponible para " + op;
+          const m2 = num(e.m2);
+          const ph = String(e.ph || "").trim();
+          let phNom = ph, barrio = "";
+          if (ph.indexOf("|") >= 0) {
+            const tr = ph.split("|");
+            phNom = tr[0].trim();
+            barrio = tr.slice(1).join("|").trim();
+          }
+          return {
+            gancho: barrio || e.z || "Panamá",
+            titulo: tipo + (m2 ? " " + m2 + " m²" : "") + " en " + op,
+            detalle: phNom
+          };
         }
-        return "Buscando " + tipo + (e.op === "venta" ? " para comprar" : " para alquiler");
+        const p = num(e.pres);
+        return {
+          gancho: e.z || "Panamá",
+          titulo: "Buscan " + tipo + (e.op === "venta" ? " para comprar" : " en alquiler"),
+          detalle: p ? "hasta " + dinero(p) + (e.op === "venta" ? "" : " al mes") : ""
+        };
       }
       function cintaIco(e) {
         if (e.v === "vehiculo") return String(e.tipo || "").toLowerCase().includes("moto") ? "🏍" : "🚗";
@@ -20296,11 +20322,16 @@
         return "🏠";
       }
       function cintaCardHtml(e) {
+        const p = cintaPartes(e);
+        const t1 = (p.gancho ? '<span class="cinta-zona">' + escapeHtml(p.gancho) + "</span> · " : "") + escapeHtml(p.titulo);
+        const t2 = e.k === "promo"
+          ? escapeHtml(p.detalle)
+          : (p.detalle ? escapeHtml(p.detalle) + " · " : "") + '<span class="cinta-hace">hace ' + anlRel(e.t) + "</span>";
         return '<div class="cinta-card ' + (e.k === "busqueda" ? "busqueda" : "oferta") + '">' +
           '<span class="cinta-ico">' + (e.k === "promo" ? "📣" : e.k === "busqueda" ? "🔎" : cintaIco(e)) + "</span>" +
           "<div>" +
-            '<div class="cinta-t1">' + escapeHtml(cintaMsg(e)) + "</div>" +
-            '<div class="cinta-t2">' + (e.k === "promo" ? "KonektaYa" : escapeHtml(String(e.z || "Panamá")) + ' · <span class="cinta-hace">hace ' + anlRel(e.t) + "</span>") + "</div>" +
+            '<div class="cinta-t1">' + t1 + "</div>" +
+            '<div class="cinta-t2">' + t2 + "</div>" +
           "</div></div>";
       }
       // Intercala los mensajes propios entre la actividad real: 1 de KonektaYa
@@ -20334,11 +20365,15 @@
       let cintaOffset = 0;
       function cintaEsMovil() { return !!(window.matchMedia && window.matchMedia("(max-width: 640px)").matches); }
       function cintaFilaHtml(e) {
+        const p = cintaPartes(e);
         const dot = e.k === "busqueda" ? "#7db8e8" : "#f1883f";
         const ico = e.k === "promo" ? "📣" : e.k === "busqueda" ? "🔎" : cintaIco(e);
-        const sub = e.k === "promo" ? "KonektaYa" : escapeHtml(String(e.z || "Panamá")) + ' · hace ' + anlRel(e.t);
+        const t1 = (p.gancho ? '<span class="cinta-zona">' + escapeHtml(p.gancho) + "</span> · " : "") + escapeHtml(p.titulo);
+        const sub = e.k === "promo"
+          ? escapeHtml(p.detalle)
+          : (p.detalle ? escapeHtml(p.detalle) + " · " : "") + "hace " + anlRel(e.t);
         return '<div class="cinta-fila"><span class="f-ico">' + ico + '</span><div class="f-cuerpo">' +
-          '<div class="f-t1"><span class="f-dot" style="background:' + dot + '"></span><span class="f-txt">' + escapeHtml(cintaMsg(e)) + "</span></div>" +
+          '<div class="f-t1"><span class="f-dot" style="background:' + dot + '"></span><span class="f-txt">' + t1 + "</span></div>" +
           '<div class="f-t2">' + sub + "</div></div></div>";
       }
       function renderCintaVivo() {
