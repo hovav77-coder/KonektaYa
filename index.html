@@ -15094,23 +15094,27 @@
                       sel.value = val;
                     };
                     setSel(form.querySelector("[data-location-province]"), provinceName);
-                    setSel(form.querySelector("[data-location-zone]"), area || city);
-                    // Si Google no dio un corregimiento del catálogo, avisar: la Zona
-                    // quedó genérica (ej. "Panamá") y conviene afinarla a mano — el
-                    // texto de zona participa en el match cuando el buscador no
-                    // tiene pin. (Mismo criterio que la carga masiva.)
-                    let zonaAviso = "";
+                    // ZONA AUTOMÁTICA: si Google trae un barrio del catálogo se usa;
+                    // si no (en ciudad de Panamá suele dar solo "Panamá"), se deduce
+                    // la zona del catálogo más cercana al pin. La fórmula del match
+                    // NO cambia — solo mejora el dato de zona que se guarda.
+                    let zonaFinal = area || city;
+                    let zonaEnCatalogo = false;
                     try {
                       const provCat = (typeof locationOptions !== "undefined" &&
                         (locationOptions[provinceName] || locationOptions[String(provinceName).replace(/^provincia de\s+/i, "")])) || null;
-                      const zonaPuesta = area || city;
-                      if (provCat && zonaPuesta && !provCat.includes(zonaPuesta)) {
-                        zonaAviso = '<div class="pc-warn">⚠ Google no identificó el corregimiento y la Zona quedó como «' + escapeHtml(zonaPuesta) + '». Si conoces el corregimiento (ej. Bella Vista), elígelo en el campo Zona.</div>';
+                      zonaEnCatalogo = Array.isArray(provCat) && provCat.includes(zonaFinal);
+                      if (!zonaEnCatalogo && typeof zonaDesdePin === "function") {
+                        const auto = zonaDesdePin(Number(hidLat.value), Number(hidLng.value), provinceName);
+                        if (auto) { zonaFinal = auto; zonaEnCatalogo = true; }
                       }
                     } catch (e) {}
-                    // Confirmación para que el usuario verifique (📍 barrio/ciudad + dirección).
+                    setSel(form.querySelector("[data-location-zone]"), zonaFinal);
+                    const zonaAviso = zonaEnCatalogo || !zonaFinal ? "" :
+                      '<div class="pc-warn">⚠ No pudimos identificar la zona exacta de este punto; quedó como «' + escapeHtml(zonaFinal) + '». El match usará el pin del mapa.</div>';
+                    // Confirmación para que el usuario verifique (📍 zona + dirección).
                     if (!confEl) { confEl = document.createElement("div"); confEl.className = "place-confirm"; wrapper.appendChild(confEl); }
-                    confEl.innerHTML = `<span class="pc-check">📍</span><span>Ubicación fijada en el mapa · ${isEstab ? "<strong>" + escapeHtml(dName) + "</strong> · " : ""}${escapeHtml(place.formattedAddress || area || city || streetText)}</span>` + zonaAviso;
+                    confEl.innerHTML = `<span class="pc-check">📍</span><span>Ubicación fijada en el mapa · ${isEstab ? "<strong>" + escapeHtml(dName) + "</strong> · " : ""}${escapeHtml(place.formattedAddress || area || city || streetText)}${zonaFinal ? " · <strong>Zona: " + escapeHtml(zonaFinal) + "</strong>" : ""}</span>` + zonaAviso;
                     confEl.classList.add("show");
                     // Mini mapa con el pin, para verificar visualmente el punto elegido.
                     if (place.location) {
@@ -15289,6 +15293,47 @@
         "Bocas del Toro": ["Bocas del Toro", "Changuinola", "Almirante"],
         "Darién": ["La Palma", "Metetí", "Santa Fe"]
       };
+
+      // Centro aproximado de cada zona del catálogo (curado una vez). Sirve para
+      // deducir la ZONA automáticamente desde el pin de Google cuando Google no
+      // devuelve el corregimiento (en ciudad de Panamá casi nunca lo da).
+      // NO toca la fórmula del match: solo mejora el dato de zona guardado.
+      const ZONA_CENTROIDES = {
+        "Ancón": [8.9594, -79.5510], "Bella Vista": [8.9790, -79.5310], "Betania": [9.0060, -79.5290],
+        "Costa del Este": [9.0100, -79.4660], "Juan Díaz": [9.0400, -79.4500], "Obarrio": [8.9843, -79.5205],
+        "Parque Lefevre": [9.0060, -79.4870], "Punta Pacífica": [8.9736, -79.5065], "San Francisco": [8.9880, -79.5030],
+        "San Miguelito": [9.0330, -79.5000], "Tocumen": [9.0680, -79.3830],
+        "Arraiján": [8.9560, -79.6650], "Brisas del Golf Arraiján": [8.9760, -79.6800], "Burunga": [8.9430, -79.6350],
+        "Chorrera": [8.8770, -79.7800], "Costa Verde": [8.8620, -79.7280], "La Chorrera": [8.8830, -79.7860],
+        "Nuevo Arraiján": [8.9180, -79.7200], "Playa Leona": [8.8280, -79.8080], "Vista Alegre": [8.9350, -79.6980],
+        "Barrio Norte": [9.3630, -79.9010], "Barrio Sur": [9.3520, -79.9020], "Cristóbal": [9.3480, -79.9130],
+        "Sabanitas": [9.3260, -79.8090], "Zona Libre": [9.3560, -79.8880],
+        "David": [8.4270, -82.4310], "Boquete": [8.7800, -82.4410], "Bugaba": [8.4830, -82.6190],
+        "Dolega": [8.5670, -82.4180], "Volcán": [8.7690, -82.6380],
+        "Aguadulce": [8.2410, -80.5450], "Antón": [8.3970, -80.2610], "Penonomé": [8.5190, -80.3560], "Río Hato": [8.3780, -80.1670],
+        "Chitré": [7.9610, -80.4290], "Monagrillo": [7.9750, -80.4380], "Parita": [8.0000, -80.5210], "Pesé": [7.9080, -80.6060],
+        "Las Tablas": [7.7680, -80.2760], "Pedasí": [7.5290, -80.0210], "Pocrí": [7.6620, -80.1230], "Tonosí": [7.4070, -80.4440],
+        "Santiago": [8.1000, -80.9830], "Atalaya": [8.0410, -80.9270], "Soná": [8.0120, -81.3200], "Montijo": [7.9930, -81.0530],
+        "Bocas del Toro": [9.3400, -82.2420], "Changuinola": [9.4300, -82.5190], "Almirante": [9.3010, -82.4020],
+        "La Palma": [8.4060, -78.1390], "Metetí": [8.5030, -77.9800], "Santa Fe": [8.6540, -78.1550]
+      };
+
+      // Zona del catálogo más cercana al pin (o "" si ninguna queda a menos de
+      // 8 km — ahí se conserva lo que diga Google, como siempre).
+      function zonaDesdePin(lat, lng, provincia) {
+        if (!isFinite(lat) || !isFinite(lng) || (!lat && !lng)) return "";
+        const cat = locationOptions[provincia] ||
+          locationOptions[String(provincia || "").replace(/^provincia de\s+/i, "")] || null;
+        const lista = Array.isArray(cat) ? cat : Object.keys(ZONA_CENTROIDES);
+        let mejor = "", d0 = Infinity;
+        lista.forEach((z) => {
+          const c = ZONA_CENTROIDES[z];
+          if (!c) return;
+          const d = haversineMeters(lat, lng, c[0], c[1]);
+          if (d < d0) { d0 = d; mejor = z; }
+        });
+        return d0 <= 8000 ? mejor : "";
+      }
 
       function load(key, fallback) {
         try {
@@ -16938,6 +16983,23 @@
         setupPropertyPricingRule();
         syncPropertyTerrainFields();
         setupLocationSelects("property", property.province || "Panamá", property.zone || "Costa del Este");
+        // Zona automática al editar: si la guardada no es del catálogo (registros
+        // viejos con "Panamá" genérico) y hay pin, se recalcula desde el pin —
+        // así el registro se corrige solo con el próximo "Guardar cambios".
+        try {
+          const zSel = form.querySelector('[data-location-zone="property"]');
+          const pSel = form.querySelector('[data-location-province="property"]');
+          const cat = zSel && pSel ? (locationOptions[pSel.value] || locationOptions[String(pSel.value || "").replace(/^provincia de\s+/i, "")]) : null;
+          if (zSel && Array.isArray(cat) && !cat.includes(zSel.value)) {
+            const auto = zonaDesdePin(Number(property.streetLat), Number(property.streetLng), pSel.value);
+            if (auto) {
+              if (![...zSel.options].some((o) => o.value === auto)) {
+                const o = document.createElement("option"); o.value = auto; o.textContent = auto; zSel.appendChild(o);
+              }
+              zSel.value = auto;
+            }
+          }
+        } catch (e) {}
         setFormValue(form, "streetOrNeighborhood", property.streetOrNeighborhood);
         // Conservar el geo de Google Places al editar (si no, el submit lo borra con "")
         ensureHiddenField(form, "streetPlaceId").value = property.streetPlaceId || "";
@@ -17003,6 +17065,21 @@
           syncUrgencySelect(urgencySelect);
         }
         setupLocationSelects("search", search.province || "Panamá", search.desiredZone || "Costa del Este");
+        // Mismo auto-arreglo de zona que editProperty (con el pin de la búsqueda).
+        try {
+          const zSel = form.querySelector('[data-location-zone="search"]');
+          const pSel = form.querySelector('[data-location-province="search"]');
+          const cat = zSel && pSel ? (locationOptions[pSel.value] || locationOptions[String(pSel.value || "").replace(/^provincia de\s+/i, "")]) : null;
+          if (zSel && Array.isArray(cat) && !cat.includes(zSel.value)) {
+            const auto = zonaDesdePin(Number(search.desiredStreetLat), Number(search.desiredStreetLng), pSel.value);
+            if (auto) {
+              if (![...zSel.options].some((o) => o.value === auto)) {
+                const o = document.createElement("option"); o.value = auto; o.textContent = auto; zSel.appendChild(o);
+              }
+              zSel.value = auto;
+            }
+          }
+        } catch (e) {}
         setFormValue(form, "desiredStreetOrNeighborhood", search.desiredStreetOrNeighborhood);
         // Conservar el geo de Google Places al editar
         ensureHiddenField(form, "desiredStreetPlaceId").value = search.desiredStreetPlaceId || "";
@@ -27044,13 +27121,21 @@
                       row.raw.streetLng = String(place.location.lng());
                       row.geo = { label: (isEstab && dName ? dName + " · " : "") + (place.formattedAddress || area || city || row.raw.streetOrNeighborhood) };
                     }
+                    // ZONA AUTOMÁTICA (igual que el formulario): si lo que puso
+                    // Google no es una zona del catálogo, se deduce la más
+                    // cercana al pin con la tabla de centroides.
+                    try {
+                      const provCat = locationOptions[row.raw.province] || null;
+                      const enCat = Array.isArray(provCat) && provCat.some((z) => normalize(z) === normalize(row.raw.zone || ""));
+                      if (!enCat && place.location && typeof zonaDesdePin === "function") {
+                        const auto = zonaDesdePin(place.location.lat(), place.location.lng(), row.raw.province);
+                        if (auto) row.raw.zone = auto;
+                      }
+                    } catch (e) {}
                     bulkRevalidar(row);
-                    // Google no siempre trae el corregimiento (muchos lugares de
-                    // Panamá solo tienen código de posición). En ese caso la zona
-                    // del Excel queda como estaba, y si no corresponde al pin, el
-                    // interesado vería una zona equivocada y las búsquedas por
-                    // texto de zona no encontrarían la fila. Avisar, no callar.
-                    if (!(area || city)) {
+                    // Si ni Google ni los centroides resolvieron la zona, la del
+                    // Excel queda como estaba: avisar, no callar.
+                    if (!(area || city) && !(row.raw.zone && (locationOptions[row.raw.province] || []).some((z) => normalize(z) === normalize(row.raw.zone)))) {
                       row.warnings = row.warnings || [];
                       row.warnings.push({ f: "zone", m: 'Google no trajo el corregimiento de este lugar: revisa que la Zona ("' + (row.raw.zone || "vacía") + '") corresponda al pin, y corrígela si no.' });
                     }
