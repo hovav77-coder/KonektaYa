@@ -20830,14 +20830,41 @@
         const ms = new Date(t).getTime();
         return ms >= anlState.win.d && ms <= anlState.win.h;
       }
-      // Visitas del contador propio dentro de la ventana activa (día completo:
-      // el día cuenta si su mediodía cae dentro de la ventana).
+      // Visitas del contador propio dentro de la ventana activa. El contador es
+      // por DÍA: un día cuenta si CUALQUIER parte del día toca la ventana (antes
+      // se evaluaba solo el mediodía y, en la mañana, el día de HOY quedaba
+      // fuera de "últimas 24 horas" — las visitas frescas no aparecían).
       function anlVisitasVentana(d) {
         const lista = d && d.visits_daily;
         if (!Array.isArray(lista) || !lista.length) return null;
         let n = 0, u = 0;
-        lista.forEach((r) => { if (anlEnPeriodo(r.d + "T12:00:00")) { n += Number(r.n || 0); u += Number(r.u || 0); } });
+        lista.forEach((r) => {
+          const ini = new Date(r.d + "T00:00:00").getTime();
+          const fin = new Date(r.d + "T23:59:59.999").getTime();
+          if (!anlState.win || (ini <= anlState.win.h && fin >= anlState.win.d)) {
+            n += Number(r.n || 0);
+            u += Number(r.u || 0);
+          }
+        });
         return { n, u };
+      }
+
+      // Tarjeta de visitas (pedida por el dueño, arriba del funnel): entradas y
+      // personas únicas de la ventana elegida + el acumulado de hoy.
+      function anlVisitasHtml(d) {
+        const v = anlVisitasVentana(d);
+        if (!v) return "";
+        const hoyIso = new Date().toISOString().slice(0, 10);
+        const hoy = (d.visits_daily || []).find((r) => r.d === hoyIso);
+        const titulo = anlState.period === "all" ? "TODO EL TIEMPO"
+          : anlState.period === "custom" ? (anlState.desde && anlState.hasta ? "DEL " + anlFmtFecha(anlState.desde) + " AL " + anlFmtFecha(anlState.hasta) : "RANGO")
+          : anlState.period === "1" ? "ÚLTIMAS 24 HORAS" : "ÚLTIMOS " + anlState.period + " DÍAS";
+        return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:13px 16px;margin-bottom:10px;display:flex;align-items:center;gap:22px;flex-wrap:wrap">' +
+          '<span style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#5b6b7e">👁 VISITAS A LA PÁGINA · ' + titulo + "</span>" +
+          '<span style="display:flex;align-items:baseline;gap:7px"><strong style="font-size:26px;font-weight:900;color:#0a2f55">' + v.n + '</strong><span style="font-size:12px;color:#5b6b7e;font-weight:700">entradas</span></span>' +
+          '<span style="display:flex;align-items:baseline;gap:7px"><strong style="font-size:26px;font-weight:900;color:#0f5e91">' + v.u + '</strong><span style="font-size:12px;color:#5b6b7e;font-weight:700">personas únicas</span></span>' +
+          (hoy ? '<span style="margin-left:auto;font-size:12px;color:#8aa0b8;font-weight:700">hoy: ' + Number(hoy.n || 0) + " · " + Number(hoy.u || 0) + " personas</span>" : "") +
+          "</div>";
       }
 
       function anlFmtFecha(iso) {
@@ -21140,6 +21167,7 @@
         }
         const z = anlZonas();
         root.innerHTML =
+          anlVisitasHtml(adminMetricsData) +
           anlFunnelHtml(adminMetricsData) +
           anlAlertaHtml(z) +
           '<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:10px;margin-bottom:10px" class="anl-2col">' + anlTrendHtml(adminMetricsData) + anlDivergHtml(z) + "</div>" +
