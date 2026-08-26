@@ -21102,8 +21102,11 @@
 
       function anlTablaHtml(d, z) {
         const porZona = {};
-        const fila = (k) => (porZona[k] = porZona[k] || { pubs: 0, avisos: 0, unlocks: 0 });
+        const fila = (k) => (porZona[k] = porZona[k] || { busq: 0, pubs: 0, avisos: 0, unlocks: 0 });
         Object.keys(z.oferta).forEach((k) => { fila(k).pubs = z.oferta[k]; });
+        // Las zonas con SOLO búsquedas también cuentan (pedido del dueño: la
+        // demanda sin oferta es justo la oportunidad que hay que ver).
+        Object.keys(z.demanda).forEach((k) => { fila(k).busq = z.demanda[k]; });
         (d.notif_list || []).forEach((n) => {
           if (!anlEnPeriodo(n.t) || !anlVertOk(n.v)) return;
           const ref = z.mapa[String(n.pub)]; if (ref) fila(ref.z).avisos++;
@@ -21114,14 +21117,14 @@
         });
         const filas = Object.keys(porZona)
           .map((k) => ({ k, ...porZona[k] }))
-          .sort((a, b) => b.avisos - a.avisos || b.pubs - a.pubs)
+          .sort((a, b) => b.avisos - a.avisos || b.pubs - a.pubs || b.busq - a.busq)
           .slice(0, 6);
         const cuerpo = !filas.length
-          ? '<div style="padding:18px 8px;text-align:center;font-size:12px;color:#8aa0b8">Aparecen las zonas cuando haya al menos 1 publicación activa.</div>'
-          : '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><tr style="color:#8aa0b8;text-align:left"><th style="padding:3px 0;font-weight:800">Zona</th><th style="text-align:right;font-weight:800">Public.</th><th style="text-align:right;font-weight:800">Avisos</th><th style="text-align:right;font-weight:800">Desbloq.</th><th style="text-align:right;font-weight:800">Tasa</th></tr>' +
+          ? '<div style="padding:18px 8px;text-align:center;font-size:12px;color:#8aa0b8">Aparecen las zonas cuando haya al menos 1 publicación o búsqueda activa.</div>'
+          : '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><tr style="color:#8aa0b8;text-align:left"><th style="padding:3px 0;font-weight:800">Zona</th><th style="text-align:right;font-weight:800">Búsq.</th><th style="text-align:right;font-weight:800">Public.</th><th style="text-align:right;font-weight:800">Avisos</th><th style="text-align:right;font-weight:800">Desbloq.</th><th style="text-align:right;font-weight:800">Tasa</th></tr>' +
             filas.map((f) => {
               const tasa = f.avisos > 0 ? Math.round((f.unlocks / f.avisos) * 100) + "%" : "—";
-              return '<tr style="border-top:1px solid #eef2f7"><td style="padding:6px 0;font-weight:800;color:#0a2f55">' + escapeHtml(f.k) + '</td><td style="text-align:right;color:#0a2f55">' + f.pubs + '</td><td style="text-align:right;color:#0a2f55">' + f.avisos + '</td><td style="text-align:right;color:#0a2f55">' + f.unlocks + '</td><td style="text-align:right"><span style="background:rgba(10,47,85,0.10);border-radius:4px;padding:1px 6px;font-weight:800;color:#0a2f55">' + tasa + "</span></td></tr>";
+              return '<tr style="border-top:1px solid #eef2f7"><td style="padding:6px 0;font-weight:800;color:#0a2f55">' + escapeHtml(f.k) + '</td><td style="text-align:right;color:#a23c18;font-weight:800">' + f.busq + '</td><td style="text-align:right;color:#0a2f55">' + f.pubs + '</td><td style="text-align:right;color:#0a2f55">' + f.avisos + '</td><td style="text-align:right;color:#0a2f55">' + f.unlocks + '</td><td style="text-align:right"><span style="background:rgba(10,47,85,0.10);border-radius:4px;padding:1px 6px;font-weight:800;color:#0a2f55">' + tasa + "</span></td></tr>";
             }).join("") + "</table>";
         return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:13px 15px;min-width:0;overflow-x:auto">' +
           '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:9px">ZONAS TOP · AVISO → DESBLOQUEO</div>' + cuerpo + "</div>";
