@@ -20305,8 +20305,9 @@
             return { gancho: e.z || "Panamá", titulo: nombre + " en venta", detalle: "" };
           }
           const busca = [e.marca, e.modelo].filter(Boolean).join(" ") || (typeof vehicleLabel === "function" && vehicleLabel(e.tipo)) || "vehículo";
-          const pv = num(e.pres);
-          return { gancho: e.z || "Panamá", titulo: "Buscan " + busca, detalle: pv ? "hasta " + dinero(pv) : "" };
+          // Formato aprobado: marca modelo + año mínimo ("2020+"), SIN presupuesto.
+          const anioMin = String(e.anio || "").replace(/[^\d]/g, "");
+          return { gancho: e.z || "Panamá", titulo: "Buscan " + busca + (anioMin ? " " + anioMin + "+" : ""), detalle: "" };
         }
         const tipo = (typeof label === "function" && label(e.tipo)) || "Inmueble";
         if (e.k === "oferta") {
