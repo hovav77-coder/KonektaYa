@@ -16841,6 +16841,12 @@
         setFormValue(form, "lastName", property.lastName);
         setFormValue(form, "email", property.email);
         setFormValue(form, "phone", property.phone);
+        // El contacto vive en el PERFIL, no en la publicación: los registros
+        // nuevos no traen nombre/teléfono y las líneas de arriba dejaban VACÍOS
+        // unos campos required ocultos — "Guardar cambios" se bloqueaba con
+        // "Completa estos campos: Nombre, Apellido, Teléfono" aun con sesión.
+        // El gate los rellena desde la sesión y re-sincroniza el chip.
+        if (typeof applyFormGate === "function") applyFormGate(form);
         setFormValue(form, "registeredBy", property.registeredBy || "propietario");
         setPropertyTypeValue(form, property.propertyType);
         setFormValue(form, "operation", property.operation);
@@ -16897,6 +16903,8 @@
         setFormValue(form, "lastName", search.lastName);
         setFormValue(form, "email", search.email);
         setFormValue(form, "phone", search.phone);
+        // Mismo arreglo que editProperty: el contacto vive en el perfil.
+        if (typeof applyFormGate === "function") applyFormGate(form);
         setFormValue(form, "role", isBrokerSearch ? "broker" : "cliente final");
         setFormValue(form, "searchFor", isBrokerSearch ? "para_mi" : search.searchFor || "para_mi");
         setFormValue(form, "finalClientPrivacy", search.finalClientPrivacy || "visible");
@@ -27376,6 +27384,8 @@
           if (!field || (field instanceof HTMLInputElement && field.type === "file")) return;
           field.value = value;
         });
+        // El contacto vive en el perfil, no en la publicación (ver editProperty).
+        if (typeof applyFormGate === "function") applyFormGate(form);
         if (form.elements.mileage) form.elements.mileage.value = formatThousandsValue(offer.mileage);
         setupVehicleOptionLists();
         setVehicleTypeValue(form, offer.vehicleType);
@@ -27424,6 +27434,8 @@
             else field.value = value;
           }
         });
+        // El contacto vive en el perfil, no en la publicación (ver editProperty).
+        if (typeof applyFormGate === "function") applyFormGate(form);
         if (form.elements.maxMileage) form.elements.maxMileage.value = formatThousandsValue(search.maxMileage);
         setupVehicleOptionLists();
         setVehicleTypeValue(form, search.vehicleType);
