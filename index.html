@@ -11298,15 +11298,16 @@
       .cinta-vivo.tablero .cinta-live { color: #f7a869; }
       .cinta-vivo.tablero .cinta-sub { color: #9fb4cc; display: inline; }
       .cinta-rota { font-size: 10px; color: #6d84a3; font-weight: 700; margin-left: auto; }
+      /* El tablero recorta a 4 filas visibles; la 5ª espera abajo y entra
+         cuando la de arriba se desliza hacia afuera (movimiento continuo). */
+      .cinta-board { overflow: hidden; }
       .cinta-fila {
         align-items: center;
-        animation: cintaFilaIn 0.45s ease;
         border-bottom: 1px solid rgba(255, 255, 255, 0.09);
         display: flex;
         gap: 9px;
         padding: 9px 0;
       }
-      .cinta-fila:last-child { border-bottom: 0; padding-bottom: 3px; }
       .cinta-fila .f-ico { font-size: 16px; flex: 0 0 auto; }
       .cinta-fila .f-cuerpo { flex: 1; min-width: 0; }
       .cinta-fila .f-t1 {
@@ -20361,9 +20362,13 @@
           scroll.hidden = true;
           board.hidden = false;
           const n = cintaEventos.length;
+          // 5 filas: 4 visibles + la siguiente esperando abajo. El marco (board)
+          // recorta; la pista interna es la que se desliza.
           const filas = [];
-          for (let i = 0; i < Math.min(4, n); i++) filas.push(cintaFilaHtml(cintaEventos[(cintaOffset + i) % n]));
-          board.innerHTML = filas.join("");
+          for (let i = 0; i < 5; i++) filas.push(cintaFilaHtml(cintaEventos[(cintaOffset + i) % n]));
+          board.innerHTML = '<div id="cintaBoardTrack">' + filas.join("") + "</div>";
+          const fila0 = board.querySelector(".cinta-fila");
+          if (fila0) board.style.height = fila0.offsetHeight * 4 + "px";
           if (rota) rota.textContent = n > 4 ? "rota cada 4 s" : "";
           return;
         }
@@ -20396,14 +20401,24 @@
       }
       cargarCintaVivo();
       setInterval(() => { if (!document.hidden) cargarCintaVivo(); }, 120000);
-      // Rotación del tablero móvil (solo cuando hay más de 4 eventos).
+      // Movimiento del tablero móvil: cada 4 s la fila de arriba se desliza
+      // hacia afuera y entra la siguiente por abajo (siempre, aun con 4).
       setInterval(() => {
         if (document.hidden || !cintaEsMovil()) return;
         const sec = document.getElementById("cintaVivo");
-        if (!sec || sec.dataset.vacia === "1") return;
-        if (!Array.isArray(cintaEventos) || cintaEventos.length <= 4) return;
-        cintaOffset = (cintaOffset + 1) % cintaEventos.length;
-        renderCintaVivo();
+        const board = document.getElementById("cintaBoard");
+        if (!sec || !board || board.hidden || sec.dataset.vacia === "1") return;
+        if (!Array.isArray(cintaEventos) || cintaEventos.length < 2) return;
+        const avanzar = () => { cintaOffset = (cintaOffset + 1) % cintaEventos.length; renderCintaVivo(); };
+        try {
+          if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { avanzar(); return; }
+        } catch (e) {}
+        const pista = document.getElementById("cintaBoardTrack");
+        const fila0 = board.querySelector(".cinta-fila");
+        if (!pista || !fila0) return;
+        pista.style.transition = "transform 0.55s ease";
+        pista.style.transform = "translateY(-" + fila0.offsetHeight + "px)";
+        setTimeout(avanzar, 590);
       }, 4000);
       // Cambio de tamaño (girar el teléfono, achicar la ventana): re-render al modo correcto.
       if (window.matchMedia) {
