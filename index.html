@@ -20432,7 +20432,7 @@
       // Cinta "EN VIVO" de la portada (3a-cinta-vivo.sql): los últimos eventos
       // reales (máx. 12, últimas 48 h) con mensaje claro y sin datos de
       // contacto. Con menos de 4 eventos la cinta entera se esconde.
-      let cintaEventos = [], cintaMin = 4, cintaCrudos = 0;
+      let cintaEventos = [], cintaMin = 4, cintaCrudos = 0, cintaFilas = 4;
       // Formato B aprobado: ZONA (naranja, el gancho) · título con el dato que
       // vende (metraje/año) · detalle abajo (PH o presupuesto). El barrio sale
       // del campo PH cuando viene como "PH Atrium Tower | Obarrio".
@@ -20513,15 +20513,16 @@
         while (p < promos.length) mezcla.push(promos[p++]);
         return mezcla;
       }
-      // La cinta siempre corre con al menos 4 tarjetas: si hay pocas, se
-      // repiten los mensajes propios (o lo que haya, si no hay mensajes).
+      // El tablero siempre corre lleno (tantas tarjetas como filas visibles
+      // configure el admin): si hay pocas, se repiten los mensajes propios
+      // (o lo que haya, si no hay mensajes).
       function cintaRellenar(lista) {
         if (!lista.length) return lista;
         const promos = lista.filter((e) => e.k === "promo");
         const fuente = promos.length ? promos : lista;
         const res = lista.slice();
         let i = 0;
-        while (res.length < 4) res.push(fuente[i++ % fuente.length]);
+        while (res.length < Math.max(4, cintaFilas)) res.push(fuente[i++ % fuente.length]);
         return res;
       }
       // En celular la cinta es un TABLERO apilado (diseño B aprobado): 4 filas
@@ -20577,17 +20578,18 @@
         }
         const n = cintaEventos.length;
         const arma = cintaEsMovil() ? cintaFilaHtml : cintaFilaPcHtml;
-        // 5 filas: 4 visibles + la siguiente esperando abajo. El marco (board)
-        // recorta; la pista interna es la que se desliza.
+        // Filas visibles (configurable en el Laboratorio, 4–10) + 1 esperando
+        // abajo. El marco (board) recorta; la pista interna es la que se desliza.
+        const vis = Math.min(10, Math.max(4, cintaFilas));
         const filas = [];
-        for (let i = 0; i < 5; i++) filas.push(arma(cintaEventos[(cintaOffset + i) % n]));
+        for (let i = 0; i < vis + 1; i++) filas.push(arma(cintaEventos[(cintaOffset + i) % n]));
         board.innerHTML = '<div id="cintaBoardTrack">' + filas.join("") + "</div>";
         const kids = board.querySelectorAll(".cinta-fila");
-        if (kids.length >= 4) {
-          const r0 = kids[0].getBoundingClientRect(), r3 = kids[3].getBoundingClientRect();
-          board.style.height = Math.ceil(r3.bottom - r0.top) + "px";
+        if (kids.length > vis) {
+          const r0 = kids[0].getBoundingClientRect(), rv = kids[vis - 1].getBoundingClientRect();
+          board.style.height = Math.ceil(rv.bottom - r0.top) + "px";
         }
-        if (rota) rota.textContent = n > 4 ? "rota cada 4 s" : "";
+        if (rota) rota.textContent = n > vis ? "rota cada 4 s" : "";
       }
       async function cargarCintaVivo() {
         if (!supabaseEnabled || !supabaseClient) return;
@@ -20597,6 +20599,7 @@
           const lista = Array.isArray(data) ? data : (data && Array.isArray(data.events) ? data.events : null);
           if (!error && lista) {
             cintaMin = Array.isArray(data) ? 4 : Math.max(1, Number(data.min) || 4);
+            cintaFilas = Array.isArray(data) ? 4 : Math.min(10, Math.max(4, Number(data.rows) || 4));
             cintaCrudos = lista.length;
             cintaEventos = cintaRellenar(cintaMezclar(lista));
             renderCintaVivo();
@@ -20683,6 +20686,7 @@
               '<label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#29425f">Ventana ' + sel("cintaSelHoras", cfg.hours, [[24, "últimas 24 h"], [48, "últimas 48 h"], [72, "últimas 72 h"], [168, "última semana"]]) + "</label>" +
               '<label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#29425f">Mínimo para mostrarse ' + sel("cintaSelMin", cfg.min, [[1, "1 evento"], [2, "2 eventos"], [3, "3 eventos"], [4, "4 eventos"], [6, "6 eventos"], [8, "8 eventos"]]) + "</label>" +
               '<label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#29425f">Máximo ' + sel("cintaSelMax", cfg.max, [[8, "8"], [12, "12"], [16, "16"], [20, "20"]]) + "</label>" +
+              '<label style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;color:#29425f">Filas visibles ' + sel("cintaSelFilas", cfg.rows || 4, [[4, "4"], [5, "5"], [6, "6"], [7, "7"], [8, "8"], [9, "9"], [10, "10"]]) + "</label>" +
               '<button class="button small" type="button" onclick="cintaAdminSave()">Guardar</button>' +
             "</div>" +
             '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:7px">MENSAJES PROPIOS <span style="font-weight:700;letter-spacing:0;color:#8aa0b8">(se mezclan con la actividad real, marcados con 📣 — cuentan para el mínimo)</span></div>' +
@@ -20720,7 +20724,14 @@
         if (!supabaseClient) return;
         let msgErr = "";
         try {
-          const { error } = await supabaseClient.rpc(fn, args);
+          let { error } = await supabaseClient.rpc(fn, args);
+          // Compat: si el SQL 3g aún no se corrió, el setter viejo no conoce
+          // p_rows — reintenta sin él para no bloquear el guardado.
+          if (error && error.code === "PGRST202" && args && "p_rows" in args) {
+            const sinRows = { ...args };
+            delete sinRows.p_rows;
+            ({ error } = await supabaseClient.rpc(fn, sinRows));
+          }
           if (error) msgErr = error.message;
         } catch (e) { msgErr = String(e && e.message || e); }
         await ensureCintaAdmin();
@@ -20735,7 +20746,7 @@
       async function cintaAdminToggle() {
         const cfg = cintaAdminData && cintaAdminData.cfg;
         if (!cfg) return;
-        await cintaAdminRpc("admin_set_ticker_config", { p_enabled: cfg.enabled === false, p_hours: cfg.hours, p_min: cfg.min, p_max: cfg.max });
+        await cintaAdminRpc("admin_set_ticker_config", { p_enabled: cfg.enabled === false, p_hours: cfg.hours, p_min: cfg.min, p_max: cfg.max, p_rows: Number(cfg.rows) || 4 });
       }
       async function cintaAdminSave() {
         const cfg = cintaAdminData && cintaAdminData.cfg;
@@ -20744,7 +20755,8 @@
           p_enabled: cfg.enabled !== false,
           p_hours: Number((document.getElementById("cintaSelHoras") || {}).value || 48),
           p_min: Number((document.getElementById("cintaSelMin") || {}).value || 4),
-          p_max: Number((document.getElementById("cintaSelMax") || {}).value || 12)
+          p_max: Number((document.getElementById("cintaSelMax") || {}).value || 12),
+          p_rows: Number((document.getElementById("cintaSelFilas") || {}).value || 4)
         });
       }
       async function cintaAdminAdd() {
