@@ -1361,6 +1361,30 @@
         margin-top: 8px;
         padding: 8px 11px;
       }
+      /* Aviso de precio sospechoso (alquiler mensual con monto de venta) */
+      .precio-aviso {
+        background: #fff8e8;
+        border: 1px solid #f1883f;
+        border-radius: 8px;
+        color: #8a5a00;
+        font-size: 12.5px;
+        font-weight: 700;
+        line-height: 1.5;
+        padding: 8px 11px;
+      }
+      .precio-aviso .precio-aviso-btn {
+        background: linear-gradient(135deg, #e05b2a, #f1883f);
+        border: 0;
+        border-radius: 7px;
+        color: #ffffff;
+        cursor: pointer;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 800;
+        margin-left: 6px;
+        padding: 4px 10px;
+      }
+
       /* Aviso ámbar cuando Google no da el corregimiento (la Zona queda genérica) */
       .place-confirm { flex-wrap: wrap; }
       .place-confirm .pc-warn {
@@ -16389,6 +16413,41 @@
 
         operation.addEventListener("change", syncPrices);
         syncPrices();
+
+        // Chequeo de cordura del alquiler (caso real: un usuario publicó
+        // "alquiler" por $320,000/mes — era su precio de VENTA — y el filtro
+        // de presupuesto del match lo dejaba invisible para todos). Si el
+        // mensual supera el umbral, aviso ámbar con arreglo de un clic.
+        // NO bloquea el envío: existen alquileres caros legítimos.
+        const LIMITE_ALQUILER_MES = 20000;
+        const montoAlquiler = () => Number(String(rentalInput.value || "").replace(/[^\d.]/g, "")) || 0;
+        const syncSanidadAlquiler = () => {
+          let aviso = rentalWrap.querySelector("[data-aviso-alquiler]");
+          const alquila = operation.value === "alquiler" || operation.value === "ambos";
+          const m = montoAlquiler();
+          if (!(alquila && m > LIMITE_ALQUILER_MES)) { if (aviso) aviso.remove(); return; }
+          if (!aviso) {
+            aviso = document.createElement("div");
+            aviso.setAttribute("data-aviso-alquiler", "");
+            aviso.className = "precio-aviso";
+            rentalWrap.appendChild(aviso);
+          }
+          const soloAlquiler = operation.value === "alquiler";
+          aviso.innerHTML = "⚠ $" + m.toLocaleString("en-US") + " <strong>al mes</strong> parece un precio de VENTA." +
+            (soloAlquiler ? ' <button type="button" class="precio-aviso-btn">Cambiarlo a venta</button>' : " Revisa la operación y los precios.");
+          const btn = aviso.querySelector(".precio-aviso-btn");
+          if (btn) btn.onclick = () => {
+            saleInput.value = rentalInput.value;
+            operation.value = "venta";
+            operation.dispatchEvent(new Event("change"));
+          };
+        };
+        if (!rentalInput.dataset.sanidadLista) {
+          rentalInput.dataset.sanidadLista = "1";
+          rentalInput.addEventListener("input", syncSanidadAlquiler);
+          operation.addEventListener("change", syncSanidadAlquiler);
+        }
+        syncSanidadAlquiler();
       }
 
       function setupSearchBrokerClientRule() {
@@ -26355,6 +26414,11 @@
         // es un separador de miles mal puesto o un cero de menos.
         if (salePrice > 0 && salePrice < 1000) bulkErr(errors, "salePrice", "Precio de venta sospechosamente bajo (" + salePrice + ") — revisa el número");
         if (rentalPrice > 0 && rentalPrice < 50) bulkErr(errors, "rentalPrice", "Precio de alquiler sospechosamente bajo (" + rentalPrice + ") — revisa el número");
+        // Y el techo (caso real del formulario): $320,000 "al mes" era un precio
+        // de venta con la operación equivocada — la fila quedaría invisible.
+        if ((operation === "alquiler" || operation === "ambos") && rentalPrice > 20000) {
+          bulkWarn(warnings, "rentalPrice", "$" + rentalPrice.toLocaleString("en-US") + " AL MES parece un precio de VENTA — revisa la operación de esta fila");
+        }
         bulkContactErrors([
           { field: "streetOrNeighborhood", label: lbl("streetOrNeighborhood"), value: raw.streetOrNeighborhood },
           // El PH también se escana en el servidor (no está en la lista de campos
