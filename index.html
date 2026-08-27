@@ -1361,6 +1361,32 @@
         margin-top: 8px;
         padding: 8px 11px;
       }
+      /* Regalo del cupón dentro del popup "registrado con éxito" */
+      .pd-cupon {
+        background: linear-gradient(135deg, #fff8e8, #ffefd8);
+        border: 1.5px solid #f1883f;
+        border-radius: 12px;
+        color: #7a4a00;
+        font-size: 13.5px;
+        line-height: 1.5;
+        margin: 12px 0 2px;
+        padding: 11px 14px;
+      }
+      .pd-cupon .pd-cupon-btn {
+        background: linear-gradient(135deg, #e05b2a, #f1883f);
+        border: 0;
+        border-radius: 9px;
+        box-shadow: 0 6px 14px rgba(224, 91, 42, 0.3);
+        color: #ffffff;
+        cursor: pointer;
+        display: block;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 800;
+        margin-top: 9px;
+        padding: 8px 16px;
+      }
+
       /* Aviso de precio sospechoso (alquiler mensual con monto de venta) */
       .precio-aviso {
         background: #fff8e8;
@@ -11567,6 +11593,10 @@
         </div>
         <div class="rd-body">
           <p id="pdMsg">Tu publicación quedó guardada. ¿Quieres publicar o buscar algo más?</p>
+          <div class="pd-cupon" id="pdCupon" hidden>
+            🎁 <strong>Tienes $10 esperando:</strong> canjea el cupón <strong>BIENVENIDO10</strong> en tu billetera.
+            <button type="button" class="pd-cupon-btn" onclick="pdCuponIr()">Canjearlo ahora</button>
+          </div>
           <div class="rd-actions">
             <button type="button" class="rd-btn rd-btn-primary" onclick="publishDoneGoHome()">Publicar o buscar más</button>
             <button type="button" class="rd-btn rd-btn-ghost" onclick="publishDoneGoPanel()">Ir a Mi panel</button>
@@ -18081,7 +18111,43 @@
         const m = document.getElementById("publishDoneModal");
         if (m) m.hidden = false;
         else goPublishOrSearch(); // fallback si no existe el modal
+        pdCuponRevisar();
       }
+      // Aviso del cupón de bienvenida DENTRO del popup de éxito: el usuario acaba
+      // de cumplir el requisito (registrarse + publicar) y es el momento exacto.
+      // Solo si no lo ha canjeado (verdad del servidor, RLS solo muestra los
+      // suyos) y no es admin. Hallazgo que lo motivó: 5 registros y 4
+      // publicaciones reales con CERO canjes — nadie encontraba dónde.
+      let pdCuponElegible = null; // cache de sesión
+      async function pdCuponRevisar() {
+        const caja = document.getElementById("pdCupon");
+        if (!caja) return;
+        caja.hidden = true;
+        try {
+          if (!supabaseEnabled || !currentUserEmail) return;
+          if (localStorage.getItem("ky_es_admin") === "1") return;
+          if (pdCuponElegible === null) {
+            const { data, error } = await supabaseClient.from("coupon_redemptions").select("coupon_code").limit(1);
+            pdCuponElegible = !error && Array.isArray(data) && data.length === 0;
+          }
+          const m = document.getElementById("publishDoneModal");
+          if (pdCuponElegible && m && !m.hidden) caja.hidden = false;
+        } catch (e) {}
+      }
+      // CTA: al panel, con la caja del cupón abierta, el código puesto y a la vista.
+      function pdCuponIr() {
+        publishDoneGoPanel();
+        setTimeout(() => {
+          try {
+            const box = document.getElementById("couponBox");
+            const input = document.getElementById("couponInput");
+            if (box) { box.hidden = false; box.classList.remove("coupon-collapsed"); }
+            if (input) input.value = "BIENVENIDO10";
+            if (box) box.scrollIntoView({ block: "center", behavior: "smooth" });
+          } catch (e) {}
+        }, 450);
+      }
+      window.pdCuponIr = pdCuponIr;
       function closePublishDone() {
         const m = document.getElementById("publishDoneModal");
         if (m) m.hidden = true;
@@ -21339,6 +21405,7 @@
         const { data, error } = await supabaseClient.rpc("redeem_coupon", { p_code: code });
         if (error) { setSt(error.message || "No se pudo canjear.", "err"); return; }
         if (inp) inp.value = "";
+        pdCuponElegible = false; // ya canjeó: el aviso post-publicación se apaga
         await refreshBalance();
         render();
         const st2 = document.getElementById("couponStatus");
