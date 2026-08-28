@@ -16480,6 +16480,42 @@
         syncSanidadAlquiler();
       }
 
+      // Espejo del chequeo de alquiler, del lado del que BUSCA (caso real
+      // "Laura": búsqueda de alquiler con presupuesto $100/mes — el filtro de
+      // presupuesto del match la dejaba sin UN solo resultado posible). Aviso
+      // ámbar bajo el campo; no bloquea el envío.
+      function setupPresupuestoSanidad(formId) {
+        const form = document.getElementById(formId);
+        const budget = form ? form.querySelector('[name="maxBudget"]') : null;
+        const op = form ? form.querySelector('[name="desiredOperation"]') : null;
+        if (!form || !budget || !op) return;
+        const wrap = budget.closest(".field");
+        const monto = () => Number(String(budget.value || "").replace(/[^\d.]/g, "")) || 0;
+        const sync = () => {
+          if (!wrap) return;
+          let aviso = wrap.querySelector("[data-aviso-presupuesto]");
+          const m = monto();
+          const bajoAlquiler = op.value === "alquiler" && m > 0 && m < 300;
+          const bajoVenta = op.value === "venta" && m > 0 && m < 10000;
+          if (!bajoAlquiler && !bajoVenta) { if (aviso) aviso.remove(); return; }
+          if (!aviso) {
+            aviso = document.createElement("div");
+            aviso.setAttribute("data-aviso-presupuesto", "");
+            aviso.className = "precio-aviso";
+            wrap.appendChild(aviso);
+          }
+          aviso.textContent = bajoAlquiler
+            ? "⚠ $" + m.toLocaleString("en-US") + " al mes es muy bajo para un alquiler en Panamá — con este presupuesto no verás resultados. Revisa el número (¿faltó un cero?)."
+            : "⚠ $" + m.toLocaleString("en-US") + " es muy bajo para una compra — con este presupuesto no verás resultados. Revisa el número.";
+        };
+        if (!budget.dataset.sanidadLista) {
+          budget.dataset.sanidadLista = "1";
+          budget.addEventListener("input", sync);
+          op.addEventListener("change", sync);
+        }
+        sync();
+      }
+
       function setupSearchBrokerClientRule() {
         const form = document.getElementById("searchForm");
         const role = form?.querySelector('[name="role"]');
@@ -17154,6 +17190,9 @@
           syncUrgencySelect(urgencySelect);
         }
         setupLocationSelects("search", search.province || "Panamá", search.desiredZone || "Costa del Este");
+        // Al editar, el aviso de presupuesto se evalúa con los valores cargados
+        // (así una búsqueda guardada con $100/mes muestra el aviso de una vez).
+        setupPresupuestoSanidad("searchForm");
         // Mismo auto-arreglo de zona que editProperty (con el pin de la búsqueda).
         try {
           const zSel = form.querySelector('[data-location-zone="search"]');
@@ -21669,6 +21708,8 @@
           setupSearchBrokerClientRule();
           setupAllBrokerCredentials();
           setupBrokerFormPrivacy();
+          setupPresupuestoSanidad("searchForm");
+          setupPresupuestoSanidad("brokerForm");
           setupAccountCreation("propertyForm");
           setupAccountCreation("searchForm");
           setupAccountCreation("brokerForm");
