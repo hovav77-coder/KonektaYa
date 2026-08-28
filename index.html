@@ -122,6 +122,11 @@
           background: #fff; border-top: 1px solid var(--line, #dce5ef);
           padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
           box-shadow: 0 -6px 20px rgba(10, 47, 85, 0.07);
+          /* iOS Safari: capa propia — sin esto, al cerrarse el teclado o al
+             esconderse la barra de Safari, el fixed quedaba "flotando" a media
+             pantalla hasta el próximo repintado. */
+          transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
         }
         .bottombar button {
           flex: 1; background: none; border: none; cursor: pointer;
@@ -18137,6 +18142,24 @@
       window.setHomeFlow = setHomeFlow;
 
       // #4 Barra inferior (móvil): navega reutilizando las funciones existentes.
+      // iOS Safari: cuando el teclado en pantalla se abre, el viewport visual se
+      // encoge y la barra fija queda a media pantalla (reportado por el dueño en
+      // su iPhone). Mientras el teclado está abierto la barra SE ESCONDE (además
+      // regala espacio para escribir); al cerrarse, el reflow del display la
+      // vuelve a anclar abajo.
+      if (window.visualViewport) {
+        const vvBar = () => {
+          const bar = document.getElementById("bottomBar");
+          if (!bar) return;
+          const tecladoAbierto = window.visualViewport.height < window.innerHeight - 120;
+          bar.style.display = tecladoAbierto ? "none" : "";
+        };
+        try {
+          window.visualViewport.addEventListener("resize", vvBar);
+          window.visualViewport.addEventListener("scroll", vvBar);
+        } catch (e) {}
+      }
+
       function bottomNavGo(what) {
         if (what === "inicio") { if (window.activatePropertyYaTab) activatePropertyYaTab("inicio"); else showTab("inicio"); }
         else if (what === "publicar") { goPublishOrSearch(); if (window.setHomeFlow) setHomeFlow("publicar"); }
