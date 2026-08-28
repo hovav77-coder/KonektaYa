@@ -21051,7 +21051,14 @@
           anlState.win = { d: new Date(anlState.desde + "T00:00:00").getTime(), h: new Date(anlState.hasta + "T23:59:59.999").getTime() };
           return;
         }
-        anlState.win = { d: Date.now() - Number(p) * 86400000, h: Date.now() + 60000 };
+        // Días CALENDARIO, no horas rodantes: «Hoy» = desde la medianoche;
+        // 7d = hoy + 6 días anteriores completos. El contador de visitas solo
+        // sabe días enteros — con una ventana rodante de 24 h tocaba dos días
+        // y sumaba ambos completos (mostraba ~48 h). Así todo cuadra al sumar.
+        const ini = new Date();
+        ini.setHours(0, 0, 0, 0);
+        ini.setDate(ini.getDate() - (Number(p) - 1));
+        anlState.win = { d: ini.getTime(), h: Date.now() + 60000 };
       }
       function anlEnPeriodo(t) {
         if (!anlState.win) return true;
@@ -21086,12 +21093,12 @@
         const hoy = (d.visits_daily || []).find((r) => r.d === hoyIso);
         const titulo = anlState.period === "all" ? "TODO EL TIEMPO"
           : anlState.period === "custom" ? (anlState.desde && anlState.hasta ? "DEL " + anlFmtFecha(anlState.desde) + " AL " + anlFmtFecha(anlState.hasta) : "RANGO")
-          : anlState.period === "1" ? "ÚLTIMAS 24 HORAS" : "ÚLTIMOS " + anlState.period + " DÍAS";
+          : anlState.period === "1" ? "HOY" : "ÚLTIMOS " + anlState.period + " DÍAS";
         return '<div style="background:#fff;border:1px solid #dce5ef;border-radius:13px;padding:13px 16px;margin-bottom:10px;display:flex;align-items:center;gap:22px;flex-wrap:wrap">' +
           '<span style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#5b6b7e">👁 VISITAS A LA PÁGINA · ' + titulo + "</span>" +
           '<span style="display:flex;align-items:baseline;gap:7px"><strong style="font-size:26px;font-weight:900;color:#0a2f55">' + v.n + '</strong><span style="font-size:12px;color:#5b6b7e;font-weight:700">entradas</span></span>' +
           '<span style="display:flex;align-items:baseline;gap:7px"><strong style="font-size:26px;font-weight:900;color:#0f5e91">' + v.u + '</strong><span style="font-size:12px;color:#5b6b7e;font-weight:700">personas únicas</span></span>' +
-          (hoy ? '<span style="margin-left:auto;font-size:12px;color:#8aa0b8;font-weight:700">hoy: ' + Number(hoy.n || 0) + " · " + Number(hoy.u || 0) + " personas</span>" : "") +
+          (hoy && anlState.period !== "1" ? '<span style="margin-left:auto;font-size:12px;color:#8aa0b8;font-weight:700">hoy: ' + Number(hoy.n || 0) + " · " + Number(hoy.u || 0) + " personas</span>" : "") +
           "</div>";
       }
 
@@ -21107,9 +21114,13 @@
         if (p !== "1" && p !== "custom") return;
         if (!supabaseEnabled || !supabaseClient) return;
         if (p === "custom" && (!anlState.desde || !anlState.hasta)) return;
-        const key = p === "1" ? "1d" : anlState.desde + "_" + anlState.hasta;
+        // «Hoy» arranca en la medianoche local — mismo periodo que la tarjeta
+        // de visitas (contador por día calendario), para que ambos cuadren.
+        const hoy0 = new Date();
+        hoy0.setHours(0, 0, 0, 0);
+        const key = p === "1" ? "hoy_" + hoy0.toISOString().slice(0, 10) : anlState.desde + "_" + anlState.hasta;
         if (!force && anlState.rango && anlState.rango.key === key && !anlState.rango.error) return;
-        const desde = p === "1" ? new Date(Date.now() - 86400000).toISOString() : new Date(anlState.desde + "T00:00:00").toISOString();
+        const desde = p === "1" ? hoy0.toISOString() : new Date(anlState.desde + "T00:00:00").toISOString();
         const hasta = p === "1" ? new Date().toISOString() : new Date(anlState.hasta + "T23:59:59.999").toISOString();
         anlState.rango = { key, data: null, cargando: true, error: "" };
         const { data, error } = await supabaseClient.rpc("admin_metrics_funnel", { p_from: desde, p_to: hasta });
@@ -21158,7 +21169,7 @@
         let f, titulo;
         if (anlState.period === "1" || anlState.period === "custom") {
           const r = anlState.rango || {};
-          titulo = anlState.period === "1" ? "ÚLTIMAS 24 HORAS"
+          titulo = anlState.period === "1" ? "HOY"
             : (anlState.desde && anlState.hasta ? "DEL " + anlFmtFecha(anlState.desde) + " AL " + anlFmtFecha(anlState.hasta) : "RANGO");
           if (!r.data) {
             const cuerpo = r.error
@@ -21374,7 +21385,7 @@
             "</div>";
         }
         return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">' +
-          '<div style="display:inline-flex;background:#fff;border:1px solid #dce5ef;border-radius:9px;overflow:hidden">' + per("1", "1d") + per("7", "7d") + per("30", "30d") + per("90", "90d") + per("all", "Todo") + "</div>" +
+          '<div style="display:inline-flex;background:#fff;border:1px solid #dce5ef;border-radius:9px;overflow:hidden">' + per("1", "Hoy") + per("7", "7d") + per("30", "30d") + per("90", "90d") + per("all", "Todo") + "</div>" +
           rangoPill +
           '<div style="display:inline-flex;gap:6px">' + vert("all", "Todos") + vert("property", "Inmuebles") + vert("vehicle", "Vehículos") + "</div>" +
           '<span style="flex:1"></span>' +
