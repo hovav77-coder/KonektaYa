@@ -11221,6 +11221,16 @@
       .pmap-node.pm-go .pmap-tx strong { color: #fff; }
       .pmap-node.pm-go .pmap-tx small { color: rgba(255, 255, 255, 0.88); }
       .pmap-node.pm-go .pmap-num { background: rgba(255, 255, 255, 0.25); color: #fff; }
+      /* Línea de estado vivo dentro del nodo Mis publicaciones (opción B) */
+      .pmap-vivo { align-items: center; display: inline-flex; gap: 6px; margin-top: 3px; }
+      .pmap-vivo-dot {
+        animation: cintaPulso 1.6s infinite;
+        background: #ffffff;
+        border-radius: 50%;
+        flex: 0 0 auto;
+        height: 7px;
+        width: 7px;
+      }
       .pm-l1 { grid-area: l1; } .pm-l2 { grid-area: l2; } .pm-l3 { grid-area: l3; } .pm-l4 { grid-area: l4; }
       .pm-r1 { grid-area: r1; } .pm-r2 { grid-area: r2; } .pm-r3 { grid-area: r3; } .pm-r4 { grid-area: r4; }
       .pmap-back { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; margin: 2px 0 16px; }
@@ -16801,13 +16811,31 @@
         set("pmapSaldo", txt("walletBalanceValue") || "USD 0.00");
         const offers = parseInt(txt("offersTabCount") || "0", 10) || 0;
         const searches = parseInt(txt("searchesTabCount") || "0", 10) || 0;
-        set("pmapPubs", offers + (offers === 1 ? " oferta" : " ofertas") + " · " + searches + (searches === 1 ? " búsqueda" : " búsquedas"));
         const hotEl = document.querySelector("#ownerActionBlock .oa-n2");
         const hot = hotEl ? parseInt(hotEl.textContent, 10) || 0 : 0;
         const badge = document.getElementById("pmapPubsBadge");
         if (badge) { badge.hidden = hot <= 0; badge.textContent = String(hot); }
         const pubNode = map.querySelector('[data-theme="publicaciones"]');
         if (pubNode) pubNode.classList.toggle("hot", hot > 0);
+        // El foco naranja sigue el camino del usuario (opción B aprobada):
+        // sin publicaciones guía "Empecemos"; con publicaciones se muda a
+        // "Mis publicaciones" y la tarjeta cuenta el estado vivo — sin esto,
+        // el usuario que ya publicó no entiende dónde pasa lo importante.
+        const empNode = map.querySelector('[data-theme="empecemos"]');
+        const tienePubs = offers + searches > 0;
+        if (empNode) empNode.classList.toggle("pm-go", !tienePubs);
+        if (pubNode) pubNode.classList.toggle("pm-go", tienePubs);
+        const cuenta = offers + (offers === 1 ? " oferta" : " ofertas") + " · " + searches + (searches === 1 ? " búsqueda" : " búsquedas");
+        const pubsEl = document.getElementById("pmapPubs");
+        if (pubsEl) {
+          if (!tienePubs) {
+            pubsEl.textContent = cuenta;
+          } else if (hot > 0) {
+            pubsEl.innerHTML = escapeHtml(cuenta) + '<br><span class="pmap-vivo"><span class="pmap-vivo-dot" style="background:#7ed6a6"></span>✨ ' + hot + (hot === 1 ? " resultado esperándote" : " resultados esperándote") + " — tócalos aquí</span>";
+          } else {
+            pubsEl.innerHTML = escapeHtml(cuenta) + '<br><span class="pmap-vivo"><span class="pmap-vivo-dot"></span>la IA está cruzando tus publicaciones — te avisamos al primer match</span>';
+          }
+        }
         // Nodos de broker solo si el panel broker existe (misma condición que
         // usa renderBrokerB2B: ficha local aprobada o promoción por Supabase).
         const b2b = document.getElementById("brokerB2BPanel");
