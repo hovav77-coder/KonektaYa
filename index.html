@@ -12857,7 +12857,8 @@
                 <div class="data-list" id="userArchived"></div>
               </div>
             </div>
-            <div class="owner-resumen-strip" id="ownerResumen" hidden></div>
+            <!-- "Tu actividad" se quitó de aquí (pedido del dueño): Historial y
+                 Pagos ya tienen su propio nodo en el mapa del panel (7 y 8). -->
             </div>
             <!-- Historial y Pagos: antes vivían en un modal (secondaryModal);
                  ahora son secciones del mapa, como los demás temas. -->
@@ -23736,26 +23737,9 @@
           }
         }
 
-        const ownerResumenTarget = document.getElementById("ownerResumen");
-        if (ownerResumenTarget && (!currentUserEmail || pubCount === 0)) {
-          // Usuario nuevo / sin sesión: ocultar "Tu actividad" (solo añade ceros).
-          ownerResumenTarget.hidden = true;
-          ownerResumenTarget.innerHTML = "";
-        } else if (ownerResumenTarget) {
-          ownerResumenTarget.hidden = false;
-          ownerResumenTarget.innerHTML =
-            '<div class="orr-head">' +
-              '<span class="owner-resumen-title">Tu actividad</span>' +
-            "</div>" +
-            '<div class="orr-stats">' +
-              '<div class="orr-stat"><span class="orr-v">' + allUnlockedCount + '</span><span class="orr-lb">🔓 desbloqueados</span></div>' +
-              '<div class="orr-stat"><span class="orr-v">$' + Math.round(allSpent) + '</span><span class="orr-lb">💳 gastado</span></div>' +
-              '<div class="orr-stat"><span class="orr-v">' + aiResultsTotal + '</span><span class="orr-lb">🤖 resultados IA</span></div>' +
-            "</div>" +
-            '<div class="orr-div"></div>' +
-            '<button type="button" class="orr-row" onclick="openSecondaryPanel(\'history\')"><span class="orr-row-l">🧾 Historial de contactos</span><span class="orr-chev">›</span></button>' +
-            '<button type="button" class="orr-row" onclick="openSecondaryPanel(\'payments\')"><span class="orr-row-l">💳 Pagos y recibos</span><span class="orr-chev">›</span></button>';
-        }
+        // El bloque "Tu actividad" se retiró de Mis publicaciones (pedido del
+        // dueño, 2026-08-27): duplicaba los accesos de Historial y Pagos, que
+        // ya tienen su propio nodo en el mapa del panel.
         // Refrescar el mapa de nodos con los datos que este render dejó en el DOM.
         if (typeof window.__pmapRefresh === "function") window.__pmapRefresh();
 
