@@ -3331,6 +3331,20 @@
         padding: 22px;
       }
 
+      /* La vista previa de la carga masiva trae una tabla más ancha que el
+         teléfono. En un flex de columna los hijos tienen min-width:auto, así
+         que la tabla estiraba la tarjeta y la página ENTERA se movía de lado
+         en el celular (y de paso rompía los elementos fijos). Con esto la
+         tabla se desplaza dentro de su propio carril (overflow-x:auto). */
+      .b2b-panel > * {
+        min-width: 0;
+      }
+
+      #bulkCard {
+        max-width: 100%;
+        min-width: 0;
+      }
+
       .b2b-head {
         align-items: center;
         background: var(--navy);
@@ -7098,6 +7112,15 @@
       .dashboard-view.active {
         display: grid;
         gap: 24px;
+      }
+
+      /* En grid los hijos tienen min-width:auto y NO encogen: la tabla de la
+         carga masiva (más ancha que el teléfono) estiraba su envoltorio más
+         allá del grid y la página entera se movía de lado en el celular.
+         Con el piso en 0, el ancho baja en cadena hasta el carril con
+         overflow-x:auto y la tabla se desplaza DENTRO de él. */
+      .dashboard-view > * {
+        min-width: 0;
       }
 
       .admin-console {
