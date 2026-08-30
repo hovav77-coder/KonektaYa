@@ -3397,6 +3397,8 @@
       .aum-tiles > div { border: 1px solid #eef2f7; border-radius: 12px; padding: 9px 10px; text-align: center; }
       .aum-tiles span { display: block; font-size: 10.5px; font-weight: 800; color: #8aa0b8; letter-spacing: 0.04em; }
       .aum-tiles b { font-size: 19px; color: #0a2f55; }
+      .au2-posible { display: inline-block; margin-top: 3px; font-size: 10.5px; font-weight: 900; background: #fff4e8; color: #a23c18; border: 1px solid #f1883f; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+      .aum-posible { background: #fff4e8; border: 1.5px solid #f1883f; border-radius: 12px; padding: 10px 13px; font-size: 13px; color: #a23c18; font-weight: 700; margin-bottom: 12px; }
 
       .b2b-head {
         align-items: center;
@@ -11871,13 +11873,14 @@
                     <option value="broker">Broker</option>
                   </select>
                 </label>
+                <p class="field full" style="margin:-4px 0 0;font-size:12.5px;color:#8aa0b8;font-weight:600">¿Vendes o gestionas propiedades de terceros? Elige <b>Broker</b>: publicas a tu nombre y subes toda tu cartera de una vez con Excel.</p>
                 <div class="field full broker-client-section" data-broker-credentials>
                   <div class="broker-section-head">
                     <strong>Datos del broker</strong>
-                    <span>Verificamos tu licencia antes de activar tu cuenta.</span>
+                    <span>Tu cuenta funciona desde ya. La licencia es opcional: al verificarla ganas la insignia ✓ de broker verificado.</span>
                   </div>
                   <div class="broker-section-grid">
-                    <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
+                    <label class="field">Número de licencia (opcional)<input name="brokerLicense" placeholder="Ej. SB-2024-1187 — la puedes agregar después" /></label>
                     <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o inmobiliaria" /></label>
                     <label class="broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Soy broker independiente</span></label>
                   </div>
@@ -12001,10 +12004,10 @@
                 <div class="field full broker-client-section" data-broker-client-section>
                   <div class="broker-section-head">
                     <strong>Datos del broker</strong>
-                    <span>Verificamos tu licencia antes de activar tu cuenta.</span>
+                    <span>Tu cuenta funciona desde ya. La licencia es opcional: al verificarla ganas la insignia ✓ de broker verificado.</span>
                   </div>
                   <div class="broker-section-grid">
-                    <label class="field">Número de licencia<input name="brokerLicense" placeholder="Ej. SB-2024-1187" /></label>
+                    <label class="field">Número de licencia (opcional)<input name="brokerLicense" placeholder="Ej. SB-2024-1187 — la puedes agregar después" /></label>
                     <label class="field">Empresa que representas<input name="brokerCompany" placeholder="Empresa o inmobiliaria" /></label>
                     <label class="broker-independent-row"><input type="checkbox" name="brokerIndependent" data-broker-independent /> <span>Soy broker independiente</span></label>
                     <label class="field">Privacidad del cliente final
@@ -12271,10 +12274,11 @@
                     <option value="broker">Broker</option>
                   </select>
                 </label>
+                <p class="field full" style="margin:-4px 0 0;font-size:12.5px;color:#8aa0b8;font-weight:600">¿Vendes vehículos de terceros o manejas varios? Elige <b>Broker</b>: publicas a tu nombre y subes toda tu flota de una vez con Excel.</p>
                 <div class="field full broker-client-section" data-broker-credentials>
                   <div class="broker-section-head">
                     <strong>Datos del broker</strong>
-                    <span>Verificamos tu empresa antes de activar tu cuenta.</span>
+                    <span>Tu cuenta funciona desde ya. Al verificar tu empresa ganas la insignia ✓ de broker verificado.</span>
                   </div>
                   <div class="broker-section-grid">
                     <label class="field full">Empresa o agencia<input name="brokerCompany" placeholder="Nombre de la empresa, agencia o el tuyo si eres individual" /></label>
@@ -12408,7 +12412,7 @@
                 <div class="field full broker-client-section" data-broker-credentials>
                   <div class="broker-section-head">
                     <strong>Datos del broker</strong>
-                    <span>Verificamos tu empresa antes de activar tu cuenta.</span>
+                    <span>Tu cuenta funciona desde ya. Al verificar tu empresa ganas la insignia ✓ de broker verificado.</span>
                   </div>
                   <div class="broker-section-grid">
                     <label class="field full">Empresa o agencia<input name="brokerCompany" placeholder="Nombre de la empresa, agencia o el tuyo si eres individual" /></label>
@@ -12783,7 +12787,7 @@
               </button>
               <button type="button" class="pmap-node pm-r4 pm-n5" data-theme="broker" onclick="openPanelSection('broker')" hidden>
                 <span class="pmap-num">5</span><span class="pmap-ic">💼</span>
-                <span class="pmap-tx"><strong>Cuenta Broker</strong><small>aprobada · paquetes con bono</small></span>
+                <span class="pmap-tx"><strong>Cuenta Broker</strong><small>activa · paquetes con bono</small></span>
               </button>
               <button type="button" class="pmap-node pm-r3 pm-n6" data-theme="carga" onclick="openPanelSection('carga')" hidden>
                 <span class="pmap-num">6</span><span class="pmap-ic">📤</span>
@@ -19946,6 +19950,23 @@
         ? '<span class="au2-rol k">Broker' + (u.broker_status && u.broker_status !== "aprobado" ? " · " + escapeHtml(u.broker_status) : "") + "</span>"
         : '<span class="au2-rol">Cliente</span>';
       const auEstadoPill = (u) => u.blocked ? '<span class="au2-estado blq">Bloqueado</span>' : '<span class="au2-estado">Activo</span>';
+      // Detección de brokers disfrazados de cliente final (capa 1 aprobada):
+      // señales en el email/nombre + volumen de publicaciones. Devuelve la
+      // razón (para el tooltip y la ficha) o "" si no hay señal.
+      function auPosibleBroker(u) {
+        if (u.role === "broker") return "";
+        const em = normalize(u.email || "");
+        const nm = normalize(u.name || "");
+        const dominio = em.split("@")[1] || "";
+        const local = em.split("@")[0] || "";
+        const CLAVES = ["inmobiliari", "realestate", "real estate", "realty", "bienesraices", "bienes raices", "propiedades", "properties", "broker", "remax", "century21", "century 21"];
+        if (CLAVES.some((k) => em.includes(k) || nm.includes(k))) return "el email o nombre suena a inmobiliaria";
+        const GENERICOS = ["gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "icloud.com", "live.com", "msn.com", "aol.com", "proton.me", "protonmail.com", "me.com"];
+        const NEGOCIO = ["ventas", "info", "contacto", "oficina", "gerencia", "mercadeo", "admin"];
+        if (dominio && !GENERICOS.includes(dominio) && NEGOCIO.includes(local)) return "email corporativo (" + local + "@ con dominio propio)";
+        if (Number(u.publicaciones || 0) >= 3) return "tiene " + u.publicaciones + " publicaciones (volumen de broker)";
+        return "";
+      }
 
       function renderAdminUsers() {
         const list = document.getElementById("adminUsersList");
@@ -19961,10 +19982,11 @@
           broker: todos.filter((u) => u.role === "broker").length,
           conpub: todos.filter((u) => Number(u.publicaciones || 0) > 0).length,
           bloqueado: todos.filter((u) => u.blocked).length,
-          nuevos: todos.filter(auEsNuevo).length
+          nuevos: todos.filter(auEsNuevo).length,
+          posible: todos.filter((u) => auPosibleBroker(u)).length
         };
         const chip = (f, t, extra) => '<button type="button" class="au-chip ' + (extra || "") + (adminUsersFiltro === f ? " on" : "") + '" onclick="adminUsersSetFiltro(\'' + f + '\')">' + t + " <b>" + n[f] + "</b></button>";
-        if (chips) chips.innerHTML = chip("all", "Todos") + chip("cliente", "Clientes") + chip("broker", "Brokers") + chip("conpub", "Con publicaciones") + chip("bloqueado", "Bloqueados") + chip("nuevos", "✨ Nuevos · 7 días", "nuevo");
+        if (chips) chips.innerHTML = chip("all", "Todos") + chip("cliente", "Clientes") + chip("broker", "Brokers") + chip("conpub", "Con publicaciones") + chip("bloqueado", "Bloqueados") + chip("nuevos", "✨ Nuevos · 7 días", "nuevo") + (n.posible ? chip("posible", "🕵️ Posibles brokers", "nuevo") : "");
         // Encabezados ordenables.
         const cols = [["name", "Usuario"], ["role", "Tipo"], ["created_at", "Registro"], ["publicaciones", "Publicaciones"], ["balance", "Saldo"], ["blocked", "Estado"]];
         head.innerHTML = "<tr>" + cols.map(([c, t]) =>
@@ -19978,6 +20000,7 @@
           if (adminUsersFiltro === "conpub" && !(Number(u.publicaciones || 0) > 0)) return false;
           if (adminUsersFiltro === "bloqueado" && !u.blocked) return false;
           if (adminUsersFiltro === "nuevos" && !auEsNuevo(u)) return false;
+          if (adminUsersFiltro === "posible" && !auPosibleBroker(u)) return false;
           return !q || normalize((u.email || "") + " " + (u.name || "") + " " + (u.phone || "")).includes(q);
         });
         const val = (u) => {
@@ -19997,9 +20020,10 @@
         } else {
           list.innerHTML = visibles.map((u) => {
             const pub = Number(u.publicaciones || 0);
+            const posible = auPosibleBroker(u);
             return `<tr class="${u.id === adminSelectedUserId ? "sel" : ""}" onclick="selectAdminUser('${u.id}')">
               <td><span class="au2-user"><span class="au2-av${u.role === "broker" ? " b" : ""}">${escapeHtml(auIniciales(u))}</span><span class="au2-nm"><b>${escapeHtml(u.name || "(sin nombre)")}</b><span>${escapeHtml(u.email || "")}</span></span></span></td>
-              <td>${auRolPill(u)}</td>
+              <td>${auRolPill(u)}${posible ? '<br><span class="au2-posible" title="' + escapeHtml(posible) + '">🕵️ ¿Broker?</span>' : ""}</td>
               <td class="au2-fecha">${auFechaRegistro(u.created_at).corto}</td>
               <td>${pub > 0 ? '<span class="au2-pub">' + pub + "</span>" : '<span class="au2-cero">0</span>'}</td>
               <td class="au2-saldo">${money.format(Number(u.balance || 0))}</td>
@@ -20105,7 +20129,9 @@
         const emAttr = escapeHtml(u.email || "").replace(/'/g, "\\'");
         // La identidad (avatar, nombre, fechas) vive en la cabecera del popup;
         // aquí van los contadores y las acciones.
+        const posible = auPosibleBroker(u);
         box.innerHTML = `
+          ${posible ? '<div class="aum-posible">🕵️ <b>Posible broker:</b> ' + escapeHtml(posible) + '. Si lo confirmas, pásalo a Broker aquí abajo (queda operativo al instante).</div>' : ""}
           <div class="aum-tiles">
             <div><span>OFERTAS</span><b>${act.ofertas.length}</b></div>
             <div><span>BÚSQUEDAS</span><b>${act.busquedas.length}</b></div>
@@ -23788,8 +23814,8 @@
           let txt = "", cls = "role-neutral";
           if (currentUserEmail) {
             if (bstatus) {
-              txt = bstatus === "aprobado" ? "Broker · Aprobado" : bstatus === "rechazado" ? "Broker · No aprobado" : "Broker · En revisión";
-              cls = bstatus === "aprobado" ? "role-ok" : bstatus === "rechazado" ? "role-bad" : "role-wait";
+              txt = bstatus === "aprobado" ? "Broker · Verificado ✓" : bstatus === "rechazado" ? "Broker · No aprobado" : "Broker";
+              cls = bstatus === "aprobado" ? "role-ok" : bstatus === "rechazado" ? "role-bad" : "role-neutral";
             } else if (typeof myProfile !== "undefined" && myProfile && myProfile.role === "propietario") {
               txt = "Propietario";
             } else {
@@ -23805,13 +23831,13 @@
           const broker = bstatus ? { status: bstatus } : null;
           if (broker && broker.status === "pendiente") {
             brokerBanner.innerHTML =
-              '<div class="broker-review-banner pending"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><div><strong>Cuenta de broker en revisión</strong><span>Estamos verificando tu licencia. Tus publicaciones y búsquedas quedan en pausa (no hacen match) y no puedes comprar paquetes hasta que un administrador apruebe tu cuenta.</span></div></div>';
+              '<div class="broker-review-banner pending"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span><div><strong>Cuenta de broker activa · verificación pendiente</strong><span>Ya puedes publicar, hacer match, desbloquear contactos y comprar paquetes. Estamos verificando tu licencia: al confirmarla ganas la insignia ✓ de Broker verificado.</span></div></div>';
           } else if (broker && broker.status === "rechazado") {
             brokerBanner.innerHTML =
               '<div class="broker-review-banner rejected"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M15 9l-6 6M9 9l6 6"></path></svg></span><div><strong>Cuenta de broker no aprobada</strong><span>Tu solicitud de broker fue rechazada. Escríbenos por WhatsApp para revisar tu caso.</span></div></div>';
           } else if (broker && broker.status === "aprobado") {
             brokerBanner.innerHTML =
-              '<div class="broker-review-banner approved"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><div><strong>Broker aprobado</strong><span>Tu cuenta está activa. Tus publicaciones hacen match y puedes comprar paquetes de desbloqueo.</span></div></div>';
+              '<div class="broker-review-banner approved"><span class="brb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></span><div><strong>Broker verificado ✓</strong><span>Tu licencia está verificada: tus publicaciones salen con la máxima confianza. Paquetes con bono y carga masiva activos.</span></div></div>';
           } else {
             brokerBanner.innerHTML = "";
           }
@@ -26471,14 +26497,30 @@
 
       // Con Supabase, el bloqueo del match de OTROS se hace por owner_blocked (servidor);
       // aquí solo evaluamos al usuario actual. Sin Supabase, se usa la ficha local.
+      // NUEVO MODELO (broker operativo): el broker funciona desde el registro
+      // ('pendiente' = activo sin insignia); solo 'rechazado' bloquea. 'aprobado'
+      // significa "verificado ✓" (insignia), ya no es un candado. Antes el broker
+      // honesto quedaba en pausa hasta aprobación y por eso se registraban como
+      // propietarios. Requiere supabase/3i-broker-operativo.sql en el servidor.
       function isBrokerBlockedFromMatching(email) {
         if (supabaseEnabled) {
           if (email && normalize(email) !== normalize(currentUserEmail)) return false;
           const st = myBrokerStatus();
-          return Boolean(st) && st !== "aprobado";
+          return st === "rechazado";
         }
         const account = getBrokerAccount(email);
-        return Boolean(account) && account.status !== "aprobado";
+        return Boolean(account) && account.status === "rechazado";
+      }
+      // Broker OPERATIVO (puede publicar/matchear/comprar/carga masiva): todo
+      // estado salvo 'rechazado'. Verificado (insignia) sigue en isBrokerApproved.
+      function isBrokerOperative(email) {
+        if (supabaseEnabled) {
+          if (email && normalize(email) !== normalize(currentUserEmail)) return true;
+          const st = myBrokerStatus();
+          return st ? st !== "rechazado" : true; // no-broker: no bloquea
+        }
+        const account = getBrokerAccount(email);
+        return account ? account.status !== "rechazado" : false;
       }
 
       function registerBrokerCredentials(email, license, company, independent, phone) {
@@ -26521,7 +26563,7 @@
       ];
 
       function buyBrokerPackage(base, bonus) {
-        if (!isBrokerApproved(currentUserEmail)) return;
+        if (!isBrokerOperative(currentUserEmail)) return;
         // Pago REAL por PayPal del precio del paquete; el bono lo acredita el servidor
         // (paypal-credit) según su propia tabla, no el navegador.
         openPayModal(Number(base), true);
@@ -26531,10 +26573,11 @@
         const target = document.getElementById("brokerB2BPanel");
         if (!target) return;
         let broker = getBrokerAccount(currentUserEmail);
-        // Reconocer también al broker aprobado por Supabase (promovido desde admin),
-        // que no tiene ficha local. myBrokerStatus() lee myProfile (fuente autoritativa).
-        const supaApproved = supabaseEnabled && myBrokerStatus() === "aprobado";
-        if (!supaApproved && (!broker || broker.status !== "aprobado")) {
+        // Broker OPERATIVO desde el registro: pendiente y aprobado ven el panel;
+        // solo rechazado (o no-broker) lo pierde. myBrokerStatus() lee myProfile.
+        const stSupa = supabaseEnabled ? myBrokerStatus() : null;
+        const supaOperativo = Boolean(stSupa) && stSupa !== "rechazado";
+        if (!supaOperativo && (!broker || broker.status === "rechazado")) {
           target.innerHTML = "";
           // La carga masiva vive en su propia sección del mapa: apagarla junto
           // con el panel broker (misma condición de aprobación).
@@ -26542,6 +26585,8 @@
           if (bulkOff) { bulkOff.hidden = true; bulkOff.innerHTML = ""; }
           return;
         }
+        // Insignia: 'aprobado' = licencia/empresa verificada por el admin.
+        const brokerVerificado = stSupa === "aprobado" || (broker && broker.status === "aprobado");
         // Broker de Supabase sin ficha local: sintetizar una para el encabezado.
         broker = broker || {
           email: currentUserEmail,
@@ -26568,7 +26613,7 @@
               <div class="b2b-broker">
                 <span class="b2b-broker-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span>
                 <div>
-                  <div class="b2b-broker-title">Cuenta Broker <span class="b2b-approved">Aprobada</span></div>
+                  <div class="b2b-broker-title">Cuenta Broker <span class="b2b-approved">${brokerVerificado ? "Verificada ✓" : "Activa · verificación pendiente"}</span></div>
                   <div class="b2b-broker-sub">${escapeHtml(broker.license || "Licencia no indicada")} · ${escapeHtml(broker.company || "")}</div>
                 </div>
               </div>
@@ -27781,8 +27826,10 @@
         // miraba la ficha local y un broker aprobado desde el admin de Supabase
         // quedaba bloqueado aquí con "Solo brokers aprobados".
         const local = getBrokerAccount(currentUserEmail);
-        const aprobado = (local && local.status === "aprobado") || (typeof isBrokerApproved === "function" && isBrokerApproved(currentUserEmail));
-        if (!aprobado) { alert("Solo brokers aprobados pueden usar la carga masiva."); return; }
+        // Broker operativo (pendiente o aprobado) puede usar la carga masiva;
+        // solo 'rechazado' queda fuera.
+        const operativo = (local && local.status !== "rechazado") || (typeof isBrokerOperative === "function" && isBrokerOperative(currentUserEmail));
+        if (!operativo) { alert("Solo cuentas de broker activas pueden usar la carga masiva."); return; }
         const prof = (typeof myProfile !== "undefined" && myProfile) ? myProfile : {};
         const broker = local || { license: prof.broker_license || "", company: prof.broker_company || "", independent: false, name: prof.name || "" };
         const phone = String(prof.phone || (local && local.phone) || "").trim();
