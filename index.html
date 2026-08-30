@@ -3345,6 +3345,59 @@
         min-width: 0;
       }
 
+      /* ---- Clientes y créditos: tabla CRM + ficha en popup (rediseño) ---- */
+      .au-chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0 0 10px; }
+      .au-chip { border: 1px solid #dce5ef; background: #fff; color: #29425f; border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 800; cursor: pointer; font-family: inherit; }
+      .au-chip b { color: #8aa0b8; margin-left: 4px; }
+      .au-chip.on { background: #0a2f55; border-color: #0a2f55; color: #fff; }
+      .au-chip.on b { color: #9db8d4; }
+      .au-chip.nuevo { border-color: #f1883f; background: #fff4e8; color: #a23c18; }
+      .au-chip.nuevo.on { background: #e05b2a; border-color: #e05b2a; color: #fff; }
+      .au-chip.nuevo.on b { color: #ffd9bd; }
+      /* La tabla es más ancha que el teléfono: se desplaza en su carril
+         (misma lección que la carga masiva: min-width 0 + overflow-x). */
+      .au-tablewrap { overflow-x: auto; border: 1px solid #eef2f7; border-radius: 12px; min-width: 0; max-width: 100%; margin-top: 10px; }
+      table.au-table { width: 100%; min-width: 740px; border-collapse: collapse; font-size: 13.5px; }
+      .au-table thead th { text-align: left; font-size: 11px; letter-spacing: 0.06em; color: #5b6b82; padding: 9px 10px; border-bottom: 2px solid #dce5ef; white-space: nowrap; cursor: pointer; user-select: none; background: #f8fbfe; }
+      .au-table thead th.on { color: #a23c18; }
+      .au-table td { padding: 9px 10px; border-bottom: 1px solid #eef2f7; vertical-align: middle; }
+      .au-table tbody tr { cursor: pointer; }
+      .au-table tbody tr:hover td { background: #f8fbff; }
+      .au-table tbody tr.sel td { background: #fff9f4; }
+      .au2-user { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .au2-av { width: 36px; height: 36px; border-radius: 50%; background: #e05b2a; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 12.5px; flex: 0 0 auto; }
+      .au2-av.b { background: #0f5e91; }
+      .au2-nm { min-width: 0; }
+      .au2-nm b { display: block; color: #0a2f55; }
+      .au2-nm span { display: block; color: #8aa0b8; font-size: 12px; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .au2-rol { font-size: 11px; font-weight: 900; border-radius: 999px; padding: 3px 10px; background: #eef3f8; color: #29425f; white-space: nowrap; }
+      .au2-rol.k { background: #e8f2fb; color: #0f5e91; border: 1px solid #b5d4ec; }
+      .au2-fecha { font-size: 12px; color: #8aa0b8; font-weight: 700; white-space: nowrap; }
+      .au2-fecha b { color: #5b6b82; }
+      .au2-pub { font-size: 11.5px; font-weight: 800; background: #e8f7ee; color: #0f7a3d; border-radius: 7px; padding: 2px 9px; }
+      .au2-cero { color: #8aa0b8; }
+      .au2-saldo { font-weight: 900; color: #0a2f55; white-space: nowrap; }
+      .au2-estado { font-size: 11px; font-weight: 900; border-radius: 999px; padding: 3px 10px; background: #e8f7ee; color: #0f7a3d; white-space: nowrap; }
+      .au2-estado.blq { background: #fff1f2; color: #b91c1c; }
+      .au-foot { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 10px; color: #5b6b82; font-size: 12.5px; font-weight: 700; }
+      .au-foot .button { margin-left: auto; }
+      .aum-overlay { position: fixed; inset: 0; z-index: 1400; background: rgba(8, 24, 44, 0.55); display: flex; align-items: flex-start; justify-content: center; padding: 4vh 12px; overflow-y: auto; }
+      /* display:flex le gana al atributo hidden: hay que reafirmarlo. */
+      .aum-overlay[hidden] { display: none; }
+      .aum-modal { background: #fff; border-radius: 18px; width: min(700px, 100%); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); overflow: hidden; margin-bottom: 4vh; }
+      .aum-head { background: linear-gradient(135deg, #0c2749, #0f3d6b); padding: 16px 20px; display: flex; align-items: center; gap: 13px; }
+      .aum-head .au2-av { width: 52px; height: 52px; font-size: 17px; }
+      .aum-tit { flex: 1; min-width: 0; }
+      .aum-tit h3 { margin: 0; color: #fff; font-size: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+      .aum-sub { color: #9db8d4; font-size: 12.5px; font-weight: 700; margin-top: 3px; }
+      .aum-sub b { color: #f8b98a; }
+      .aum-x { border: none; background: none; color: #9db8d4; font-size: 20px; font-weight: 900; cursor: pointer; padding: 4px 8px; font-family: inherit; }
+      .aum-body { padding: 16px 20px 20px; max-height: min(76vh, 900px); overflow-y: auto; }
+      .aum-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+      .aum-tiles > div { border: 1px solid #eef2f7; border-radius: 12px; padding: 9px 10px; text-align: center; }
+      .aum-tiles span { display: block; font-size: 10.5px; font-weight: 800; color: #8aa0b8; letter-spacing: 0.04em; }
+      .aum-tiles b { font-size: 19px; color: #0a2f55; }
+
       .b2b-head {
         align-items: center;
         background: var(--navy);
@@ -13030,12 +13083,24 @@
                       </div>
                       <button class="button small ghost" type="button" onclick="adminLoadUsers()">Actualizar</button>
                     </div>
-                    <div class="au-panel">
-                      <div class="au-listcol">
-                        <input id="adminUsersSearch" class="admin-users-search" placeholder="Filtrar por email o nombre" oninput="renderAdminUsers()" />
-                        <div class="admin-users-list" id="adminUsersList"><p class="admin-users-empty">Toca “Actualizar” para cargar los usuarios.</p></div>
+                    <!-- Rediseño aprobado por mockup: tabla tipo CRM (ordenable,
+                         con chips de filtro) + ficha completa en popup al tocar
+                         una fila. Fecha de registro y último acceso vienen del
+                         RPC (correr supabase/3h-usuarios-fechas.sql). -->
+                    <div class="au-chips" id="adminUsersChips"></div>
+                    <input id="adminUsersSearch" class="admin-users-search" placeholder="Filtrar por email, nombre o teléfono" oninput="renderAdminUsers()" />
+                    <div class="au-tablewrap">
+                      <table class="au-table">
+                        <thead id="adminUsersHead"></thead>
+                        <tbody id="adminUsersList"><tr><td colspan="6"><p class="admin-users-empty">Toca “Actualizar” para cargar los usuarios.</p></td></tr></tbody>
+                      </table>
+                    </div>
+                    <div class="au-foot" id="adminUsersFoot"></div>
+                    <div class="aum-overlay" id="adminUserModal" hidden>
+                      <div class="aum-modal">
+                        <div class="aum-head" id="adminUserModalHead"></div>
+                        <div class="aum-body" id="adminUserDetail"></div>
                       </div>
-                      <aside class="au-detailcol" id="adminUserDetail"><p class="admin-users-empty">Selecciona un usuario para ver su ficha.</p></aside>
                     </div>
                   </div>
                   <div class="admin-credit-panel">
@@ -19836,27 +19901,170 @@
         if (typeof render === "function") render(); // refresca las métricas (clientes/bloqueados)
       }
       let adminSelectedUserId = null;
+      // --- Rediseño (aprobado por mockup): tabla CRM + ficha en popup ---
+      let adminUsersFiltro = "all";
+      let adminUsersOrden = { campo: "created_at", dir: -1 };
+      let adminUsersLimite = 60;
+
+      function auIniciales(u) {
+        const parts = String(u.name || u.email || "?").trim().split(/\s+/).filter(Boolean);
+        return (((parts[0] || "")[0] || "") + ((parts[1] || "")[0] || "")).toUpperCase() || "?";
+      }
+      // Fecha de registro relativa: "hoy · 9:12", "ayer · 4:40", "hace 3 d · 26 ago"…
+      function auFechaRegistro(d) {
+        if (!d) return { corto: "—", largo: "", dias: null };
+        const t = new Date(d);
+        if (isNaN(t)) return { corto: "—", largo: "", dias: null };
+        const hoy0 = new Date(); hoy0.setHours(0, 0, 0, 0);
+        const dia0 = new Date(t); dia0.setHours(0, 0, 0, 0);
+        const dias = Math.round((hoy0 - dia0) / 86400000);
+        const hora = t.toLocaleTimeString("es-PA", { hour: "numeric", minute: "2-digit" });
+        const dmes = t.toLocaleDateString("es-PA", { day: "numeric", month: "short" });
+        const largo = t.toLocaleDateString("es-PA", { day: "numeric", month: "short", year: "numeric" }) + ", " + hora;
+        const corto = dias <= 0 ? "<b>hoy</b> · " + hora
+          : dias === 1 ? "<b>ayer</b> · " + hora
+          : dias < 7 ? "<b>hace " + dias + " d</b> · " + dmes
+          : dias < 365 ? dmes
+          : t.toLocaleDateString("es-PA", { day: "numeric", month: "short", year: "2-digit" });
+        return { corto, largo, dias };
+      }
+      function auUltimoAcceso(d) {
+        if (!d) return "—";
+        const t = new Date(d);
+        if (isNaN(t)) return "—";
+        const min = Math.max(0, Math.round((Date.now() - t.getTime()) / 60000));
+        if (min < 60) return "hace " + Math.max(1, min) + " min";
+        const h = Math.round(min / 60);
+        if (h < 24) return "hace " + h + " h";
+        const dias = Math.round(h / 24);
+        if (dias === 1) return "ayer";
+        if (dias < 30) return "hace " + dias + " d";
+        return t.toLocaleDateString("es-PA", { day: "numeric", month: "short" });
+      }
+      const auEsNuevo = (u) => u.created_at && Date.now() - new Date(u.created_at).getTime() < 7 * 86400000;
+      const auRolPill = (u) => u.role === "broker"
+        ? '<span class="au2-rol k">Broker' + (u.broker_status && u.broker_status !== "aprobado" ? " · " + escapeHtml(u.broker_status) : "") + "</span>"
+        : '<span class="au2-rol">Cliente</span>';
+      const auEstadoPill = (u) => u.blocked ? '<span class="au2-estado blq">Bloqueado</span>' : '<span class="au2-estado">Activo</span>';
+
       function renderAdminUsers() {
         const list = document.getElementById("adminUsersList");
-        if (!list) return;
+        const head = document.getElementById("adminUsersHead");
+        const chips = document.getElementById("adminUsersChips");
+        const foot = document.getElementById("adminUsersFoot");
+        if (!list || !head) return;
+        const todos = adminUsersData.filter((u) => !isAdminEmail(u.email));
+        // Chips con contador (el filtro activo se marca).
+        const n = {
+          all: todos.length,
+          cliente: todos.filter((u) => u.role !== "broker").length,
+          broker: todos.filter((u) => u.role === "broker").length,
+          conpub: todos.filter((u) => Number(u.publicaciones || 0) > 0).length,
+          bloqueado: todos.filter((u) => u.blocked).length,
+          nuevos: todos.filter(auEsNuevo).length
+        };
+        const chip = (f, t, extra) => '<button type="button" class="au-chip ' + (extra || "") + (adminUsersFiltro === f ? " on" : "") + '" onclick="adminUsersSetFiltro(\'' + f + '\')">' + t + " <b>" + n[f] + "</b></button>";
+        if (chips) chips.innerHTML = chip("all", "Todos") + chip("cliente", "Clientes") + chip("broker", "Brokers") + chip("conpub", "Con publicaciones") + chip("bloqueado", "Bloqueados") + chip("nuevos", "✨ Nuevos · 7 días", "nuevo");
+        // Encabezados ordenables.
+        const cols = [["name", "Usuario"], ["role", "Tipo"], ["created_at", "Registro"], ["publicaciones", "Publicaciones"], ["balance", "Saldo"], ["blocked", "Estado"]];
+        head.innerHTML = "<tr>" + cols.map(([c, t]) =>
+          '<th class="' + (adminUsersOrden.campo === c ? "on" : "") + '" onclick="adminUsersSort(\'' + c + '\')">' + t.toUpperCase() +
+          (adminUsersOrden.campo === c ? (adminUsersOrden.dir === -1 ? " ▼" : " ▲") : "") + "</th>").join("") + "</tr>";
+        // Filtro + búsqueda + orden.
         const q = normalize((document.getElementById("adminUsersSearch") || {}).value || "");
-        const rows = adminUsersData.filter((u) => !isAdminEmail(u.email) && (!q || normalize((u.email || "") + " " + (u.name || "")).includes(q)));
+        let rows = todos.filter((u) => {
+          if (adminUsersFiltro === "cliente" && u.role === "broker") return false;
+          if (adminUsersFiltro === "broker" && u.role !== "broker") return false;
+          if (adminUsersFiltro === "conpub" && !(Number(u.publicaciones || 0) > 0)) return false;
+          if (adminUsersFiltro === "bloqueado" && !u.blocked) return false;
+          if (adminUsersFiltro === "nuevos" && !auEsNuevo(u)) return false;
+          return !q || normalize((u.email || "") + " " + (u.name || "") + " " + (u.phone || "")).includes(q);
+        });
+        const val = (u) => {
+          switch (adminUsersOrden.campo) {
+            case "role": return u.role === "broker" ? 1 : 0;
+            case "created_at": return u.created_at ? new Date(u.created_at).getTime() : 0;
+            case "publicaciones": return Number(u.publicaciones || 0);
+            case "balance": return Number(u.balance || 0);
+            case "blocked": return u.blocked ? 1 : 0;
+            default: return normalize(u.name || u.email || "");
+          }
+        };
+        rows.sort((a, b) => { const va = val(a), vb = val(b); return (va < vb ? -1 : va > vb ? 1 : 0) * adminUsersOrden.dir; });
+        const visibles = rows.slice(0, adminUsersLimite);
         if (!rows.length) {
-          list.innerHTML = '<p class="admin-users-empty">' + (adminUsersData.length ? "Sin coincidencias." : "No hay usuarios.") + "</p>";
+          list.innerHTML = '<tr><td colspan="6"><p class="admin-users-empty">' + (adminUsersData.length ? "Sin coincidencias." : adminUsersLoaded ? "No hay usuarios." : "Toca “Actualizar” para cargar los usuarios.") + "</p></td></tr>";
         } else {
-          list.innerHTML = rows.map((u) => `
-            <button type="button" class="au-item${u.id === adminSelectedUserId ? " sel" : ""}" onclick="selectAdminUser('${u.id}')">
-              <span class="au-item-nm">
-                <b>${escapeHtml(u.name || "(sin nombre)")}</b>
-                <span>${escapeHtml(u.email || "")}</span>
-              </span>
-              <span class="au-item-bal">${money.format(Number(u.balance || 0))}${u.blocked ? '<span class="au-dot" title="Bloqueado"></span>' : ""}</span>
-            </button>`).join("");
+          list.innerHTML = visibles.map((u) => {
+            const pub = Number(u.publicaciones || 0);
+            return `<tr class="${u.id === adminSelectedUserId ? "sel" : ""}" onclick="selectAdminUser('${u.id}')">
+              <td><span class="au2-user"><span class="au2-av${u.role === "broker" ? " b" : ""}">${escapeHtml(auIniciales(u))}</span><span class="au2-nm"><b>${escapeHtml(u.name || "(sin nombre)")}</b><span>${escapeHtml(u.email || "")}</span></span></span></td>
+              <td>${auRolPill(u)}</td>
+              <td class="au2-fecha">${auFechaRegistro(u.created_at).corto}</td>
+              <td>${pub > 0 ? '<span class="au2-pub">' + pub + "</span>" : '<span class="au2-cero">0</span>'}</td>
+              <td class="au2-saldo">${money.format(Number(u.balance || 0))}</td>
+              <td>${auEstadoPill(u)}</td>
+            </tr>`;
+          }).join("");
         }
-        renderAdminUserDetail();
+        if (foot) {
+          const sinFechas = adminUsersLoaded && todos.length > 0 && todos.every((u) => !u.created_at);
+          foot.innerHTML =
+            "Mostrando " + visibles.length + " de " + rows.length +
+            (n.nuevos ? ' · <span style="color:#a23c18">📅 ' + n.nuevos + " registro" + (n.nuevos === 1 ? "" : "s") + " esta semana</span>" : "") +
+            (sinFechas ? ' · <span style="color:#b91c1c">Para ver fechas corre <b>supabase/3h-usuarios-fechas.sql</b> y toca “Actualizar”.</span>' : "") +
+            (rows.length > visibles.length ? '<button class="button small ghost" type="button" onclick="adminUsersMas()">Cargar más</button>' : "");
+        }
+        renderAdminUserModal();
       }
+      function adminUsersSetFiltro(f) { adminUsersFiltro = f; adminUsersLimite = 60; renderAdminUsers(); }
+      window.adminUsersSetFiltro = adminUsersSetFiltro;
+      function adminUsersSort(campo) {
+        if (adminUsersOrden.campo === campo) adminUsersOrden.dir *= -1;
+        else adminUsersOrden = { campo, dir: campo === "name" || campo === "role" ? 1 : -1 };
+        renderAdminUsers();
+      }
+      window.adminUsersSort = adminUsersSort;
+      function adminUsersMas() { adminUsersLimite += 60; renderAdminUsers(); }
+      window.adminUsersMas = adminUsersMas;
+
       function selectAdminUser(id) { adminSelectedUserId = id; renderAdminUsers(); }
       window.selectAdminUser = selectAdminUser;
+      function closeAdminUserModal() {
+        adminSelectedUserId = null;
+        const m = document.getElementById("adminUserModal");
+        if (m) m.hidden = true;
+        renderAdminUsers();
+      }
+      window.closeAdminUserModal = closeAdminUserModal;
+      // La ficha vive en un popup: cabecera azul (identidad + fechas) + cuerpo.
+      function renderAdminUserModal() {
+        const overlay = document.getElementById("adminUserModal");
+        const head = document.getElementById("adminUserModalHead");
+        if (!overlay || !head) return;
+        const u = adminUsersData.find((x) => x.id === adminSelectedUserId);
+        if (!u) { overlay.hidden = true; return; }
+        overlay.hidden = false;
+        const f = auFechaRegistro(u.created_at);
+        head.innerHTML = `
+          <span class="au2-av${u.role === "broker" ? " b" : ""}">${escapeHtml(auIniciales(u))}</span>
+          <div class="aum-tit">
+            <h3>${escapeHtml(u.name || "(sin nombre)")} ${auRolPill(u)} ${auEstadoPill(u)}</h3>
+            <div class="aum-sub">📅 Registrado <b>${u.created_at ? f.largo : "—"}</b> &nbsp;·&nbsp; 👁 Último acceso <b>${auUltimoAcceso(u.last_sign_in_at)}</b></div>
+          </div>
+          <button class="aum-x" type="button" onclick="closeAdminUserModal()" aria-label="Cerrar">✕</button>`;
+        renderAdminUserDetail();
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          const m = document.getElementById("adminUserModal");
+          if (m && !m.hidden) closeAdminUserModal();
+        }
+      });
+      // Clic en el fondo oscuro = cerrar (el clic dentro del panel no cierra).
+      document.addEventListener("click", (e) => {
+        if (e.target && e.target.id === "adminUserModal") closeAdminUserModal();
+      });
 
       function adminUserActivity(uid) {
         const lbl = (v) => (typeof label === "function" ? label(v) : v) || "";
@@ -19895,10 +20103,13 @@
         const section = (titulo, arr) => `<div class="au-acth">${titulo} <span class="n">${arr.length}</span></div>` +
           (arr.length ? arr.map(itemHtml).join("") : '<p class="admin-users-empty">Sin registros.</p>');
         const emAttr = escapeHtml(u.email || "").replace(/'/g, "\\'");
+        // La identidad (avatar, nombre, fechas) vive en la cabecera del popup;
+        // aquí van los contadores y las acciones.
         box.innerHTML = `
-          <div class="au-dtop">
-            <span class="au-av">${escapeHtml(initials)}</span>
-            <div><h3>${escapeHtml(u.name || "(sin nombre)")} <span class="au-rolpill">${rol}</span></h3><p>${u.publicaciones || 0} publicaciones${u.blocked ? ' · <b style="color:#b91c1c">Bloqueado</b>' : ""}</p></div>
+          <div class="aum-tiles">
+            <div><span>OFERTAS</span><b>${act.ofertas.length}</b></div>
+            <div><span>BÚSQUEDAS</span><b>${act.busquedas.length}</b></div>
+            <div><span>DESBLOQUEOS</span><b>${u.desbloqueos != null ? Number(u.desbloqueos) : "—"}</b></div>
           </div>
           <div class="au-datagrid">
             <div class="au-drow"><span>Nombre</span><b>${escapeHtml(first)}</b></div>
