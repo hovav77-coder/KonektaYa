@@ -15431,6 +15431,7 @@
           "Obarrio",
           "Parque Lefevre",
           "Punta Pacífica",
+          "Punta Paitilla",
           "San Francisco",
           "San Miguelito",
           "Tocumen"
@@ -15463,7 +15464,10 @@
       const ZONA_CENTROIDES = {
         "Ancón": [8.9594, -79.5510], "Bella Vista": [8.9790, -79.5310], "Betania": [9.0060, -79.5290],
         "Costa del Este": [9.0100, -79.4660], "Juan Díaz": [9.0400, -79.4500], "Obarrio": [8.9843, -79.5205],
-        "Parque Lefevre": [9.0060, -79.4870], "Punta Pacífica": [8.9736, -79.5065], "San Francisco": [8.9880, -79.5030],
+        // Paitilla y Pacífica son penínsulas vecinas: el centroide de Paitilla
+        // se calibró con el pin real de PH The Point (8.9710, -79.5181) para
+        // que la punta caiga en Paitilla y Multiplaza siga en Pacífica.
+        "Parque Lefevre": [9.0060, -79.4870], "Punta Pacífica": [8.9736, -79.5065], "Punta Paitilla": [8.9752, -79.5205], "San Francisco": [8.9880, -79.5030],
         "San Miguelito": [9.0330, -79.5000], "Tocumen": [9.0680, -79.3830],
         "Arraiján": [8.9560, -79.6650], "Brisas del Golf Arraiján": [8.9760, -79.6800], "Burunga": [8.9430, -79.6350],
         "Chorrera": [8.8770, -79.7800], "Costa Verde": [8.8620, -79.7280], "La Chorrera": [8.8830, -79.7860],
@@ -17234,16 +17238,17 @@
         setupPropertyPricingRule();
         syncPropertyTerrainFields();
         setupLocationSelects("property", property.province || "Panamá", property.zone || "Costa del Este");
-        // Zona automática al editar: si la guardada no es del catálogo (registros
-        // viejos con "Panamá" genérico) y hay pin, se recalcula desde el pin —
-        // así el registro se corrige solo con el próximo "Guardar cambios".
+        // Zona automática al editar: si hay pin, EL PIN MANDA (decisión del
+        // dueño: la zona nunca se elige a mano). Recalcular siempre corrige
+        // solo dos casos reales: registros viejos con zona genérica ("Panamá")
+        // y zonas guardadas antes de que su barrio existiera en el catálogo
+        // (ej. The Point quedó "Punta Pacífica" antes de agregar Paitilla).
         try {
           const zSel = form.querySelector('[data-location-zone="property"]');
           const pSel = form.querySelector('[data-location-province="property"]');
-          const cat = zSel && pSel ? (locationOptions[pSel.value] || locationOptions[String(pSel.value || "").replace(/^provincia de\s+/i, "")]) : null;
-          if (zSel && Array.isArray(cat) && !cat.includes(zSel.value)) {
+          if (zSel && pSel) {
             const auto = zonaDesdePin(Number(property.streetLat), Number(property.streetLng), pSel.value);
-            if (auto) {
+            if (auto && auto !== zSel.value) {
               if (![...zSel.options].some((o) => o.value === auto)) {
                 const o = document.createElement("option"); o.value = auto; o.textContent = auto; zSel.appendChild(o);
               }
@@ -17319,14 +17324,13 @@
         // Al editar, el aviso de presupuesto se evalúa con los valores cargados
         // (así una búsqueda guardada con $100/mes muestra el aviso de una vez).
         setupPresupuestoSanidad("searchForm");
-        // Mismo auto-arreglo de zona que editProperty (con el pin de la búsqueda).
+        // Mismo auto-arreglo de zona que editProperty: con pin, el pin manda.
         try {
           const zSel = form.querySelector('[data-location-zone="search"]');
           const pSel = form.querySelector('[data-location-province="search"]');
-          const cat = zSel && pSel ? (locationOptions[pSel.value] || locationOptions[String(pSel.value || "").replace(/^provincia de\s+/i, "")]) : null;
-          if (zSel && Array.isArray(cat) && !cat.includes(zSel.value)) {
+          if (zSel && pSel) {
             const auto = zonaDesdePin(Number(search.desiredStreetLat), Number(search.desiredStreetLng), pSel.value);
-            if (auto) {
+            if (auto && auto !== zSel.value) {
               if (![...zSel.options].some((o) => o.value === auto)) {
                 const o = document.createElement("option"); o.value = auto; o.textContent = auto; zSel.appendChild(o);
               }
