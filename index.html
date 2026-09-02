@@ -3398,6 +3398,25 @@
       .aum-tiles span { display: block; font-size: 10.5px; font-weight: 800; color: #8aa0b8; letter-spacing: 0.04em; }
       .aum-tiles b { font-size: 19px; color: #0a2f55; }
       .au2-posible { display: inline-block; margin-top: 3px; font-size: 10.5px; font-weight: 900; background: #fff4e8; color: #a23c18; border: 1px solid #f1883f; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+      /* "Sin resultados aún" vivo: punto pulsando + 3 mensajes rotando (CSS puro). */
+      .sinres { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; gap: 10px; border: 1px dashed #cfdcec; background: #f8fbff; border-radius: 12px; padding: 10px 14px; }
+      .sinres-dot { width: 9px; height: 9px; border-radius: 50%; background: #f1883f; box-shadow: 0 0 0 5px rgba(241, 136, 63, 0.16); flex: 0 0 auto; animation: sinresPulso 1.8s ease-in-out infinite; }
+      @keyframes sinresPulso { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.25); opacity: 0.72; } }
+      .sinres-msgs { position: relative; flex: 1; min-width: 0; height: 1.4em; }
+      .sinres-msgs span { position: absolute; inset: 0; font-size: 13px; font-weight: 700; color: #37506e; opacity: 0; animation: sinresRot 13.5s infinite; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sinres-msgs span b { color: #0a2f55; }
+      .sinres-msgs span:nth-child(2) { animation-delay: 4.5s; }
+      .sinres-msgs span:nth-child(3) { animation-delay: 9s; }
+      @keyframes sinresRot { 0% { opacity: 0; transform: translateY(7px); } 4%, 29% { opacity: 1; transform: translateY(0); } 33%, 100% { opacity: 0; transform: translateY(-7px); } }
+      .sinres-pasos { display: flex; gap: 5px; flex: 0 0 auto; }
+      .sinres-pasos i { width: 6px; height: 6px; border-radius: 50%; background: #d5dee9; animation: sinresPaso 13.5s infinite; }
+      .sinres-pasos i:nth-child(2) { animation-delay: 4.5s; }
+      .sinres-pasos i:nth-child(3) { animation-delay: 9s; }
+      @keyframes sinresPaso { 0%, 32% { background: #f1883f; } 33%, 100% { background: #d5dee9; } }
+      @media (prefers-reduced-motion: reduce) {
+        .sinres-dot, .sinres-msgs span, .sinres-pasos i { animation: none; }
+        .sinres-msgs span:first-child { opacity: 1; }
+      }
       .aum-posible { background: #fff4e8; border: 1.5px solid #f1883f; border-radius: 12px; padding: 10px 13px; font-size: 13px; color: #a23c18; font-weight: 700; margin-bottom: 12px; }
 
       .b2b-head {
@@ -20996,6 +21015,24 @@
           detalle: lug && pres ? lug + " · " + pres : lug || pres
         };
       }
+      // "Sin resultados aún" VIVO (opción A aprobada, sin revelar cantidades):
+      // punto que pulsa + 3 mensajes rotando con CSS puro. Honesto: explica
+      // que el cruce es continuo y automático, sin prometer demanda invisible.
+      function sinResultadosVivoHtml(esBusqueda, tipo, publishedAt) {
+        const t = String(tipo || "publicación").toLowerCase();
+        const reciente = publishedAt && Date.now() - new Date(publishedAt).getTime() < 24 * 3600000;
+        const m1 = esBusqueda
+          ? "La IA revisa <b>cada publicación nueva</b> contra tu búsqueda…"
+          : "La IA está cruzando tu " + escapeHtml(t) + " con <b>cada búsqueda nueva</b>…";
+        const m2 = "Te avisamos por email al primer match 📬 — no tienes que hacer nada";
+        const m3 = reciente
+          ? "Ya apareces en el <b>tablero de la portada</b> 📺"
+          : esBusqueda
+            ? "Las ofertas nuevas entran todos los días — tu búsqueda las espera"
+            : "Las búsquedas nuevas entran todos los días — tu " + escapeHtml(t) + " compite en cada una";
+        return '<div class="sinres"><span class="sinres-dot"></span><span class="sinres-msgs"><span>' + m1 + "</span><span>" + m2 + "</span><span>" + m3 + '</span></span><span class="sinres-pasos"><i></i><i></i><i></i></span></div>';
+      }
+
       function cintaIco(e) {
         if (e.v === "vehiculo") return String(e.tipo || "").toLowerCase().includes("moto") ? "🏍" : "🚗";
         const t = String(e.tipo || "").toLowerCase();
@@ -24713,7 +24750,7 @@
                                         ? ` <span class="btn-badge hot">${requestedMatches.length} con interés</span>`
                                         : ""
                                     }</button>`
-                                  : `<button class="button small results-empty" type="button" disabled>Sin resultados aún</button>`
+                                  : sinResultadosVivoHtml(false, (typeof label === "function" && label(property.propertyType)) || "publicación", property.publishedAt)
                               }
                             </div>
                           </div>
@@ -24794,7 +24831,7 @@
                                       ? ` <span class="btn-badge hot">${offerRequests.length} con interés</span>`
                                       : ""
                                   }</button>`
-                                : `<button class="button small results-empty" type="button" disabled>Sin resultados aún</button>`
+                                : sinResultadosVivoHtml(false, "vehículo", offer.publishedAt)
                             }
                           </div>
                         </div>
@@ -24886,7 +24923,9 @@
                               ${
                                 searchMatches.length
                                   ? `<button class="button small primary" type="button" onclick="openResultsModal('propertySearch', '${search.id}')">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
-                                  : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
+                                  : searchActive
+                                    ? sinResultadosVivoHtml(true, "búsqueda", search.publishedAt)
+                                    : `<button class="button small results-empty" type="button" disabled>Búsqueda de baja</button>`
                               }
                             </div>
                           </div>
@@ -24962,7 +25001,9 @@
                             ${
                               searchMatches.length
                                 ? `<button class="button small primary" type="button" onclick="openResultsModal('vehicleSearch', '${search.id}')">Ver resultados <span class="btn-badge">${searchMatches.length}</span></button>`
-                                : `<button class="button small results-empty" type="button" disabled>${searchActive ? "Sin resultados aún" : "Búsqueda de baja"}</button>`
+                                : searchActive
+                                  ? sinResultadosVivoHtml(true, "búsqueda", search.publishedAt)
+                                  : `<button class="button small results-empty" type="button" disabled>Búsqueda de baja</button>`
                             }
                           </div>
                         </div>
