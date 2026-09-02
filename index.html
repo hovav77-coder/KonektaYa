@@ -20984,10 +20984,16 @@
           };
         }
         const p = num(e.pres);
+        // El lugar deseado (PH o referencia) es el dato que engancha: "The
+        // Point", "Albrook Mall". Llega en 'lug' desde 3j; los tickers viejos
+        // no lo traen y el formato cae al de siempre sin romperse.
+        let lug = String(e.lug || "").trim();
+        if (lug.length > 26) lug = lug.slice(0, 25) + "…";
+        const pres = p ? "hasta " + dinero(p) + (e.op === "venta" ? "" : " al mes") : "";
         return {
           gancho: e.z || "Panamá",
           titulo: "Buscan " + tipo + (e.op === "venta" ? " para comprar" : " en alquiler"),
-          detalle: p ? "hasta " + dinero(p) + (e.op === "venta" ? "" : " al mes") : ""
+          detalle: lug && pres ? lug + " · " + pres : lug || pres
         };
       }
       function cintaIco(e) {
