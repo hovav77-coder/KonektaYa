@@ -19142,7 +19142,7 @@
         setupProtectedFreeTextValidation();
         save();
         if (savedProperty && data.registeredBy === "broker") savedProperty._broker = { license: data.brokerLicense, company: data.brokerCompany, independent: data.brokerIndependent };
-        if (supabaseEnabled) supaUpsertPublication("properties", savedProperty);
+        if (supabaseEnabled) supaPublishVerificado("properties", savedProperty);
         showToast("propertyToast");
         render();
         afterPublishSuccess();
@@ -19210,7 +19210,7 @@
         setupProtectedFreeTextValidation();
         save();
         if (savedSearch && data.role === "broker") savedSearch._broker = { license: data.brokerLicense, company: data.brokerCompany, independent: data.brokerIndependent };
-        if (supabaseEnabled) supaUpsertPublication("searches", savedSearch);
+        if (supabaseEnabled) supaPublishVerificado("searches", savedSearch);
         showToast(toastId);
         render();
         afterPublishSuccess();
@@ -19290,7 +19290,7 @@
         setupProtectedFreeTextValidation();
         save();
         if (savedVehicleOffer && data.registeredBy === "broker") savedVehicleOffer._broker = { license: data.brokerLicense, company: data.brokerCompany, independent: data.brokerIndependent };
-        if (supabaseEnabled) supaUpsertPublication("vehicleOffers", savedVehicleOffer);
+        if (supabaseEnabled) supaPublishVerificado("vehicleOffers", savedVehicleOffer);
         showToast("vehicleOfferToast");
         render();
         afterPublishSuccess();
@@ -19354,7 +19354,7 @@
         setupProtectedFreeTextValidation();
         save();
         if (savedVehicleSearch && data.role === "broker") savedVehicleSearch._broker = { license: data.brokerLicense, company: data.brokerCompany, independent: data.brokerIndependent };
-        if (supabaseEnabled) supaUpsertPublication("vehicleSearches", savedVehicleSearch);
+        if (supabaseEnabled) supaPublishVerificado("vehicleSearches", savedVehicleSearch);
         showToast("vehicleSearchToast");
         render();
         afterPublishSuccess();
@@ -20661,6 +20661,39 @@
         } finally {
           pendingPublishUpserts--;
         }
+      }
+
+      // Publicación HONESTA (caso Moises, 2026-09-02): los 4 formularios
+      // publicaban sin mirar la respuesta del servidor. Si este rechazaba
+      // (sesión sin confirmar, RLS, trigger anti-contacto), la copia local
+      // quedaba como publicación FANTASMA: visible y haciendo match en ESTE
+      // navegador, inexistente para el resto — y el próximo sync la borraba
+      // "misteriosamente". Este guardián espera el veredicto: si el servidor
+      // dice no, deshace la copia local, restaura la verdad del servidor y
+      // explica el motivo real en vez del "✓ publicado" mentiroso.
+      async function supaPublishVerificado(entityKey, record) {
+        let res;
+        try {
+          res = (await supaUpsertPublication(entityKey, record)) || { ok: false, reason: "sin respuesta del servidor" };
+        } catch (e) {
+          res = { ok: false, reason: (e && e.message) || "error de red" };
+        }
+        if (res.ok) return;
+        const quitar = (arr) => (arr || []).filter((r) => r.id !== record.id);
+        if (entityKey === "properties") properties = quitar(properties);
+        else if (entityKey === "searches") searches = quitar(searches);
+        else if (entityKey === "vehicleOffers") vehicleOffers = quitar(vehicleOffers);
+        else if (entityKey === "vehicleSearches") vehicleSearches = quitar(vehicleSearches);
+        if (window.forceMatchRecalc) window.forceMatchRecalc();
+        save();
+        const modal = document.getElementById("publishDoneModal");
+        if (modal) modal.hidden = true;
+        render();
+        // Si era una EDICIÓN, la recarga trae de vuelta la versión del servidor.
+        try { supaLoadAll(); } catch (e) {}
+        alert("⚠️ Tu publicación NO quedó guardada en el servidor.\n\nMotivo: " +
+          (typeof bulkServerReason === "function" ? bulkServerReason(res.reason) : res.reason) +
+          "\n\nRevisa que tu sesión esté activa (tu avatar arriba a la derecha) y publícala de nuevo.");
       }
 
       // Dispara la Edge Function que detecta matches del nuevo aviso y manda el
