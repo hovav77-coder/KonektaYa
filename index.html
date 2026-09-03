@@ -21007,7 +21007,7 @@
           const pv = num(e.pv), pa = num(e.pa);
           const precio = e.op === "venta" ? (pv ? dinero(pv) : "")
             : e.op === "alquiler" ? (pa ? dinero(pa) + " al mes" : "")
-            : [pv ? dinero(pv) : "", pa ? dinero(pa) + " al mes" : ""].filter(Boolean).join(" · ");
+            : [pv ? dinero(pv) : "", pa ? dinero(pa) + "/mes" : ""].filter(Boolean).join(" · "); // compacto: caben los dos
           return {
             gancho: barrio || e.z || "Panamá",
             titulo: tipo + (m2 ? " " + m2 + " m²" : "") + " en " + op,
