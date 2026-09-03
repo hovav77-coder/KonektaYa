@@ -21321,11 +21321,13 @@
           const sw = '<button type="button" onclick="cintaAdminOcultar(\'' + tbAttr + "','" + idAttr + "'," + (hid ? "false" : "true") + ')" title="' + (hid ? "Volver a mostrar en la portada" : "Ocultar de la portada") + '" style="display:inline-flex;align-items:center;gap:7px;border:none;background:none;cursor:pointer;font:inherit;font-size:11.5px;font-weight:800;color:' + (hid ? "#c9d6e4" : "#7ed6a6") + ';padding:0">' +
             (hid ? "Oculta" : "En portada") +
             '<span style="width:36px;height:20px;border-radius:999px;background:' + (hid ? "#5b6b82" : "#22b46a") + ';position:relative;flex:0 0 auto"><span style="position:absolute;top:3px;' + (hid ? "left:3px" : "right:3px") + ';width:14px;height:14px;border-radius:50%;background:#fff"></span></span></button>';
-          return '<div style="display:grid;grid-template-columns:26px 150px 1fr 1fr 64px 120px;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;color:#fff' + (hid ? ";opacity:.5" : "") + '">' +
+          // Título arriba y detalle debajo (como el tablero en el celular): el
+          // panel del admin es angosto y en columnas se cortaban los textos.
+          return '<div style="display:grid;grid-template-columns:24px 128px minmax(0,1fr) 62px 112px;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;color:#fff' + (hid ? ";opacity:.5" : "") + '">' +
             '<span style="font-size:15px">' + cintaIco(e) + "</span>" +
-            '<span style="color:#f1883f;font-weight:900;font-size:12px;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(String(p.gancho || "").toUpperCase()) + "</span>" +
-            '<span style="font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(p.titulo || "") + "</span>" +
-            '<span style="color:' + (plausible ? "#b9c9dc" : "#ffb4a0") + ';font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(det) + "</span>" +
+            '<span style="color:#f1883f;font-weight:900;font-size:11.5px;letter-spacing:.04em;line-height:1.2">' + escapeHtml(String(p.gancho || "").toUpperCase()) + "</span>" +
+            '<span style="min-width:0"><span style="display:block;font-weight:800;font-size:13.5px;line-height:1.25">' + escapeHtml(p.titulo || "") + "</span>" +
+              (det ? '<span style="display:block;color:' + (plausible ? "#b9c9dc" : "#ffb4a0") + ';font-size:12.5px;line-height:1.25;margin-top:1px">' + escapeHtml(det) + "</span>" : "") + "</span>" +
             '<span style="color:#8aa0b8;font-size:11px;text-align:right;white-space:nowrap">hace ' + escapeHtml(typeof anlRel === "function" ? anlRel(e.t) : "") + "</span>" +
             '<span style="display:flex;justify-content:flex-end">' + sw + "</span>" +
           "</div>";
