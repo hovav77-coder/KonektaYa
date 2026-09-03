@@ -18341,6 +18341,11 @@
         } catch (e) {}
       }
       // CTA: al panel, con la caja del cupón abierta, el código puesto y a la vista.
+      // "Canjearlo ahora" hace lo que dice (caso Henry, 2026-09-02): antes solo
+      // abría la billetera con el código escrito y el usuario tenía que apretar
+      // OTRO botón para ver el saldo — la mitad ni se daba cuenta. Ahora abre la
+      // billetera, escribe el código y CANJEA de una vez; el estado del canje
+      // (✓ acreditado / error real) queda a la vista en la misma caja.
       function pdCuponIr() {
         publishDoneGoPanel();
         setTimeout(() => {
@@ -18350,6 +18355,7 @@
             if (box) { box.hidden = false; box.classList.remove("coupon-collapsed"); }
             if (input) input.value = "BIENVENIDO10";
             if (box) box.scrollIntoView({ block: "center", behavior: "smooth" });
+            if (typeof redeemCoupon === "function") redeemCoupon();
           } catch (e) {}
         }, 450);
       }
