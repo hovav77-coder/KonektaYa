@@ -21239,6 +21239,7 @@
         }
         cintaAdminData = data || {};
         renderCintaAdminCard();
+        cintaAdminTablero();
         cintaAdminPreview();
       }
       window.ensureCintaAdmin = ensureCintaAdmin;
@@ -21283,10 +21284,70 @@
               '<input type="text" id="cintaNuevoMsg" maxlength="140" placeholder="Escribe un mensaje nuevo… (ej. Canjea el cupón BIENVENIDO10)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();cintaAdminAdd();}" style="flex:1;min-width:0;padding:8px 12px;border:1px solid #dce5ef;border-radius:9px;font:inherit;font-size:13px">' +
               '<button class="button small" type="button" onclick="cintaAdminAdd()">+ Agregar</button>' +
             "</div>" +
+            '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:7px">EN EL TABLERO AHORA <span style="font-weight:700;letter-spacing:0;color:#8aa0b8">(apaga una fila para sacarla de la portada; la publicación sigue activa y haciendo match)</span> <button class="button small ghost" type="button" style="font-size:11px;margin-left:6px" onclick="cintaAdminTablero()">Actualizar</button></div>' +
+            '<div id="cintaTableroAdm" style="min-width:0;margin-bottom:14px"><span class="admin-users-empty">Cargando…</span></div>' +
             '<div style="font-size:11px;font-weight:800;letter-spacing:.05em;color:#5b6b7e;margin-bottom:7px">ASÍ SE VE AHORA MISMO PARA EL PÚBLICO <button class="button small ghost" type="button" style="font-size:11px;margin-left:6px" onclick="cintaAdminPreview()">Actualizar</button></div>' +
             '<div id="cintaPreviewRow" style="min-width:0"><span class="admin-users-empty">Cargando…</span></div>' +
           "</div>";
       }
+
+      // "En el tablero ahora" (opción A aprobada): lista de lo que está en la
+      // ventana del tablero — INCLUIDAS las ocultas — con interruptor por fila.
+      // Servidor: 3l-tablero-ocultar.sql (admin_ticker_events / admin_set_ticker_hidden).
+      async function cintaAdminTablero() {
+        const box = document.getElementById("cintaTableroAdm");
+        if (!box || !supabaseClient) return;
+        const { data, error } = await supabaseClient.rpc("admin_ticker_events");
+        if (error) {
+          box.innerHTML = '<div style="background:#fff8e8;border:1px solid #f1883f;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:700;color:#8a5a00">Para controlar filas puntuales corre <strong>supabase/3l-tablero-ocultar.sql</strong> en el SQL Editor y toca “Actualizar”.</div>';
+          return;
+        }
+        const lista = (data && Array.isArray(data.events) ? data.events : []).filter((e) => e.k !== "promo");
+        if (!lista.length) { box.innerHTML = '<span class="admin-users-empty">Sin publicaciones en la ventana del tablero.</span>'; return; }
+        const enPortada = lista.filter((e) => !e.hid && cintaPlausible(e)).length;
+        const ocultas = lista.filter((e) => e.hid).length;
+        const fuera = lista.filter((e) => !cintaPlausible(e)).length;
+        const pill = (txt, bg, col, borde) => '<span style="font-size:12px;font-weight:800;border-radius:999px;padding:5px 12px;background:' + bg + ';color:' + col + (borde ? ";border:1px solid " + borde : "") + '">' + txt + "</span>";
+        const resumen = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+          pill(enPortada + " en portada", "#e8f7ee", "#0f7a3d") + pill(ocultas + " oculta" + (ocultas === 1 ? "" : "s"), "#f1f5f9", "#5b6b82") +
+          (fuera ? pill("⚠️ " + fuera + " con monto fuera de rango (no sale sola)", "#fff4e8", "#a23c18", "#f1883f") : "") + "</div>";
+        const filas = lista.map((e) => {
+          const p = cintaPartes(e);
+          const plausible = cintaPlausible(e);
+          const hid = Boolean(e.hid);
+          const idAttr = escapeHtml(String(e.id || ""));
+          const tbAttr = escapeHtml(String(e.tb || ""));
+          const det = (plausible ? "" : "⚠️ ") + (p.detalle || "");
+          const sw = '<button type="button" onclick="cintaAdminOcultar(\'' + tbAttr + "','" + idAttr + "'," + (hid ? "false" : "true") + ')" title="' + (hid ? "Volver a mostrar en la portada" : "Ocultar de la portada") + '" style="display:inline-flex;align-items:center;gap:7px;border:none;background:none;cursor:pointer;font:inherit;font-size:11.5px;font-weight:800;color:' + (hid ? "#c9d6e4" : "#7ed6a6") + ';padding:0">' +
+            (hid ? "Oculta" : "En portada") +
+            '<span style="width:36px;height:20px;border-radius:999px;background:' + (hid ? "#5b6b82" : "#22b46a") + ';position:relative;flex:0 0 auto"><span style="position:absolute;top:3px;' + (hid ? "left:3px" : "right:3px") + ';width:14px;height:14px;border-radius:50%;background:#fff"></span></span></button>';
+          return '<div style="display:grid;grid-template-columns:26px 150px 1fr 1fr 64px 120px;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 12px;color:#fff' + (hid ? ";opacity:.5" : "") + '">' +
+            '<span style="font-size:15px">' + cintaIco(e) + "</span>" +
+            '<span style="color:#f1883f;font-weight:900;font-size:12px;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(String(p.gancho || "").toUpperCase()) + "</span>" +
+            '<span style="font-weight:800;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(p.titulo || "") + "</span>" +
+            '<span style="color:' + (plausible ? "#b9c9dc" : "#ffb4a0") + ';font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(det) + "</span>" +
+            '<span style="color:#8aa0b8;font-size:11px;text-align:right;white-space:nowrap">hace ' + escapeHtml(typeof anlRel === "function" ? anlRel(e.t) : "") + "</span>" +
+            '<span style="display:flex;justify-content:flex-end">' + sw + "</span>" +
+          "</div>";
+        }).join("");
+        box.innerHTML = resumen +
+          '<div style="background:linear-gradient(180deg,#0f2740,#0b1d31);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0;overflow-x:auto">' + filas + "</div>";
+      }
+      window.cintaAdminTablero = cintaAdminTablero;
+      async function cintaAdminOcultar(tb, id, ocultar) {
+        if (!supabaseClient) return;
+        const { error } = await supabaseClient.rpc("admin_set_ticker_hidden", { p_table: tb, p_id: id, p_hidden: ocultar });
+        const st = document.getElementById("cintaAdmStatus");
+        if (error) {
+          if (st) { st.textContent = "✘ " + error.message; st.style.color = "#c62828"; }
+          return;
+        }
+        if (st) { st.textContent = ocultar ? "✔ Oculta de la portada" : "✔ De vuelta en la portada"; st.style.color = "#0f7a3d"; setTimeout(() => { if (st.textContent.startsWith("✔")) st.textContent = ""; }, 4000); }
+        cintaAdminTablero();
+        cintaAdminPreview();
+        cargarCintaVivo();
+      }
+      window.cintaAdminOcultar = cintaAdminOcultar;
 
       async function cintaAdminPreview() {
         const row = document.getElementById("cintaPreviewRow");
