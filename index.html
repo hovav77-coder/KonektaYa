@@ -21069,6 +21069,20 @@
       }
       // Intercala los mensajes propios entre la actividad real: 1 de KonektaYa
       // por cada 3 de la gente (la cinta es del mercado, no del dueño).
+      // ¿Tiene sentido el monto? Umbrales = los de setupPropertyPricingRule /
+      // setupPresupuestoSanidad: alquiler > $20,000/mes, presupuesto de alquiler
+      // < $300 o de compra < $10,000 = dato errado → fuera del tablero.
+      function cintaPlausible(e) {
+        if (!e || e.k === "promo" || e.v !== "inmueble") return true;
+        const n = (v) => { const x = Number(String(v == null ? "" : v).replace(/[^\d.]/g, "")); return isFinite(x) ? x : 0; };
+        if (e.k === "oferta") {
+          const pa = n(e.pa);
+          return !(pa > 20000);
+        }
+        const p = n(e.pres);
+        if (!p) return true;
+        return e.op === "venta" ? p >= 10000 : p >= 300;
+      }
       function cintaMezclar(lista) {
         const reales = lista.filter((e) => e.k !== "promo");
         const promos = lista.filter((e) => e.k === "promo");
@@ -21168,8 +21182,14 @@
           if (!error && lista) {
             cintaMin = Array.isArray(data) ? 4 : Math.max(1, Number(data.min) || 4);
             cintaFilas = Array.isArray(data) ? 4 : Math.min(10, Math.max(4, Number(data.rows) || 4));
-            cintaCrudos = lista.length;
-            cintaEventos = cintaRellenar(cintaMezclar(lista));
+            // Escudo de imagen: la portada NO exhibe montos absurdos (mismos
+            // umbrales que los avisos de sanidad de los formularios). Casos
+            // reales que lo motivaron: "hasta $100 al mes" y "$320,000 al mes"
+            // publicados antes de que existieran los avisos. La publicación
+            // sigue viva y matcheando; solo no sale en el tablero público.
+            const plausibles = lista.filter(cintaPlausible);
+            cintaCrudos = plausibles.length;
+            cintaEventos = cintaRellenar(cintaMezclar(plausibles));
             renderCintaVivo();
           }
         } catch (e) {}
