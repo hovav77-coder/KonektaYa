@@ -21002,10 +21002,16 @@
             phNom = tr[0].trim();
             barrio = tr.slice(1).join("|").trim();
           }
+          // Precio (llega en pv/pa desde 3k; los tickers viejos no lo traen):
+          // venta → "$650,000"; alquiler → "$1,800 al mes"; ambos → los dos.
+          const pv = num(e.pv), pa = num(e.pa);
+          const precio = e.op === "venta" ? (pv ? dinero(pv) : "")
+            : e.op === "alquiler" ? (pa ? dinero(pa) + " al mes" : "")
+            : [pv ? dinero(pv) : "", pa ? dinero(pa) + " al mes" : ""].filter(Boolean).join(" · ");
           return {
             gancho: barrio || e.z || "Panamá",
             titulo: tipo + (m2 ? " " + m2 + " m²" : "") + " en " + op,
-            detalle: phNom
+            detalle: phNom && precio ? phNom + " · " + precio : phNom || precio
           };
         }
         const p = num(e.pres);
