@@ -195,17 +195,29 @@ function calcVehiculoScore(offer: any, search: any, c: any) {
 }
 
 // -------- Email (Resend) --------
-function matchEmailHtml(vertical: string, recipientIsSearcher: boolean, name: string) {
+// publisher=true: correo al que ACABA de publicar y ya cruza con alguien
+// (aprobado 2026-09-02 — caso Henry: vio el match en su panel y esperaba el
+// correo; ese momento es el empujón para entrar y desbloquear).
+function matchEmailHtml(vertical: string, recipientIsSearcher: boolean, name: string, publisher = false, count = 0) {
   const cosa = vertical === "vehiculo" ? "vehículo" : "inmueble";
-  const linea = recipientIsSearcher
-    ? `Se publicó un <strong>${cosa}</strong> que coincide con lo que estás buscando.`
-    : `Alguien está buscando un <strong>${cosa}</strong> que coincide con lo que ofreces.`;
+  const n = Math.max(1, Number(count) || 1);
+  const s = n === 1 ? "" : "s";
+  const titulo = publisher
+    ? (recipientIsSearcher ? `🎯 Tu búsqueda ya tiene ${n} coincidencia${s}` : `🎯 Tu publicación ya tiene ${n} interesado${s}`)
+    : "🎯 Tienes una nueva oportunidad";
+  const linea = publisher
+    ? (recipientIsSearcher
+        ? `Acabas de publicar tu búsqueda y ya hay <strong>${n} ${cosa}${s}</strong> que coincide${n === 1 ? "" : "n"} con lo que buscas.`
+        : `Acabas de publicar tu <strong>${cosa}</strong> y ya hay <strong>${n} persona${s}</strong> buscando algo así. Entra a ver ${n === 1 ? "quién es" : "quiénes son"}.`)
+    : recipientIsSearcher
+      ? `Se publicó un <strong>${cosa}</strong> que coincide con lo que estás buscando.`
+      : `Alguien está buscando un <strong>${cosa}</strong> que coincide con lo que ofreces.`;
   const hola = name ? `Hola ${name},` : "Hola,";
   return `<!doctype html><html><body style="margin:0;background:#eef3fa;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f2a4a">
   <div style="max-width:520px;margin:0 auto;padding:24px">
     <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(15,42,74,.08)">
       <div style="background:linear-gradient(135deg,#0a2f55,#0f2a4a);color:#fff;padding:26px 24px">
-        <div style="font-size:22px;font-weight:800">🎯 Tienes una nueva oportunidad</div>
+        <div style="font-size:22px;font-weight:800">${titulo}</div>
         <div style="color:#bcd4ee;font-size:14px;margin-top:4px">KonektaYa · Panamá</div>
       </div>
       <div style="padding:24px">
@@ -219,7 +231,7 @@ function matchEmailHtml(vertical: string, recipientIsSearcher: boolean, name: st
   </div></body></html>`;
 }
 
-async function sendResendEmail(to: string, vertical: string, recipientIsSearcher: boolean, name: string) {
+async function sendResendEmail(to: string, vertical: string, recipientIsSearcher: boolean, name: string, opts: { publisher?: boolean; count?: number } = {}) {
   // La API key debe ir en el header sin caracteres invisibles (espacios, saltos
   // de línea, comillas raras que se cuelan al pegar) o fetch falla con "not a
   // valid ByteString". Dejamos solo ASCII imprimible sin espacios.
@@ -227,14 +239,19 @@ async function sendResendEmail(to: string, vertical: string, recipientIsSearcher
   if (!key) throw new Error("RESEND_API_KEY no configurado");
   const from = (Deno.env.get("NOTIFY_FROM") || "KonektaYa <avisos@konektaya.com>").replace(/[^\x20-\x7E]/g, "");
   const cosa = vertical === "vehiculo" ? "vehículo" : "inmueble";
+  const n = Math.max(1, Number(opts.count) || 1);
+  const s = n === 1 ? "" : "s";
+  const subject = opts.publisher
+    ? (recipientIsSearcher ? `🎯 Tu búsqueda ya tiene ${n} coincidencia${s} en KonektaYa` : `🎯 Tu ${cosa} ya tiene ${n} interesado${s} en KonektaYa`)
+    : `🎯 Nueva oportunidad de ${cosa} en KonektaYa`;
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { "Authorization": "Bearer " + key, "Content-Type": "application/json" },
     body: JSON.stringify({
       from,
       to: [to],
-      subject: `🎯 Nueva oportunidad de ${cosa} en KonektaYa`,
-      html: matchEmailHtml(vertical, recipientIsSearcher, name),
+      subject,
+      html: matchEmailHtml(vertical, recipientIsSearcher, name, !!opts.publisher, n),
     }),
   });
   if (!res.ok) throw new Error("Resend " + res.status + ": " + (await res.text()));
@@ -351,8 +368,45 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log("notify-matches:done", { notified, candidates: recipientIds.length });
-    return json({ ok: true, notified, candidates: recipientIds.length });
+    // También al PUBLICANTE (aprobado 2026-09-02, caso Henry): si su publicación
+    // nueva ya cruza con alguien, ese correo es el empujón para entrar a ver el
+    // match (y desbloquear). Mismo dedupe (publication_id + su propio id como
+    // destinatario) y misma preferencia notify_matches; al fallar el envío se
+    // borra la fila para permitir el reintento. No cuenta contra MAX_EMAILS.
+    let publisherNotified = false;
+    try {
+      const { data: yo } = await admin.from("profiles").select("id,email,name,notify_matches").eq("id", user.id).maybeSingle();
+      if (yo?.email && yo.notify_matches !== false) {
+        const totalPubs = [...count.values()].reduce((a, b) => a + b, 0);
+        // Oferta nueva → "N personas buscando" (destinatarios distintos);
+        // búsqueda nueva → "N inmuebles/vehículos coinciden" (publicaciones).
+        const nPub = kind === "offer" ? recipientIds.length : (totalPubs || recipientIds.length);
+        const bestAll = Math.max(0, ...best.values());
+        const { data: ins, error: insErr2 } = await admin
+          .from("match_notifications")
+          .upsert(
+            { publication_id: String(id), recipient_id: user.id, vertical, kind,
+              best_score: Math.round(bestAll), matched_count: nPub },
+            { onConflict: "publication_id,recipient_id", ignoreDuplicates: true }
+          )
+          .select("id");
+        if (!insErr2 && ins && ins.length) {
+          try {
+            await sendResendEmail(yo.email, vertical, kind === "search", String(yo.name || "").split(/\s+/)[0] || "", { publisher: true, count: nPub });
+            publisherNotified = true;
+            console.log("notify-matches:sent-publisher", { to: yo.email, count: nPub });
+          } catch (e) {
+            await admin.from("match_notifications").delete().eq("publication_id", String(id)).eq("recipient_id", user.id);
+            console.warn("sendResendEmail:publisher:error", { err: String((e as Error)?.message || e) });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("notify-publisher", String((e as Error)?.message || e));
+    }
+
+    console.log("notify-matches:done", { notified, publisherNotified, candidates: recipientIds.length });
+    return json({ ok: true, notified, publisherNotified, candidates: recipientIds.length });
   } catch (e) {
     return json({ error: String((e as Error)?.message || e) }, 500);
   }
